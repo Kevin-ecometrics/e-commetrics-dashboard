@@ -1,103 +1,105 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useState, Suspense, lazy, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import Login from "@/components/login";
+import { useLang } from "@/app/context/LangContext";
+const LazyLanding = lazy(() => import("@/components/landing"));
+
+type SelectedOption = "login" | "landing" | null;
+type Lang = "es" | "en";
+
+const translations = {
+  es: {
+    title: "¿Qué deseas hacer?",
+    login: "Ingresar al Dashboard",
+    explore: "Conocer E-commetrics",
+    loading: "Cargando información...",
+  },
+  en: {
+    title: "What would you like to do?",
+    login: "Go to Dashboard",
+    explore: "Explore E-commetrics",
+    loading: "Loading information...",
+  },
+};
+
+export default function Page() {
+  const [selectedOption, setSelectedOption] = useState<SelectedOption>(null);
+
+  const goToLogin = () => setSelectedOption("login");
+  const goToLanding = () => setSelectedOption("landing");
+
+  const { lang, changeLang } = useLang();
+
+  useEffect(() => {
+    const existingLang = document.cookie.match(
+      /(?:^|;\s*)lang=(en|es)/
+    )?.[1] as Lang | undefined;
+
+    if (!existingLang) {
+      document.cookie = "lang=es; path=/; max-age=31536000";
+      changeLang("es");
+    } else {
+      changeLang(existingLang);
+    }
+  }, []);
+
+  const t = translations[lang];
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <div className="overflow-x-hidden min-h-screen">
+      <AnimatePresence>
+        {selectedOption === null && (
+          <motion.div
+            key="modal"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-l from-[#BD155C] to-[#1E171E]"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+              className="bg-white p-6 rounded-2xl max-w-sm w-full text-center shadow-lg"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <h2 className="text-xl font-bold mb-4 text-gray-800">
+                {t.title}
+              </h2>
+              <button
+                onClick={goToLogin}
+                className="w-full bg-[#BD155C] hover:bg-[#BD155C]/90 text-white py-2 px-4 rounded-lg mb-3 transition duration-200"
+              >
+                {t.login}
+              </button>
+              <button
+                onClick={goToLanding}
+                className="w-full bg-gray-100 hover:bg-gray-200 text-black py-2 px-4 rounded-lg transition duration-200"
+              >
+                {t.explore}
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+      {selectedOption === "login" && <Login goToLanding={goToLanding} />}
+
+      {selectedOption === "landing" && (
+        <Suspense
+          fallback={<div className="text-center py-10">{t.loading}</div>}
+        >
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+            <LazyLanding goToLogin={goToLogin} />
+          </motion.div>
+        </Suspense>
+      )}
     </div>
   );
 }
