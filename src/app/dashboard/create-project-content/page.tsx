@@ -4,11 +4,11 @@ import React, { useState, useEffect } from "react";
 import { toast, Toaster } from "react-hot-toast";
 
 const TYPES = [
-  "Name of BUSINESS and Client objectives",
-  "Onboarding Package",
+  "Business and Objectives",
   "MVP + IDEA",
-  "Strategy",
-  "Growth Hacking",
+  "Business strategy",
+  "Growth Hacking strategy",
+  "Apps",
 ];
 
 type User = { id: number; userName: string };

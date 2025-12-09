@@ -32,20 +32,20 @@ type ProjectContentItem = {
 
 const types_es = [
   "Todos",
-  "Name of BUSINESS and Client objectives",
-  "Onboarding Package",
+  "Business and Objectives",
   "MVP + IDEA",
-  "Strategy",
-  "Growth Hacking",
+  "Business strategy",
+  "Growth Hacking strategy",
+  "Apps",
 ];
 
 const types_en = [
   "All",
-  "Name of BUSINESS and Client objectives",
-  "Onboarding Package",
+  "Business and Objectives",
   "MVP + IDEA",
-  "Strategy",
-  "Growth Hacking",
+  "Business strategy",
+  "Growth Hacking strategy",
+  "Apps",
 ];
 
 export default function ProjectContent({ project }: { project: Project[] }) {

@@ -1,7 +1,21 @@
 "use client";
 
 import * as React from "react";
-import { Frame, PieChart, Map, Bot, Pencil, LucideIcon } from "lucide-react";
+import {
+  Frame,
+  PieChart,
+  Map,
+  Bot,
+  Pencil,
+  UserPlus,
+  UserCog,
+  FolderPlus,
+  FolderCog,
+  FilePlus,
+  FileCog,
+  Shield,
+  LucideIcon,
+} from "lucide-react";
 import { NavUser } from "@/components/nav-user";
 import Cookies from "js-cookie";
 import {
@@ -48,6 +62,7 @@ interface AdminAction {
   name: string;
   url: string;
   icon: LucideIcon;
+  category: string; // Nueva propiedad para categorizar
 }
 
 /**
@@ -75,15 +90,6 @@ type AppSidebarProps = React.ComponentProps<typeof Sidebar>;
 
 /**
  * Componente principal del sidebar de la aplicación
- *
- * Funcionalidades principales:
- * 1. Muestra diferentes secciones según el rol del usuario (admin/client)
- * 2. Filtra las aplicaciones según los permisos del usuario
- * 3. Gestiona el idioma (español/inglés)
- * 4. Maneja el comportamiento responsive del sidebar
- *
- * @param props - Props heredadas del componente Sidebar
- * @returns JSX.Element
  */
 export function AppSidebar({ ...props }: AppSidebarProps) {
   // Hooks para obtener datos del contexto de autenticación
@@ -97,7 +103,6 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
 
   /**
    * Efecto para cargar el idioma desde las cookies al montar el componente
-   * Se ejecuta solo una vez al montar
    */
   React.useEffect(() => {
     const cookieLang = Cookies.get("lang") as "es" | "en";
@@ -107,8 +112,7 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
   }, [changeLang]);
 
   /**
-   * Manejador para cerrar el sidebar en dispositivos móviles al hacer clic en un elemento
-   * Mejora la UX en dispositivos táctiles
+   * Manejador para cerrar el sidebar en dispositivos móviles
    */
   const handleItemClick = (): void => {
     if (isMobile) {
@@ -117,9 +121,7 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
   };
 
   /**
-   * Configuración de aplicaciones disponibles en español
-   * IMPORTANTE: La propiedad 'component' debe coincidir exactamente
-   * con los nombres almacenados en la base de datos de permisos
+   * Configuración de aplicaciones disponibles
    */
   const apps: AppItem[] = [
     {
@@ -127,35 +129,35 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
       name: "Generador de QR",
       url: "/dashboard/webapp/qr",
       icon: Frame,
-      component: "QR", // Coincide con permission.component === "QR"
+      component: "QR",
     },
     {
       id: "vcard",
       name: "Tarjeta de Visita",
       url: "/dashboard/webapp/vcard",
       icon: Map,
-      component: "Vcard", // Coincide con permission.component === "Vcard"
+      component: "Vcard",
     },
     {
       id: "calendar",
       name: "Calendario",
       url: "/dashboard/webapp/calendar",
       icon: PieChart,
-      component: "calendar", // Coincide con permission.component === "calendar"
+      component: "calendar",
     },
     {
       id: "blogs",
       name: "Gestor de Blogs",
       url: "/dashboard/webapp/blogs",
       icon: Bot,
-      component: "blogs", // Coincide con permission.component === "blogs"
+      component: "blogs",
     },
     {
       id: "reforma",
       name: "Calendario Reforma",
       url: "/dashboard/webapp/calendar-reforma",
       icon: PieChart,
-      component: "Reforma", // Coincide con permission.component === "Reforma"
+      component: "Reforma",
     },
     {
       id: "monge",
@@ -166,10 +168,6 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
     },
   ];
 
-  /**
-   * Configuración de aplicaciones disponibles en inglés
-   * Mantiene la misma estructura y componentes que la versión en español
-   */
   const appsEn: AppItem[] = [
     {
       id: "qr",
@@ -217,132 +215,139 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
 
   /**
    * Función para filtrar aplicaciones según los permisos del usuario
-   *
-   * Lógica de filtrado:
-   * 1. Si el usuario es admin: ve todas las aplicaciones
-   * 2. Si el usuario es client: solo ve aplicaciones con can_view === true
-   *
-   * @param appsList - Lista de aplicaciones a filtrar
-   * @returns AppItem[] - Lista filtrada de aplicaciones
    */
   const getFilteredApps = (appsList: AppItem[]): AppItem[] => {
-    // Los administradores tienen acceso a todas las aplicaciones
     if (user?.role === "admin") {
       return appsList;
     }
 
-    // Para usuarios client, filtrar por permisos específicos
     return appsList.filter((app: AppItem) => {
-      // Buscar el permiso correspondiente a esta aplicación
       const permission = permissions.find(
         (p: Permission) => p.component === app.component
       );
-      // Solo mostrar si el permiso existe y can_view es true
       return permission?.can_view === true;
     });
   };
 
-  /**
-   * Aplicaciones filtradas según el idioma actual y los permisos del usuario
-   */
   const filteredApps: AppItem[] = getFilteredApps(
     lang === "es" ? apps : appsEn
   );
 
   /**
-   * Configuración de acciones administrativas en español
-   * Solo visibles para usuarios con rol 'admin'
+   * Configuración de acciones administrativas en español - AGRUPADAS POR CATEGORÍA
    */
   const adminActionsEs: AdminAction[] = [
+    // Clientes
     {
       id: "create-client",
       name: "Crear Cliente",
       url: "/dashboard/create-client",
-      icon: PieChart,
-    },
-    {
-      id: "create-project",
-      name: "Crear Proyecto",
-      url: "/dashboard/create-project",
-      icon: Map,
-    },
-    {
-      id: "create-project-content",
-      name: "Crear Contenido Proyecto",
-      url: "/dashboard/create-project-content",
-      icon: Bot,
+      icon: UserPlus,
+      category: "clientes",
     },
     {
       id: "update-client",
       name: "Actualizar Cliente",
       url: "/dashboard/update-client",
-      icon: Pencil,
+      icon: UserCog,
+      category: "clientes",
+    },
+    // Proyectos
+    {
+      id: "create-project",
+      name: "Crear Proyecto",
+      url: "/dashboard/create-project",
+      icon: FolderPlus,
+      category: "proyectos",
     },
     {
       id: "update-project",
       name: "Actualizar Proyecto",
       url: "/dashboard/update-project",
-      icon: Pencil,
+      icon: FolderCog,
+      category: "proyectos",
+    },
+    // Contenido Proyecto
+    {
+      id: "create-project-content",
+      name: "Crear Contenido Proyecto",
+      url: "/dashboard/create-project-content",
+      icon: FilePlus,
+      category: "contenido",
     },
     {
       id: "update-project-content",
       name: "Actualizar Contenido Proyecto",
       url: "/dashboard/update-project-content",
-      icon: Pencil,
+      icon: FileCog,
+      category: "contenido",
     },
+    // Otros (sin dropdown)
     {
       id: "access-app",
       name: "Permisos",
       url: "/dashboard/access-app",
-      icon: Pencil,
+      icon: Shield,
+      category: "otros",
     },
   ];
 
   /**
-   * Configuración de acciones administrativas en inglés
+   * Configuración de acciones administrativas en inglés - AGRUPADAS POR CATEGORÍA
    */
   const adminActionsEn: AdminAction[] = [
+    // Clientes
     {
       id: "create-client",
       name: "Create Client",
       url: "/dashboard/create-client",
-      icon: PieChart,
-    },
-    {
-      id: "create-project",
-      name: "Create Project",
-      url: "/dashboard/create-project",
-      icon: Map,
-    },
-    {
-      id: "create-project-content",
-      name: "Create Project Content",
-      url: "/dashboard/create-project-content",
-      icon: Bot,
+      icon: UserPlus,
+      category: "clientes",
     },
     {
       id: "update-client",
       name: "Update Client",
       url: "/dashboard/update-client",
-      icon: Pencil,
+      icon: UserCog,
+      category: "clientes",
+    },
+    // Proyectos
+    {
+      id: "create-project",
+      name: "Create Project",
+      url: "/dashboard/create-project",
+      icon: FolderPlus,
+      category: "proyectos",
     },
     {
       id: "update-project",
       name: "Update Project",
       url: "/dashboard/update-project",
-      icon: Pencil,
+      icon: FolderCog,
+      category: "proyectos",
+    },
+    // Contenido Proyecto
+    {
+      id: "create-project-content",
+      name: "Create Project Content",
+      url: "/dashboard/create-project-content",
+      icon: FilePlus,
+      category: "contenido",
     },
     {
       id: "update-project-content",
       name: "Update Project Content",
       url: "/dashboard/update-project-content",
-      icon: Pencil,
+      icon: FileCog,
+      category: "contenido",
     },
+    // Otros (sin dropdown)
     {
       id: "access-app",
       name: "Permissions",
       url: "/dashboard/access-app",
-      icon: Pencil,
+      icon: Shield,
+      category: "otros",
     },
   ];
 
@@ -353,11 +358,35 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
     lang === "es" ? adminActionsEs : adminActionsEn;
 
   /**
+   * Función para agrupar acciones por categoría
+   */
+  const groupActionsByCategory = (actions: AdminAction[]) => {
+    const grouped: Record<string, AdminAction[]> = {};
+
+    actions.forEach((action) => {
+      if (!grouped[action.category]) {
+        grouped[action.category] = [];
+      }
+      grouped[action.category].push(action);
+    });
+
+    return grouped;
+  };
+
+  const groupedActions = groupActionsByCategory(adminActions);
+
+  /**
+   * Traducciones de categorías
+   */
+  const categoryTranslations = {
+    clientes: lang === "es" ? "Clientes" : "Clients",
+    proyectos: lang === "es" ? "Proyectos" : "Projects",
+    contenido: lang === "es" ? "Contenido Proyecto" : "Project Content",
+    otros: lang === "es" ? "Otros" : "Others",
+  };
+
+  /**
    * Proyectos visibles según el rol del usuario
-   *
-   * Lógica de filtrado:
-   * 1. Admin: ve todos los proyectos
-   * 2. Client: solo ve sus propios proyectos (donde id_user coincide)
    */
   const visibleProjects: Project[] =
     user?.role === "admin"
@@ -368,27 +397,197 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
 
   return (
     <Sidebar collapsible="icon" {...props}>
-      {/* Header del sidebar con información del equipo/usuario */}
       <SidebarHeader>{user && <TeamSwitcher user={user} />}</SidebarHeader>
 
       <SidebarContent>
-        {/* Sección de Acciones Administrativas - Solo visible para admins */}
-        {user?.role === "admin" && adminActions.length > 0 && (
+        {/* Sección de Acciones Administrativas - REESTRUCTURADA CON DROPDOWNS */}
+        {user?.role === "admin" && Object.keys(groupedActions).length > 0 && (
           <SidebarGroup className="group-data-[collapsible=icon]:hidden">
             <SidebarGroupLabel>
               {lang === "es" ? "Acciones" : "Actions"}
             </SidebarGroupLabel>
             <SidebarMenu>
-              {adminActions.map((action: AdminAction) => (
-                <SidebarMenuItem key={action.id}>
-                  <SidebarMenuButton asChild>
-                    <Link href={action.url} onClick={handleItemClick}>
-                      <action.icon className="mr-2" />
-                      <span>{action.name}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {/* Categoría: Clientes */}
+              {groupedActions.clientes &&
+                groupedActions.clientes.length > 0 && (
+                  <SidebarMenuItem>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <SidebarMenuButton className="w-full flex justify-between items-center">
+                          <div className="flex items-center gap-2">
+                            <UserPlus className="w-4 h-4" />
+                            <span>{categoryTranslations.clientes}</span>
+                          </div>
+                          <svg
+                            className="w-4 h-4 ml-2"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth={2}
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M6 9l6 6 6-6"
+                            />
+                          </svg>
+                        </SidebarMenuButton>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent
+                        className="w-56 p-0"
+                        side="right"
+                        align="start"
+                      >
+                        <SidebarMenu>
+                          {groupedActions.clientes.map(
+                            (action: AdminAction) => (
+                              <SidebarMenuItem key={action.id}>
+                                <SidebarMenuButton asChild>
+                                  <Link
+                                    href={action.url}
+                                    onClick={handleItemClick}
+                                    className="flex items-center gap-2"
+                                  >
+                                    <action.icon className="w-4 h-4" />
+                                    <span>{action.name}</span>
+                                  </Link>
+                                </SidebarMenuButton>
+                              </SidebarMenuItem>
+                            )
+                          )}
+                        </SidebarMenu>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </SidebarMenuItem>
+                )}
+
+              {/* Categoría: Proyectos */}
+              {groupedActions.proyectos &&
+                groupedActions.proyectos.length > 0 && (
+                  <SidebarMenuItem>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <SidebarMenuButton className="w-full flex justify-between items-center">
+                          <div className="flex items-center gap-2">
+                            <FolderPlus className="w-4 h-4" />
+                            <span>{categoryTranslations.proyectos}</span>
+                          </div>
+                          <svg
+                            className="w-4 h-4 ml-2"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth={2}
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M6 9l6 6 6-6"
+                            />
+                          </svg>
+                        </SidebarMenuButton>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent
+                        className="w-56 p-0"
+                        side="right"
+                        align="start"
+                      >
+                        <SidebarMenu>
+                          {groupedActions.proyectos.map(
+                            (action: AdminAction) => (
+                              <SidebarMenuItem key={action.id}>
+                                <SidebarMenuButton asChild>
+                                  <Link
+                                    href={action.url}
+                                    onClick={handleItemClick}
+                                    className="flex items-center gap-2"
+                                  >
+                                    <action.icon className="w-4 h-4" />
+                                    <span>{action.name}</span>
+                                  </Link>
+                                </SidebarMenuButton>
+                              </SidebarMenuItem>
+                            )
+                          )}
+                        </SidebarMenu>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </SidebarMenuItem>
+                )}
+
+              {/* Categoría: Contenido Proyecto */}
+              {groupedActions.contenido &&
+                groupedActions.contenido.length > 0 && (
+                  <SidebarMenuItem>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <SidebarMenuButton className="w-full flex justify-between items-center">
+                          <div className="flex items-center gap-2">
+                            <FilePlus className="w-4 h-4" />
+                            <span>{categoryTranslations.contenido}</span>
+                          </div>
+                          <svg
+                            className="w-4 h-4 ml-2"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth={2}
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M6 9l6 6 6-6"
+                            />
+                          </svg>
+                        </SidebarMenuButton>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent
+                        className="w-56 p-0"
+                        side="right"
+                        align="start"
+                      >
+                        <SidebarMenu>
+                          {groupedActions.contenido.map(
+                            (action: AdminAction) => (
+                              <SidebarMenuItem key={action.id}>
+                                <SidebarMenuButton asChild>
+                                  <Link
+                                    href={action.url}
+                                    onClick={handleItemClick}
+                                    className="flex items-center gap-2"
+                                  >
+                                    <action.icon className="w-4 h-4" />
+                                    <span>{action.name}</span>
+                                  </Link>
+                                </SidebarMenuButton>
+                              </SidebarMenuItem>
+                            )
+                          )}
+                        </SidebarMenu>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </SidebarMenuItem>
+                )}
+
+              {/* Categoría: Otros (sin dropdown) */}
+              {groupedActions.otros && groupedActions.otros.length > 0 && (
+                <>
+                  {groupedActions.otros.map((action: AdminAction) => (
+                    <SidebarMenuItem key={action.id}>
+                      <SidebarMenuButton asChild>
+                        <Link
+                          href={action.url}
+                          onClick={handleItemClick}
+                          className="flex items-center gap-2"
+                        >
+                          <action.icon className="w-4 h-4" />
+                          <span>{action.name}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </>
+              )}
             </SidebarMenu>
           </SidebarGroup>
         )}
@@ -401,7 +600,6 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
             </SidebarGroupLabel>
             <SidebarMenu>
               {user?.role === "admin" ? (
-                // Para admins: dropdown con todos los proyectos
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <SidebarMenuButton className="w-full flex justify-between items-center">
@@ -448,7 +646,6 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
                   </DropdownMenuContent>
                 </DropdownMenu>
               ) : (
-                // Para clients: lista directa de sus proyectos
                 visibleProjects.map((project: Project) => (
                   <SidebarMenuItem key={project.id}>
                     <SidebarMenuButton asChild>
@@ -467,7 +664,7 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
           </SidebarGroup>
         )}
 
-        {/* Sección de Aplicaciones - Filtrada por permisos */}
+        {/* Sección de Aplicaciones */}
         {filteredApps.length > 0 && (
           <SidebarGroup className="group-data-[collapsible=icon]:hidden">
             <SidebarGroupLabel>Apps</SidebarGroupLabel>
@@ -511,7 +708,6 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
         )}
       </SidebarContent>
 
-      {/* Footer del sidebar con información del usuario */}
       <SidebarFooter>{user && <NavUser user={user} />}</SidebarFooter>
 
       <SidebarRail />
