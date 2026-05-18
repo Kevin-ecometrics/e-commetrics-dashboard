@@ -14,6 +14,7 @@ import {
   CheckCircle2,
   Loader2,
   Settings,
+  Tag,
 } from "lucide-react";
 
 type User = {
@@ -24,7 +25,14 @@ type User = {
 };
 
 type ComponentAccess = {
-  component: "QR" | "Vcard" | "blogs" | "calendar" | "Reforma" | "Monge";
+  component:
+    | "QR"
+    | "Vcard"
+    | "blogs"
+    | "calendar"
+    | "Reforma"
+    | "Monge"
+    | "PromoPalmas";
   can_view: boolean;
 };
 
@@ -35,6 +43,7 @@ const AVAILABLE_COMPONENTS: ComponentAccess["component"][] = [
   "calendar",
   "Reforma",
   "Monge",
+  "PromoPalmas",
 ];
 
 // Mapeo de componentes a iconos y nombres legibles
@@ -70,6 +79,12 @@ const COMPONENT_CONFIG = {
     icon: Calendar,
     name: "Calendario de Monge",
     color: "text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-900",
+  },
+  PromoPalmas: {
+    icon: Tag,
+    name: "Promo Palmas",
+    color:
+      "text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-900",
   },
 };
 

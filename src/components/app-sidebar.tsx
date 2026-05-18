@@ -14,6 +14,7 @@ import {
   FilePlus,
   FileCog,
   Shield,
+  Tag,
   LucideIcon,
 } from "lucide-react";
 import { NavUser } from "@/components/nav-user";
@@ -166,6 +167,13 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
       icon: PieChart,
       component: "Monge",
     },
+    {
+      id: "promo-palmas",
+      name: "Promo Palmas",
+      url: "/dashboard/webapp/promo-palmas",
+      icon: Tag,
+      component: "PromoPalmas",
+    },
   ];
 
   const appsEn: AppItem[] = [
@@ -210,6 +218,13 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
       url: "/dashboard/webapp/calendar-monge",
       icon: PieChart,
       component: "Monge",
+    },
+    {
+      id: "promo-palmas",
+      name: "Promo Palmas",
+      url: "/dashboard/webapp/promo-palmas",
+      icon: Tag,
+      component: "PromoPalmas",
     },
   ];
 
