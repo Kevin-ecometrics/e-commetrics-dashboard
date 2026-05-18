@@ -1,414 +1,416 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @next/next/no-img-element */
 "use client";
-import React, {
-  useState,
-  useEffect,
-  useRef,
-  useCallback,
-  useMemo,
-} from "react";
-import { MessageCircle, X } from "lucide-react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import { MessageCircle, X, Send, RotateCcw, Bot, MapPin, Phone, Mail } from "lucide-react";
+import { FaWhatsapp } from "react-icons/fa";
 import { useLang } from "@/app/context/LangContext";
+
+interface ChatAction {
+  label: string;
+  href: string;
+  variant: "maps" | "whatsapp" | "phone" | "email";
+}
 
 interface ChatMessage {
   id: number;
   text: string;
   isBot: boolean;
   timestamp: Date;
+  actions?: ChatAction[];
 }
 
-interface ChatOption {
-  id: string;
-  text: string;
-  response: string;
-  followUp?: string[];
+const CHAT_API_URL = `${process.env.NEXT_PUBLIC_URL}/api/chat`;
+
+const QUICK_OPTIONS = {
+  es: [
+    { label: "💻 Desarrollo web",   text: "¿Qué servicios de desarrollo web ofrecen?" },
+    { label: "🛒 E-commerce",        text: "¿Qué soluciones de e-commerce tienen?" },
+    { label: "📦 Paquetes y precios",text: "¿Cuáles son sus paquetes y precios?" },
+    { label: "🔍 SEO y Marketing",   text: "¿Qué servicios de SEO y marketing digital ofrecen?" },
+    { label: "📞 Contacto",          text: "¿Cómo puedo contactarlos?" },
+    { label: "📍 Ubicación",         text: "¿Dónde están ubicados?" },
+  ],
+  en: [
+    { label: "💻 Web Development",  text: "What web development services do you offer?" },
+    { label: "🛒 E-commerce",        text: "What e-commerce solutions do you have?" },
+    { label: "📦 Packages & Pricing",text: "What are your packages and pricing?" },
+    { label: "🔍 SEO & Marketing",   text: "What SEO and digital marketing services do you offer?" },
+    { label: "📞 Contact",           text: "How can I contact you?" },
+    { label: "📍 Location",          text: "Where are you located?" },
+  ],
+};
+
+const WELCOME = {
+  es: "¡Hola! 👋 Soy el asistente virtual de **E-commetrics**. Estoy aquí para ayudarte con cualquier pregunta sobre nuestros servicios, ubicación o soporte. ¿En qué puedo ayudarte?",
+  en: "Hi! 👋 I'm the virtual assistant of **E-commetrics**. I'm here to help with any questions about our services, location, or support. How can I help you?",
+};
+
+const ACTION_CONFIG: Record<ChatAction["variant"], { className: string; icon: React.ReactNode }> = {
+  maps: {
+    className: "bg-green-50 border-green-200 text-green-700 hover:bg-green-100",
+    icon: <MapPin size={12} />,
+  },
+  whatsapp: {
+    className: "bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100",
+    icon: <FaWhatsapp size={13} />,
+  },
+  phone: {
+    className: "bg-violet-50 border-violet-200 text-violet-700 hover:bg-violet-100",
+    icon: <Phone size={12} />,
+  },
+  email: {
+    className: "bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100",
+    icon: <Mail size={12} />,
+  },
+};
+
+function detectActions(userText: string, lang: string): ChatAction[] {
+  const t = userText.toLowerCase();
+  const isLocation = /ubicad|locat|donde|where|direcci|address|mapa|maps|tijuana|san diego/i.test(t);
+  const isContact  = /contact|whatsapp|llam|call|tel[eé]fon|phone|email|correo/i.test(t);
+  const isPrice    = /precio|cost|cuanto|how much|price|paquete|package|plan|inicial|pro|empresa|personaliz/i.test(t);
+  const isService  = /servicio|service|web|ecommerce|e-commerce|seo|marketing|video|marca|brand|redes|social/i.test(t);
+
+  if (isLocation) {
+    return [
+      {
+        label: lang === "es" ? "Tijuana en Maps" : "Tijuana on Maps",
+        href: "https://maps.google.com/?q=Tijuana+BC+Mexico+Ecommetrica",
+        variant: "maps",
+      },
+    ];
+  }
+
+  if (isPrice || isService) {
+    return [
+      { label: "WhatsApp", href: "https://wa.me/526646429633", variant: "whatsapp" },
+      { label: "Email", href: "mailto:juanmanuel@ecommetrica.com", variant: "email" },
+    ];
+  }
+
+  if (isContact) {
+    return [
+      { label: "WhatsApp", href: "https://wa.me/526646429633", variant: "whatsapp" },
+      { label: lang === "es" ? "Llamar" : "Call", href: "tel:+526646429633", variant: "phone" },
+      { label: "Email", href: "mailto:juanmanuel@ecommetrica.com", variant: "email" },
+    ];
+  }
+
+  return [];
 }
 
-const TYPING_DELAY = 1200;
-const RESPONSE_DELAY = 800;
+function MessageText({ text }: { text: string }) {
+  const parts = text.split(/(\*\*[^*]+\*\*|\n)/g);
+  return (
+    <>
+      {parts.map((part, i) => {
+        if (part.startsWith("**") && part.endsWith("**"))
+          return <strong key={i}>{part.slice(2, -2)}</strong>;
+        if (part === "\n") return <br key={i} />;
+        return <span key={i}>{part}</span>;
+      })}
+    </>
+  );
+}
 
-const chatOptionsES: ChatOption[] = [
-  {
-    id: "contact",
-    text: "📞 ¿Cómo puedo contactarlos?",
-    response:
-      "📞 Puedes contactarnos de estas maneras:\n\n• Teléfono: +52 664 642 9633\n• Email: juanmanuel@e-commetrics.com\n• WhatsApp: +52 664 642 9633\n\nHorario: Lunes a Sábado 9AM - 7PM",
-    followUp: [
-      "💬 ¿Cuál es el mejor horario para llamar?",
-      "📧 ¿Responden rápido por email?",
-    ],
-  },
-  {
-    id: "location",
-    text: "📍 ¿Dónde están ubicados?",
-    response:
-      "📍 Nuestra oficina está ubicada en:\n\nCalle Ignacio Zaragoza, Gustavo Madero 8169-306, 22000 Tijuana, B.C.\n\n🚗 Contamos con estacionamiento disponible",
-    followUp: [
-      "🗺️ ¿Pueden enviar indicaciones?",
-      "🚌 ¿Hay transporte público cercano?",
-    ],
-  },
-  {
-    id: "services",
-    text: "❓ ¿Qué servicios ofrecen?",
-    response:
-      "✨ Nuestros principales servicios:\n\n• Desarrollo de software personalizado\n• Consultoría tecnológica\n• Soporte técnico 24/7\n• Capacitación empresarial\n• Análisis de datos\n• Automatización de procesos\n\n¿Te interesa algún servicio específico?",
-    followUp: [
-      "💻 Desarrollo web",
-      "📊 Análisis de datos",
-      "🤖 Automatización",
-    ],
-  },
-  {
-    id: "dashboard-help",
-    text: "📊 Necesito ayuda con el dashboard",
-    response:
-      "🔍 Parece que tienes problemas para acceder o usar el dashboard.\n\nPosibles causas:\n• No has iniciado sesión\n• Tu sesión ha expirado\n• Hay un error con las cookies\n\n💡 Solución: Intenta refrescar la página, borrar cookies o iniciar sesión nuevamente.",
-    followUp: ["🔑 ¿Cómo inicio sesión?", "❌ ¿Cómo borrar cookies?"],
-  },
-];
+function ActionButtons({ actions }: { actions: ChatAction[] }) {
+  return (
+    <div className="flex flex-wrap gap-1.5 mt-2.5 pt-2 border-t border-gray-100">
+      {actions.map((action, i) => {
+        const cfg = ACTION_CONFIG[action.variant];
+        return (
+          <a
+            key={i}
+            href={action.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg border font-medium transition-colors ${cfg.className}`}
+          >
+            {cfg.icon}
+            {action.label}
+          </a>
+        );
+      })}
+    </div>
+  );
+}
 
-const chatOptionsEN: ChatOption[] = [
-  {
-    id: "contact",
-    text: "📞 How can I contact you?",
-    response:
-      "📞 You can contact us in the following ways:\n\n• Phone: +52 664 642 9633\n• Email: juanmanuel@e-commetrics.com\n• WhatsApp: +52 664 642 9633\n\nHours: Monday to Saturday 9AM - 7PM",
-    followUp: [
-      "💬 What's the best time to call?",
-      "📧 Do you respond quickly by email?",
-    ],
-  },
-  {
-    id: "location",
-    text: "📍 Where are you located?",
-    response:
-      "📍 Our office is located at:\n\nCalle Ignacio Zaragoza, Gustavo Madero 8169-306, 22000 Tijuana, B.C.\n\n🚗 Parking available",
-    followUp: [
-      "🗺️ Can you send directions?",
-      "🚌 Is there public transport nearby?",
-    ],
-  },
-  {
-    id: "services",
-    text: "❓ What services do you offer?",
-    response:
-      "✨ Our main services:\n\n• Custom software development\n• Technology consulting\n• 24/7 technical support\n• Business training\n• Data analysis\n• Process automation\n\nAre you interested in a specific service?",
-    followUp: ["💻 Web development", "📊 Data analysis", "🤖 Automation"],
-  },
-  {
-    id: "dashboard-help",
-    text: "📊 I need help with the dashboard",
-    response:
-      "🔍 It seems you're having trouble accessing or using the dashboard.\n\nPossible causes:\n• You are not logged in\n• Your session has expired\n• There is an error with cookies\n\n💡 Solution: Try refreshing the page, clearing cookies, or logging in again.",
-    followUp: ["🔑 How do I log in?", "❌ How to clear cookies?"],
-  },
-];
-
-function EnhancedChatbot() {
-  const [isOpen, setIsOpen] = useState(false);
+export default function EnhancedChatbot() {
+  const [isOpen, setIsOpen]     = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [showOptions, setShowOptions] = useState(true);
+  const [input, setInput]       = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [hasInteracted, setHasInteracted] = useState(false);
+  const [hoveredId, setHoveredId]     = useState<number | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const chatContainerRef = useRef<HTMLDivElement>(null);
-  const { lang } = useLang();
-  const options = useMemo(
-    () => (lang === "es" ? chatOptionsES : chatOptionsEN),
+  const inputRef       = useRef<HTMLInputElement>(null);
+  const { lang }       = useLang();
+
+  const getWelcome = useCallback(
+    (): ChatMessage => ({
+      id: Date.now(),
+      text: WELCOME[lang as "es" | "en"] ?? WELCOME.es,
+      isBot: true,
+      timestamp: new Date(),
+    }),
     [lang]
   );
 
-  // Auto scroll to bottom
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, []);
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages, scrollToBottom]);
-
-  const LangChange = () => {
-    if (lang === "es") {
-      setMessages([
-        {
-          id: Date.now(),
-          text: "¡Hola! 👋 Soy tu asistente virtual de E-commetrics. ¿En qué puedo ayudarte hoy?",
-          isBot: true,
-          timestamp: new Date(),
-        },
-      ]);
-      setUnreadCount(0);
-    } else {
-      setMessages([
-        {
-          id: Date.now(),
-          text: "Hi! 👋 I'm your virtual assistant from E-commetrics. How can I help you today?",
-          isBot: true,
-          timestamp: new Date(),
-        },
-      ]);
-      setUnreadCount(0);
-    }
-  };
+  useEffect(() => { scrollToBottom(); }, [messages, scrollToBottom]);
 
   useEffect(() => {
-    LangChange();
-  }, [lang]);
+    setMessages([getWelcome()]);
+    setUnreadCount(0);
+  }, [lang, getWelcome]);
 
-  // Handle option click
-  const handleOptionClick = useCallback(
-    (option: ChatOption) => {
-      if (!hasInteracted) setHasInteracted(true);
+  const resetChat = useCallback(() => {
+    setMessages([getWelcome()]);
+    setInput("");
+    setIsTyping(false);
+    setTimeout(() => inputRef.current?.focus(), 50);
+  }, [getWelcome]);
 
-      const userMessage: ChatMessage = {
+  const sendToGroq = useCallback(
+    async (userText: string, history: ChatMessage[]) => {
+      const apiMessages = history
+        .slice(1)
+        .map((m) => ({ role: m.isBot ? "assistant" : "user", content: m.text }));
+      apiMessages.push({ role: "user", content: userText });
+
+      const res = await fetch(CHAT_API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ messages: apiMessages, lang }),
+      });
+
+      if (!res.ok)
+        return lang === "es"
+          ? "Lo siento, hubo un error. Intenta de nuevo."
+          : "Sorry, there was an error. Please try again.";
+
+      const data = await res.json();
+      return data.reply ?? (lang === "es" ? "Sin respuesta." : "No response.");
+    },
+    [lang]
+  );
+
+  const handleSend = useCallback(
+    async (text?: string) => {
+      const userText = (text ?? input).trim();
+      if (!userText || isTyping) return;
+
+      setInput("");
+
+      const userMsg: ChatMessage = {
         id: Date.now(),
-        text: option.text,
+        text: userText,
         isBot: false,
         timestamp: new Date(),
       };
 
-      setMessages((prev) => [...prev, userMessage]);
-      setShowOptions(false);
+      setMessages((prev) => [...prev, userMsg]);
       setIsTyping(true);
+      setTimeout(() => scrollToBottom(), 50);
 
-      // Scroll to bottom after user message
-      setTimeout(() => {
-        scrollToBottom();
-      }, 100);
+      const reply   = await sendToGroq(userText, messages);
+      const actions = detectActions(userText, lang);
 
-      const typingTimer = setTimeout(() => {
-        const botMessage: ChatMessage = {
+      setMessages((prev) => [
+        ...prev,
+        {
           id: Date.now() + 1,
-          text: option.response,
+          text: reply,
           isBot: true,
           timestamp: new Date(),
-        };
-
-        setMessages((prev) => [...prev, botMessage]);
-        setIsTyping(false);
-
-        // Scroll to bottom after bot message
-        setTimeout(() => {
-          scrollToBottom();
-        }, 100);
-
-        const optionsTimer = setTimeout(() => {
-          setShowOptions(true);
-          // Scroll to bottom after showing options
-          setTimeout(() => {
-            scrollToBottom();
-          }, 100);
-        }, RESPONSE_DELAY);
-
-        return () => clearTimeout(optionsTimer);
-      }, TYPING_DELAY);
-
-      return () => clearTimeout(typingTimer);
+          actions: actions.length > 0 ? actions : undefined,
+        },
+      ]);
+      setIsTyping(false);
+      setTimeout(() => scrollToBottom(), 50);
     },
-    [hasInteracted, scrollToBottom]
+    [input, isTyping, messages, lang, sendToGroq, scrollToBottom]
   );
 
-  // Handle chat open
-  const handleChatOpen = useCallback(() => {
-    setIsOpen(true);
-    setUnreadCount(0);
-  }, []);
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); }
+    },
+    [handleSend]
+  );
 
-  // Handle chat close
-  const handleChatClose = useCallback(() => {
-    setIsOpen(false);
-  }, []);
-
-  // Simulate new message notification when closed
   useEffect(() => {
-    if (!isOpen && !hasInteracted) {
-      const timer = setTimeout(() => {
-        setUnreadCount(1);
-      }, 5000);
-
-      return () => clearTimeout(timer);
+    if (!isOpen) {
+      const t = setTimeout(() => setUnreadCount((c) => (c === 0 ? 1 : c)), 5000);
+      return () => clearTimeout(t);
     }
-  }, [isOpen, hasInteracted]);
+  }, [isOpen]);
+
+  const quickOptions = QUICK_OPTIONS[lang as "es" | "en"] ?? QUICK_OPTIONS.es;
 
   return (
-    <div
-      className="fixed bottom-6 right-6 z-50 text-black"
-      ref={chatContainerRef}
-    >
-      {/* Chat Toggle Button */}
+    <div className="fixed bottom-6 right-6 z-50">
+      {/* Toggle button */}
       {!isOpen && (
-        <div className="relative">
-          <button
-            onClick={handleChatOpen}
-            className="group relative bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white p-4 rounded-full shadow-2xl transition-all duration-300 hover:scale-110 hover:shadow-blue-500/25 focus:outline-none focus:ring-4 focus:ring-blue-300"
-            aria-label={
-              lang === "es" ? "Abrir chat de soporte" : "Open support chat"
-            }
-          >
-            <MessageCircle
-              size={28}
-              className="transition-transform group-hover:scale-110"
-            />
-
-            {/* Pulse animation */}
-            <div className="absolute inset-0 rounded-full bg-blue-400 animate-ping opacity-20"></div>
-
-            {/* Unread count badge */}
-            {unreadCount > 0 && (
-              <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-semibold animate-bounce">
-                {unreadCount}
-              </div>
-            )}
-          </button>
-        </div>
+        <button
+          onClick={() => { setIsOpen(true); setUnreadCount(0); setTimeout(() => inputRef.current?.focus(), 100); }}
+          className="group relative bg-gradient-to-br from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 text-white p-4 rounded-full shadow-2xl transition-all duration-300 hover:scale-110 focus:outline-none focus:ring-4 focus:ring-blue-300"
+          aria-label={lang === "es" ? "Abrir chat" : "Open chat"}
+        >
+          <MessageCircle size={28} className="transition-transform group-hover:scale-110" />
+          <span className="absolute inset-0 rounded-full bg-blue-400 animate-ping opacity-20 pointer-events-none" />
+          {unreadCount > 0 && (
+            <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold animate-bounce">
+              {unreadCount}
+            </span>
+          )}
+        </button>
       )}
 
-      {/* Chat Window */}
+      {/* Chat window */}
       {isOpen && (
-        <div className="bg-white rounded-2xl shadow-2xl w-96 h-[600px] flex flex-col border border-gray-200 transform transition-all duration-300 animate-in slide-in-from-bottom-4 fade-in">
+        <div className="bg-white rounded-2xl shadow-2xl w-80 sm:w-96 flex flex-col border border-gray-200 animate-in slide-in-from-bottom-4 fade-in duration-200 text-black"
+          style={{ height: "min(640px, calc(100vh - 6rem))" }}
+        >
           {/* Header */}
-          <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-4 rounded-t-2xl flex justify-between items-center relative shrink-0">
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <img
-                  src="/logo.jpg"
-                  alt="Logo"
-                  className="size-8 rounded-full"
-                />
-                <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full border-2 border-white"></div>
-              </div>
-              <div>
-                <span className="font-semibold text-lg">
-                  {lang === "es" ? "Soporte" : "Support"}
-                </span>
-                <p className="text-blue-100 text-xs">
-                  {lang === "es" ? "En línea ahora" : "Online now"}
-                </p>
-              </div>
+          <div className="bg-gradient-to-r from-blue-600 to-blue-500 text-white px-4 py-3 rounded-t-2xl flex items-center gap-3 shrink-0">
+            <div className="relative shrink-0">
+              <img src="/logo.jpg" alt="E-commetrics" className="w-9 h-9 rounded-full object-cover ring-2 ring-white/40" />
+              <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-400 rounded-full border-2 border-blue-600" />
             </div>
-
-            <div className="flex items-center gap-2">
-              {/* Close Button */}
-              <button
-                onClick={handleChatClose}
-                className="hover:bg-blue-600 p-2 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-300"
-                aria-label={lang === "es" ? "Cerrar chat" : "Close chat"}
-              >
-                <X size={20} />
-              </button>
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-sm leading-tight">E-commetrics</p>
+              <p className="text-blue-100 text-xs flex items-center gap-1">
+                <span className="w-1.5 h-1.5 bg-green-400 rounded-full inline-block animate-pulse" />
+                {lang === "es" ? "Asistente IA · En línea" : "AI Assistant · Online"}
+              </p>
             </div>
+            <button
+              onClick={resetChat}
+              title={lang === "es" ? "Nueva conversación" : "New chat"}
+              className="p-1.5 rounded-lg hover:bg-white/20 transition-colors focus:outline-none"
+            >
+              <RotateCcw size={15} />
+            </button>
+            <button
+              onClick={() => setIsOpen(false)}
+              className="p-1.5 rounded-lg hover:bg-white/20 transition-colors focus:outline-none"
+              aria-label={lang === "es" ? "Cerrar" : "Close"}
+            >
+              <X size={18} />
+            </button>
           </div>
 
-          {/* Messages Area - Prioritized with more space */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gradient-to-b from-gray-50 to-white min-h-0 scroll-smooth">
-            {messages.map((message) => (
+          {/* Messages */}
+          <div className="flex-1 overflow-y-auto px-3 py-4 space-y-3 bg-gray-50 min-h-0">
+            {messages.map((msg) => (
               <div
-                key={message.id}
-                className={`flex ${
-                  message.isBot ? "justify-start" : "justify-end"
-                } animate-in slide-in-from-bottom-2 fade-in`}
+                key={msg.id}
+                className={`flex items-end gap-2 ${msg.isBot ? "justify-start" : "justify-end"}`}
+                onMouseEnter={() => setHoveredId(msg.id)}
+                onMouseLeave={() => setHoveredId(null)}
               >
-                <div
-                  className={`max-w-[85%] px-4 py-3 rounded-2xl shadow-sm transition-all duration-200 hover:shadow-md ${
-                    message.isBot
-                      ? "bg-white text-gray-800 border border-gray-200 rounded-bl-sm"
-                      : "bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-br-sm"
-                  }`}
-                >
+                {msg.isBot && (
+                  <div className="w-7 h-7 rounded-full bg-blue-600 flex items-center justify-center shrink-0 mb-0.5 shadow-sm">
+                    <Bot size={14} className="text-white" />
+                  </div>
+                )}
+                <div className={`flex flex-col gap-0.5 ${msg.isBot ? "max-w-[80%]" : "max-w-[78%]"}`}>
                   <div
-                    className={`text-sm leading-relaxed whitespace-pre-line ${
-                      message.isBot ? "text-gray-800" : "text-white"
+                    className={`px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed shadow-sm ${
+                      msg.isBot
+                        ? "bg-white text-gray-800 border border-gray-200 rounded-bl-sm"
+                        : "bg-blue-600 text-white rounded-br-sm"
                     }`}
                   >
-                    {message.text}
+                    <MessageText text={msg.text} />
+                    {msg.isBot && msg.actions && <ActionButtons actions={msg.actions} />}
                   </div>
-                  <div
-                    className={`text-xs mt-2 opacity-70 ${
-                      message.isBot ? "text-gray-500" : "text-blue-100"
-                    }`}
+                  <span
+                    className={`text-[10px] text-gray-400 px-1 transition-opacity duration-150 ${
+                      hoveredId === msg.id ? "opacity-100" : "opacity-0"
+                    } ${msg.isBot ? "text-left" : "text-right"}`}
                   >
-                    {message.timestamp.toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </div>
+                    {msg.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                  </span>
                 </div>
               </div>
             ))}
 
-            {/* Typing Indicator */}
+            {/* Typing indicator */}
             {isTyping && (
-              <div className="flex justify-start animate-in slide-in-from-bottom-2 fade-in">
-                <div className="bg-white px-4 py-3 rounded-2xl rounded-bl-sm shadow-sm border border-gray-200 flex items-center gap-2">
-                  <div className="flex gap-1">
-                    <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"></div>
-                    <div
-                      className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"
-                      style={{ animationDelay: "0.1s" }}
-                    ></div>
-                    <div
-                      className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"
-                      style={{ animationDelay: "0.2s" }}
-                    ></div>
-                  </div>
-                  <span className="text-xs text-gray-500">
-                    {lang === "es" ? "escribiendo..." : "typing..."}
-                  </span>
+              <div className="flex items-end gap-2">
+                <div className="w-7 h-7 rounded-full bg-blue-600 flex items-center justify-center shrink-0 shadow-sm">
+                  <Bot size={14} className="text-white" />
                 </div>
-              </div>
-            )}
-
-            {/* Spacer to ensure proper scrolling */}
-            <div ref={messagesEndRef} className="h-4" />
-          </div>
-
-          {/* Options Area - No scroll, fixed display */}
-          {showOptions && !isTyping && messages.length > 0 && (
-            <div className="border-t border-gray-100 bg-gradient-to-b from-white to-gray-50 p-3 rounded-b-2xl shrink-0">
-              <div className="space-y-2">
-                <p className="text-xs text-gray-500 mb-2 font-medium">
-                  {lang === "es"
-                    ? "¿Necesitas algo más?"
-                    : "Need anything else?"}
-                </p>
-                <div className="grid gap-1.5">
-                  {options.map((option, index) => (
-                    <button
-                      key={option.id}
-                      onClick={() => handleOptionClick(option)}
-                      className="w-full text-left px-3 py-2 text-xs bg-white hover:bg-blue-50 hover:border-blue-200 border border-gray-200 rounded-lg transition-all duration-200 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-300 group"
-                      style={{
-                        animationDelay: `${index * 50}ms`,
-                      }}
-                    >
-                      <span className="block font-medium text-gray-700 group-hover:text-blue-700 transition-colors leading-snug">
-                        {option.text}
-                      </span>
-                    </button>
+                <div className="bg-white border border-gray-200 px-4 py-3 rounded-2xl rounded-bl-sm shadow-sm flex items-center gap-1.5">
+                  {[0, 0.15, 0.3].map((delay, i) => (
+                    <span
+                      key={i}
+                      className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"
+                      style={{ animationDelay: `${delay}s` }}
+                    />
                   ))}
                 </div>
               </div>
-            </div>
-          )}
+            )}
+            <div ref={messagesEndRef} />
+          </div>
 
-          {/* Footer - More compact */}
-          <div className="border-t border-gray-100 bg-gradient-to-r from-gray-50 to-gray-100 px-4 py-2 rounded-b-2xl shrink-0">
-            <div className="text-xs text-gray-500 text-center flex items-center justify-center gap-2">
-              <span className="opacity-75">
-                {lang === "es" ? "Desarrollado por" : "Developed by"}
-              </span>
-              <span className="font-bold text-blue-600">E-commetrics</span>
-              <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></div>
+          {/* Quick options — 2-column grid, always visible */}
+          <div className="shrink-0 border-t border-gray-100 bg-white px-3 pt-2 pb-2">
+            <p className="text-[10px] text-gray-400 font-medium mb-1.5 uppercase tracking-wide">
+              {lang === "es" ? "Preguntas frecuentes" : "Quick questions"}
+            </p>
+            <div className="grid grid-cols-2 gap-1.5">
+              {quickOptions.map((opt, i) => (
+                <button
+                  key={i}
+                  onClick={() => handleSend(opt.text)}
+                  disabled={isTyping}
+                  className="text-xs px-2.5 py-1.5 rounded-lg border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:border-blue-300 transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-left truncate focus:outline-none focus:ring-2 focus:ring-blue-300"
+                >
+                  {opt.label}
+                </button>
+              ))}
             </div>
+          </div>
+
+          {/* Input */}
+          <div className="shrink-0 border-t border-gray-100 bg-white px-3 pt-2 pb-3 rounded-b-2xl">
+            <div className="flex gap-2 items-center">
+              <input
+                ref={inputRef}
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder={lang === "es" ? "Escribe tu mensaje..." : "Type your message..."}
+                disabled={isTyping}
+                maxLength={500}
+                className="flex-1 text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent disabled:opacity-50 bg-gray-50 placeholder-gray-400"
+              />
+              <button
+                onClick={() => handleSend()}
+                disabled={!input.trim() || isTyping}
+                className="bg-blue-600 hover:bg-blue-700 active:scale-95 text-white p-2 rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed shrink-0 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                aria-label={lang === "es" ? "Enviar" : "Send"}
+              >
+                <Send size={16} />
+              </button>
+            </div>
+            <p className="text-center text-[10px] text-gray-300 mt-1.5">
+              {lang === "es" ? "Desarrollado por" : "Powered by"}{" "}
+              <span className="text-blue-400 font-medium">E-commetrics</span>
+            </p>
           </div>
         </div>
       )}
     </div>
   );
 }
-
-export default EnhancedChatbot;
