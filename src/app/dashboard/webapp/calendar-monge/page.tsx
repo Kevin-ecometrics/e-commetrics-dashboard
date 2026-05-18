@@ -111,7 +111,7 @@ function getAvailableHours(dateStr: string): string[] {
   const dayOfWeek = getDayOfWeek(dateStr);
 
   if (dayOfWeek === 1 || dayOfWeek === 3 || dayOfWeek === 5) {
-    return ["10:00", "11:00", "12:00", "13:00", "16:00", "17:00"];
+    return ["10:00", "11:00", "12:00", "13:00", "16:00", "17:00", "18:00"];
   } else if (dayOfWeek === 2 || dayOfWeek === 4 || dayOfWeek === 6) {
     return ["10:00", "11:00", "12:00", "13:00"];
   }
@@ -384,6 +384,7 @@ export default function CalendarMonge() {
             })
           );
         } else if (blockForm.startTime && blockForm.endTime) {
+          // Bloquear horas en el rango especificado
           const startHour = parseInt(blockForm.startTime.split(":")[0]);
           const endHour = parseInt(blockForm.endTime.split(":")[0]);
 
@@ -397,6 +398,7 @@ export default function CalendarMonge() {
             return;
           }
 
+          // Incluir la hora final para bloquear hasta las 6:00 PM
           for (let hour = startHour; hour < endHour; hour++) {
             const hourStr = `${hour.toString().padStart(2, "0")}:00`;
             if (
@@ -406,6 +408,18 @@ export default function CalendarMonge() {
             ) {
               hoursToBlock.push(hourStr);
             }
+          }
+        } else if (blockForm.startTime && !blockForm.endTime) {
+          // Bloquear solo una hora específica
+          const hourStr = blockForm.startTime.includes(":")
+            ? blockForm.startTime
+            : blockForm.startTime + ":00";
+          if (
+            availableHours.some((available) =>
+              available.startsWith(hourStr.substring(0, 5))
+            )
+          ) {
+            hoursToBlock.push(hourStr);
           }
         }
 
@@ -1958,6 +1972,7 @@ export default function CalendarMonge() {
                         "13:00",
                         "16:00",
                         "17:00",
+                        "18:00",
                       ].map((hour) => (
                         <option key={hour} value={`${hour}:00`}>
                           {hour}
@@ -1984,7 +1999,16 @@ export default function CalendarMonge() {
                         -- {lang === "es" ? "Seleccionar" : "Select"} --
                       </option>
                       {blockForm.startTime &&
-                        ["10:00", "11:00", "12:00", "13:00", "16:00", "17:00"]
+                        [
+                          "10:00",
+                          "11:00",
+                          "12:00",
+                          "13:00",
+                          "16:00",
+                          "17:00",
+                          "18:00",
+                          "19:00",
+                        ]
                           .filter((hour) => {
                             const startHour = parseInt(
                               blockForm.startTime.split(":")[0]
@@ -2040,8 +2064,8 @@ export default function CalendarMonge() {
                     : "Blocking..."
                   : blockType === "single"
                   ? lang === "es"
-                    ? "Bloquear Día"
-                    : "Block Day"
+                    ? "Bloquear Horario(s)"
+                    : "Block Time Slot(s)"
                   : lang === "es"
                   ? "Bloquear Rango"
                   : "Block Range"}
