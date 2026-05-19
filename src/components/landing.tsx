@@ -5,7 +5,36 @@ import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import Packages from "@/components/packages";
 import { useLang } from "@/app/context/LangContext";
-const Hero = ({ locale }) => {
+
+type Locale = "en" | "es";
+
+type Skill = {
+  id: number;
+  title: string;
+  percent: number;
+  icon: React.ReactNode;
+  description: string;
+};
+
+type Service = {
+  id: number;
+  key: string;
+  title: string;
+  description: string;
+  desc2: string;
+  banner: string;
+};
+
+type ConsultingItem = {
+  id: number;
+  title: string;
+  desc: string;
+  image: string;
+  icon: string;
+  hoverColor: string;
+};
+
+const Hero = ({ locale }: { locale: Locale }) => {
   const words =
     locale === "en"
       ? ["Simplify", "Elevate", "Innovate", "E-commetrics"]
@@ -55,14 +84,14 @@ const Hero = ({ locale }) => {
   );
 };
 
-const Skills = ({ locale }) => {
+const Skills = ({ locale }: { locale: Locale }) => {
   const [isVisible, setIsVisible] = useState(false);
-  const [hoveredSkill, setHoveredSkill] = useState(null);
-  const [percentages, setPercentages] = useState([]);
+  const [hoveredSkill, setHoveredSkill] = useState<number | null>(null);
+  const [percentages, setPercentages] = useState<number[]>([]);
 
-  const animationRef = useRef(null);
+  const animationRef = useRef<number | null>(null);
 
-  const skillsEcommetrics = [
+  const skillsEcommetrics: Skill[] = [
     {
       id: 1,
       title:
@@ -110,7 +139,6 @@ const Skills = ({ locale }) => {
           />
         </svg>
       ),
-
       description:
         locale === "en"
           ? "GOOGLE owns more than 93% of search intent and Instagram is where everyone is."
@@ -280,273 +308,79 @@ const Skills = ({ locale }) => {
   );
 };
 
-const Services = ({ locale }) => {
-  const [selectedService, setSelectedService] = useState(null);
+const Services = ({ locale }: { locale: Locale }) => {
+  const [selectedService, setSelectedService] = useState<Service | null>(null);
 
-  const getServiceIcon = (key) => {
+  const getServiceIcon = (key: string): React.ReactNode => {
     switch (key) {
       case "video":
         return (
-          <svg
-            className="w-7 h-7 text-[#861453]"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="1.5"
-              d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
-            />
+          <svg className="w-7 h-7 text-[#861453]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
           </svg>
         );
       case "brand":
         return (
-          <svg
-            className="w-7 h-7 text-[#861453]"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="1.5"
-              d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"
-            />
+          <svg className="w-7 h-7 text-[#861453]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
           </svg>
         );
       case "writing":
         return (
-          <svg
-            className="w-7 h-7 text-[#861453]"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="1.5"
-              d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
-            />
+          <svg className="w-7 h-7 text-[#861453]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
           </svg>
         );
       case "web":
         return (
-          <svg
-            className="w-7 h-7 text-[#861453]"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="1.5"
-              d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244"
-            />
+          <svg className="w-7 h-7 text-[#861453]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
           </svg>
         );
       case "webapp":
         return (
-          <svg
-            className="w-7 h-7 text-[#861453]"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="1.5"
-              d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5"
-            />
+          <svg className="w-7 h-7 text-[#861453]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5" />
           </svg>
         );
       case "desing":
         return (
-          <svg
-            className="w-7 h-7 text-[#861453]"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="1.5"
-              d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0V12a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 12V5.25"
-            />
+          <svg className="w-7 h-7 text-[#861453]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0V12a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 12V5.25" />
           </svg>
         );
       case "ecommerce":
         return (
-          <svg
-            className="w-7 h-7 text-[#861453]"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="1.5"
-              d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"
-            />
+          <svg className="w-7 h-7 text-[#861453]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
           </svg>
         );
       case "planning":
         return (
-          <svg
-            className="w-7 h-7 text-[#861453]"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="1.5"
-              d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"
-            />
+          <svg className="w-7 h-7 text-[#861453]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
           </svg>
         );
       default:
         return (
-          <svg
-            className="w-7 h-7 text-[#861453]"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="1.5"
-              d="M13.5 21v-7.5a.75.75 0 01.75-.75h3a.75.75 0 01.75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349m-16.5 11.65V9.35m0 0a3.001 3.001 0 003.75-.615A2.993 2.993 0 009.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 002.25 1.016c.896 0 1.7-.393 2.25-1.016a3.001 3.001 0 003.75.614m-16.5 0a3.004 3.004 0 01-.621-4.72L4.318 3.44A1.5 1.5 0 015.378 3h13.243a1.5 1.5 0 011.06.44l1.19 1.189a3 3 0 01-.621 4.72m-13.5 8.65h3.75a.75.75 0 00.75-.75V13.5a.75.75 0 00-.75-.75H6.75a.75.75 0 00-.75.75v3.75c0 .415.336.75.75.75z"
-            />
+          <svg className="w-7 h-7 text-[#861453]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M13.5 21v-7.5a.75.75 0 01.75-.75h3a.75.75 0 01.75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349m-16.5 11.65V9.35m0 0a3.001 3.001 0 003.75-.615A2.993 2.993 0 009.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 002.25 1.016c.896 0 1.7-.393 2.25-1.016a3.001 3.001 0 003.75.614m-16.5 0a3.004 3.004 0 01-.621-4.72L4.318 3.44A1.5 1.5 0 015.378 3h13.243a1.5 1.5 0 011.06.44l1.19 1.189a3 3 0 01-.621 4.72m-13.5 8.65h3.75a.75.75 0 00.75-.75V13.5a.75.75 0 00-.75-.75H6.75a.75.75 0 00-.75.75v3.75c0 .415.336.75.75.75z" />
           </svg>
         );
     }
   };
 
-  const serviceEcommetrics = [
-    {
-      id: 1,
-      key: "video",
-      title: locale === "en" ? "Video Production" : "Video producción",
-      description:
-        locale === "en"
-          ? "We design and execute all key processes of pre-production, production, and post-production."
-          : "Diseñamos y ejecutamos todos los procesos clave de preproducción, producción y post producción...",
-      desc2:
-        locale === "en"
-          ? "We design and execute all key processes of pre-production, production, and post-production to transform our clients' vision into reality, adapting to the required format."
-          : "Diseñamos y ejecutamos todos los procesos clave de preproducción, producción y post producción para transformar la visión de nuestros clientes en realidad, adaptándonos al formato requerido.",
-      banner: "https://ecommetrica.com/banner1.webp",
-    },
-    {
-      id: 2,
-      key: "brand",
-      title: locale === "en" ? "Brand Identity" : "Identidad de marca",
-      description:
-        locale === "en"
-          ? "Beyond a logo, we unify name, colors, and marketing strategy."
-          : "Mas allá de un logo unificamos nombre, colores y estrategia de marketing...",
-      desc2:
-        locale === "en"
-          ? "Beyond a logo, we unify name, colors, and marketing strategy to achieve a powerful visual coherence that resonates with consumers."
-          : "Más allá de un logo, unificamos nombre, colores y estrategia de marketing para lograr una coherencia visual poderosa que resuene con los consumidores.",
-      banner: "https://ecommetrica.com/banner2.webp",
-    },
-    {
-      id: 3,
-      key: "writing",
-      title: locale === "en" ? "Creative Writing" : "Escritura creativa",
-      description:
-        locale === "en"
-          ? "We give soul and personality to your brand or business."
-          : "Le damos alma y personalidad a tu marca o negocio...",
-      desc2:
-        locale === "en"
-          ? "We give soul and personality to your brand or business while playing with imagination and creativity to create narratives and stories that connect with people."
-          : "Le damos alma y personalidad a tu marca o negocio mientras jugamos con la imaginación y creatividad para crear narrativas e historias que conecten con las personas.",
-      banner: "https://ecommetrica.com/banner3.webp",
-    },
-    {
-      id: 4,
-      key: "web",
-      title: locale === "en" ? "Web Positioning" : "Posicionamiento Web",
-      description:
-        locale === "en"
-          ? "We boost your business in search engines. We design comprehensive strategies."
-          : "Impulsamos tu negocio en motores de búsqueda. Diseñamos estrategias integrales...",
-      desc2:
-        locale === "en"
-          ? "We boost your business on search engines. We design comprehensive strategies that maximize lead retention and conversion. We create digital ecosystems by connecting your website with social networks, produce and distribute high-value content, and execute highly effective email marketing campaigns."
-          : "Impulsamos tu negocio en motores de búsqueda. Diseñamos estrategias integrales que maximizan la retención y conversión de leads. Creamos ecosistemas digitales conectando tu sitio web con redes sociales, producimos y distribuimos contenido de alto valor y ejecutamos campañas de email marketing altamente efectivas.",
-      banner: "https://ecommetrica.com/banner4.webp",
-    },
-    {
-      id: 5,
-      key: "webapp",
-      title:
-        locale === "en" ? "Programming and WebApps" : "Programación y webApps",
-      description:
-        locale === "en"
-          ? "We develop impactful and adaptable websites and online stores."
-          : "Desarrollamos páginas y tiendas en línea impactantes y adaptables...",
-      desc2:
-        locale === "en"
-          ? "We develop impactful and adaptable online pages and stores that grow with you. Made to your taste, needs, and required workflow. Each client also gets a customized web application that simplifies business management, allowing access to all their information, appointment calendars, reviews, mass emailing, and much more in one click."
-          : "Desarrollamos páginas y tiendas en línea impactantes y adaptables que crecen contigo. Hechas a tu gusto, necesidades y flujo de trabajo requerido. Cada cliente también recibe una aplicación web personalizada que simplifica la gestión del negocio, permitiendo acceder a toda su información, agendas de citas, reseñas, envíos masivos de correos y mucho más en un solo clic.",
-      banner: "https://ecommetrica.com/banner5.webp",
-    },
-    {
-      id: 6,
-      key: "desing",
-      title: locale === "en" ? "Web Design" : "Diseño web",
-      description:
-        locale === "en"
-          ? "We focus on providing a great user experience (UX) and interface design."
-          : "Nos enfocamos en brindar una experiencia de usuario UX y diseño interfaz...",
-      desc2:
-        locale === "en"
-          ? "We focus on providing a user experience (UX) and interface design that stands out from the rest, with high performance and superior functionality so your potential clients or patients enjoy a comfortable and unique experience."
-          : "Nos enfocamos en brindar una experiencia de usuario (UX) y diseño de interfaz que destaque del resto, con alto rendimiento y funcionalidad superior para que tus potenciales clientes o pacientes disfruten de una experiencia cómoda y única.",
-      banner: "https://ecommetrica.com/banner6.webp",
-    },
-    {
-      id: 7,
-      key: "ecommerce",
-      title: locale === "en" ? "E-commerce" : "E-commerce",
-      description:
-        locale === "en"
-          ? "We specialize in B2C, B2B, and guide you step by step."
-          : "Nos especializamos en B2C, B2B, te guiamos paso a paso...",
-      desc2:
-        locale === "en"
-          ? "We specialize in B2C, B2B. We guide you step by step to design a strategic plan that drives your growth, helps you deeply understand the market, and clearly define your products and services. We combine our technology to select the most appropriate platform that gives you autonomy, regional and international reach, and automates your processes to maximize efficiency and results."
-          : "Nos especializamos en B2C, B2B. Te guiamos paso a paso para diseñar un plan estratégico que impulse tu crecimiento, te ayude a entender profundamente el mercado y a definir claramente tus productos y servicios. Combinamos nuestra tecnología para seleccionar la plataforma más adecuada que te brinde autonomía, alcance regional e internacional y automatice tus procesos para maximizar eficiencia y resultados.",
-      banner: "https://ecommetrica.com/banner7.webp",
-    },
-    {
-      id: 8,
-      key: "planning",
-      title: locale === "en" ? "Strategic Planning" : "Planeación estratégica",
-      description:
-        locale === "en"
-          ? "We focus on your business growth and help you identify opportunities."
-          : "Nos enfocamos en el crecimiento de tu negocio, te ayudamos a identificar oportunidades...",
-      desc2:
-        locale === "en"
-          ? "We focus on the growth of your business, helping you identify improvement opportunities and implement strategies that allow you to achieve your goals."
-          : "Nos enfocamos en el crecimiento de tu negocio, ayudándote a identificar oportunidades de mejora e implementar estrategias que te permitan alcanzar tus objetivos.",
-      banner: "https://ecommetrica.com/banner8.webp",
-    },
+  const serviceEcommetrics: Service[] = [
+    { id: 1, key: "video", title: locale === "en" ? "Video Production" : "Video producción", description: locale === "en" ? "We design and execute all key processes of pre-production, production, and post-production." : "Diseñamos y ejecutamos todos los procesos clave de preproducción, producción y post producción...", desc2: locale === "en" ? "We design and execute all key processes of pre-production, production, and post-production to transform our clients' vision into reality, adapting to the required format." : "Diseñamos y ejecutamos todos los procesos clave de preproducción, producción y post producción para transformar la visión de nuestros clientes en realidad, adaptándonos al formato requerido.", banner: "https://ecommetrica.com/banner1.webp" },
+    { id: 2, key: "brand", title: locale === "en" ? "Brand Identity" : "Identidad de marca", description: locale === "en" ? "Beyond a logo, we unify name, colors, and marketing strategy." : "Mas allá de un logo unificamos nombre, colores y estrategia de marketing...", desc2: locale === "en" ? "Beyond a logo, we unify name, colors, and marketing strategy to achieve a powerful visual coherence that resonates with consumers." : "Más allá de un logo, unificamos nombre, colores y estrategia de marketing para lograr una coherencia visual poderosa que resuene con los consumidores.", banner: "https://ecommetrica.com/banner2.webp" },
+    { id: 3, key: "writing", title: locale === "en" ? "Creative Writing" : "Escritura creativa", description: locale === "en" ? "We give soul and personality to your brand or business." : "Le damos alma y personalidad a tu marca o negocio...", desc2: locale === "en" ? "We give soul and personality to your brand or business while playing with imagination and creativity to create narratives and stories that connect with people." : "Le damos alma y personalidad a tu marca o negocio mientras jugamos con la imaginación y creatividad para crear narrativas e historias que conecten con las personas.", banner: "https://ecommetrica.com/banner3.webp" },
+    { id: 4, key: "web", title: locale === "en" ? "Web Positioning" : "Posicionamiento Web", description: locale === "en" ? "We boost your business in search engines. We design comprehensive strategies." : "Impulsamos tu negocio en motores de búsqueda. Diseñamos estrategias integrales...", desc2: locale === "en" ? "We boost your business on search engines. We design comprehensive strategies that maximize lead retention and conversion." : "Impulsamos tu negocio en motores de búsqueda. Diseñamos estrategias integrales que maximizan la retención y conversión de leads.", banner: "https://ecommetrica.com/banner4.webp" },
+    { id: 5, key: "webapp", title: locale === "en" ? "Programming and WebApps" : "Programación y webApps", description: locale === "en" ? "We develop impactful and adaptable websites and online stores." : "Desarrollamos páginas y tiendas en línea impactantes y adaptables...", desc2: locale === "en" ? "We develop impactful and adaptable online pages and stores that grow with you." : "Desarrollamos páginas y tiendas en línea impactantes y adaptables que crecen contigo.", banner: "https://ecommetrica.com/banner5.webp" },
+    { id: 6, key: "desing", title: locale === "en" ? "Web Design" : "Diseño web", description: locale === "en" ? "We focus on providing a great user experience (UX) and interface design." : "Nos enfocamos en brindar una experiencia de usuario UX y diseño interfaz...", desc2: locale === "en" ? "We focus on providing a user experience (UX) and interface design that stands out from the rest." : "Nos enfocamos en brindar una experiencia de usuario (UX) y diseño de interfaz que destaque del resto.", banner: "https://ecommetrica.com/banner6.webp" },
+    { id: 7, key: "ecommerce", title: "E-commerce", description: locale === "en" ? "We specialize in B2C, B2B, and guide you step by step." : "Nos especializamos en B2C, B2B, te guiamos paso a paso...", desc2: locale === "en" ? "We specialize in B2C, B2B. We guide you step by step to design a strategic plan that drives your growth." : "Nos especializamos en B2C, B2B. Te guiamos paso a paso para diseñar un plan estratégico que impulse tu crecimiento.", banner: "https://ecommetrica.com/banner7.webp" },
+    { id: 8, key: "planning", title: locale === "en" ? "Strategic Planning" : "Planeación estratégica", description: locale === "en" ? "We focus on your business growth and help you identify opportunities." : "Nos enfocamos en el crecimiento de tu negocio, te ayudamos a identificar oportunidades...", desc2: locale === "en" ? "We focus on the growth of your business, helping you identify improvement opportunities and implement strategies." : "Nos enfocamos en el crecimiento de tu negocio, ayudándote a identificar oportunidades de mejora.", banner: "https://ecommetrica.com/banner8.webp" },
   ];
+
   return (
     <div className="bg-white text-black px-8 md:px-24 gap-10 text-balance py-16 items-start grid grid-cols-1 md:grid-cols-2">
       <div>
@@ -646,52 +480,12 @@ const Services = ({ locale }) => {
   );
 };
 
-const Consulting = ({ locale }) => {
-  const consultingEcommetrics = [
-    {
-      id: 1,
-      title: locale === "en" ? "Programming" : "Programación",
-      desc:
-        locale === "en"
-          ? "Fast and secure websites."
-          : "Páginas Web, rápida y segura.",
-      image: "https://ecommetrica.com/programacion.webp",
-      icon: "https://ecommetrica.com/MarketingIcon.svg",
-      hoverColor: "bg-gradient-to-br from-blue-500/80 to-purple-600/10",
-    },
-    {
-      id: 2,
-      title: locale === "en" ? "Marketing" : "Marketing",
-      desc:
-        locale === "en"
-          ? "We provide the best S.S.L. with NameCheap."
-          : "Tenemos el mejor S.S.L. con NameCheap.",
-      image: "https://ecommetrica.com/marketing.webp",
-      icon: "https://ecommetrica.com/MarketingIcon.svg",
-      hoverColor: "bg-gradient-to-br from-purple-600/80 to-black/10",
-    },
-    {
-      id: 3,
-      title: locale === "en" ? "SEO" : "SEO",
-      desc:
-        locale === "en"
-          ? "Your site will be better structured for Google©."
-          : "Tu sitio estará mejor estructurado para Google©.",
-      image: "https://ecommetrica.com/SEO.webp",
-      icon: "https://ecommetrica.com/SeoIcon.svg",
-      hoverColor: "bg-gradient-to-br from-violet-700/80 to-purple-900/10",
-    },
-    {
-      id: 4,
-      title: locale === "en" ? "Web Master" : "Web Master",
-      desc:
-        locale === "en"
-          ? "Fast, secure and reliable hosting."
-          : "Hospedaje rápido, seguro y confiable.",
-      image: "https://ecommetrica.com/webMaster.webp",
-      icon: "https://ecommetrica.com/WebMasterIcon.svg",
-      hoverColor: "bg-gradient-to-br from-pink-500/80 to-rose-600/10",
-    },
+const Consulting = ({ locale }: { locale: Locale }) => {
+  const consultingEcommetrics: ConsultingItem[] = [
+    { id: 1, title: locale === "en" ? "Programming" : "Programación", desc: locale === "en" ? "Fast and secure websites." : "Páginas Web, rápida y segura.", image: "https://ecommetrica.com/programacion.webp", icon: "https://ecommetrica.com/MarketingIcon.svg", hoverColor: "bg-gradient-to-br from-blue-500/80 to-purple-600/10" },
+    { id: 2, title: locale === "en" ? "Marketing" : "Marketing", desc: locale === "en" ? "We provide the best S.S.L. with NameCheap." : "Tenemos el mejor S.S.L. con NameCheap.", image: "https://ecommetrica.com/marketing.webp", icon: "https://ecommetrica.com/MarketingIcon.svg", hoverColor: "bg-gradient-to-br from-purple-600/80 to-black/10" },
+    { id: 3, title: "SEO", desc: locale === "en" ? "Your site will be better structured for Google©." : "Tu sitio estará mejor estructurado para Google©.", image: "https://ecommetrica.com/SEO.webp", icon: "https://ecommetrica.com/SeoIcon.svg", hoverColor: "bg-gradient-to-br from-violet-700/80 to-purple-900/10" },
+    { id: 4, title: "Web Master", desc: locale === "en" ? "Fast, secure and reliable hosting." : "Hospedaje rápido, seguro y confiable.", image: "https://ecommetrica.com/webMaster.webp", icon: "https://ecommetrica.com/WebMasterIcon.svg", hoverColor: "bg-gradient-to-br from-pink-500/80 to-rose-600/10" },
   ];
 
   return (
@@ -748,7 +542,8 @@ const Consulting = ({ locale }) => {
     </div>
   );
 };
-const Footer = ({ locale, goToLogin }) => (
+
+const Footer = ({ locale, goToLogin }: { locale: Locale; goToLogin: () => void }) => (
   <motion.footer
     initial={{ opacity: 0 }}
     whileInView={{ opacity: 1 }}
@@ -774,22 +569,23 @@ const Footer = ({ locale, goToLogin }) => (
   </motion.footer>
 );
 
-export default function Landing({ goToLogin }) {
+export default function Landing({ goToLogin }: { goToLogin: () => void }) {
   const { lang, changeLang } = useLang();
 
   useEffect(() => {
     const match = document.cookie.match(/(^| )lang=([^;]+)/);
     const cookieLang = match?.[2];
     if (cookieLang === "en" || cookieLang === "es") {
-      changeLang(cookieLang);
+      changeLang(cookieLang as Locale);
     }
   }, []);
 
   const toggleLocale = () => {
-    const newLocale = lang === "en" ? "es" : "en";
+    const newLocale: Locale = lang === "en" ? "es" : "en";
     changeLang(newLocale);
     document.cookie = `lang=${newLocale}; path=/; max-age=31536000`;
   };
+
   return (
     <div className="relative min-h-screen">
       {/* Botón de idioma */}
@@ -817,12 +613,12 @@ export default function Landing({ goToLogin }) {
         </button>
       </div>
 
-      <Hero locale={lang} />
-      <Skills locale={lang} />
-      <Services locale={lang} />
-      <Packages locale={lang} />
-      <Consulting locale={lang} />
-      <Footer locale={lang} goToLogin={goToLogin} />
+      <Hero locale={lang as Locale} />
+      <Skills locale={lang as Locale} />
+      <Services locale={lang as Locale} />
+      <Packages locale={lang as Locale} />
+      <Consulting locale={lang as Locale} />
+      <Footer locale={lang as Locale} goToLogin={goToLogin} />
     </div>
   );
 }

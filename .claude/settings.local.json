@@ -2,7 +2,13 @@
   "permissions": {
     "allow": [
       "Bash(bunx tsc *)",
-      "WebFetch(domain:ecommetrica.com)"
+      "WebFetch(domain:ecommetrica.com)",
+      "Bash(bun run *)",
+      "Bash(Remove-Item \"src\\\\app\\\\dashboard\\\\webapp\\\\blogs\\\\page.jsx\")",
+      "Bash(Remove-Item \"src\\\\app\\\\dashboard\\\\webapp\\\\calendar\\\\page.jsx\")",
+      "Bash(Remove-Item \"src\\\\app\\\\dashboard\\\\webapp\\\\qr\\\\page.jsx\")",
+      "Bash(Remove-Item \"src\\\\app\\\\dashboard\\\\webapp\\\\vcard\\\\page.jsx\")",
+      "Bash(Remove-Item \"src\\\\components\\\\landing.jsx\")"
     ]
   }
 }

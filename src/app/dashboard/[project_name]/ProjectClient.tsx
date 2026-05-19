@@ -48,6 +48,26 @@ const types_en = [
   "Apps",
 ];
 
+const TYPE_META: Record<string, { bg: string; icon: string }> = {
+  "Business and Objectives": { bg: "bg-emerald-100 dark:bg-emerald-900/40", icon: "💼" },
+  "MVP + IDEA":              { bg: "bg-purple-100 dark:bg-purple-900/40",   icon: "💡" },
+  "Business strategy":       { bg: "bg-blue-100 dark:bg-blue-900/40",       icon: "📈" },
+  "Growth Hacking strategy": { bg: "bg-orange-100 dark:bg-orange-900/40",   icon: "🚀" },
+  "Apps":                    { bg: "bg-pink-100 dark:bg-pink-900/40",        icon: "📱" },
+};
+
+function TypePlaceholder({ type }: { type: string }) {
+  const meta = TYPE_META[type] ?? { bg: "bg-gray-100 dark:bg-gray-800", icon: "📄" };
+  return (
+    <div className={`w-full h-52 flex flex-col items-center justify-center gap-3 ${meta.bg}`}>
+      <span className="text-5xl select-none">{meta.icon}</span>
+      <span className="text-xs font-medium text-gray-500 dark:text-gray-400 px-3 text-center line-clamp-2">
+        {type}
+      </span>
+    </div>
+  );
+}
+
 export default function ProjectContent({ project: initialProject }: { project: Project[] }) {
   const { user } = useAuth();
   const { lang } = useLang();
@@ -145,19 +165,34 @@ export default function ProjectContent({ project: initialProject }: { project: P
           {lang === "es" ? "Filtrar por tipo" : "Filter by type"}
         </h2>
         <div className="flex flex-wrap gap-3">
-          {types.map((type) => (
-            <button
-              key={type}
-              onClick={() => setFilteredType(type)}
-              className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-200 border ${
-                filteredType === type
-                  ? "bg-blue-600 dark:bg-blue-500 text-white border-blue-600 dark:border-blue-500 shadow-lg shadow-blue-500/25"
-                  : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700 hover:shadow-md"
-              }`}
-            >
-              {type}
-            </button>
-          ))}
+          {types.map((type) => {
+            const isAll = type === types[0];
+            const count = isAll
+              ? contents.length
+              : contents.filter((c) => c.type === type).length;
+            return (
+              <button
+                key={type}
+                onClick={() => setFilteredType(type)}
+                className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 border ${
+                  filteredType === type
+                    ? "bg-[#BD155C] text-white border-[#BD155C] shadow-lg shadow-[#BD155C]/25"
+                    : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700 hover:shadow-md"
+                }`}
+              >
+                {type}
+                <span
+                  className={`text-xs px-1.5 py-0.5 rounded-full font-semibold ${
+                    filteredType === type
+                      ? "bg-white/20 text-white"
+                      : "bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
+                  }`}
+                >
+                  {count}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -218,14 +253,8 @@ export default function ProjectContent({ project: initialProject }: { project: P
                       <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                     </div>
                   ) : (
-                    <div className="relative overflow-hidden">
-                      <img
-                        src="/logo.jpg"
-                        alt={`Imagen de ${item.type}`}
-                        className="w-full h-52 object-cover group-hover:scale-105 transition-transform duration-300"
-                        loading="lazy"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div className="relative overflow-hidden group-hover:brightness-95 transition-all duration-300">
+                      <TypePlaceholder type={item.type} />
                     </div>
                   )}
 
@@ -233,7 +262,7 @@ export default function ProjectContent({ project: initialProject }: { project: P
                   <div className="p-6 space-y-4">
                     {/* Tipo/Categoría */}
                     <div className="flex items-center justify-between">
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-pink-100 dark:bg-pink-900/30 text-[#BD155C] dark:text-pink-300 border border-pink-200 dark:border-pink-800">
                         {item.type}
                       </span>
                       {/* <time className="text-xs text-gray-500 dark:text-gray-400">
@@ -269,7 +298,7 @@ export default function ProjectContent({ project: initialProject }: { project: P
                           href={item.link}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors duration-200 group/link"
+                          className="inline-flex items-center gap-2 text-sm font-medium text-[#BD155C] hover:text-[#a01050] transition-colors duration-200 group/link"
                         >
                           <span>{item.href || "Ver enlace"}</span>
                           <svg

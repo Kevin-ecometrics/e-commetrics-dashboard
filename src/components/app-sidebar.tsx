@@ -3,10 +3,6 @@
 import * as React from "react";
 import {
   Frame,
-  PieChart,
-  Map,
-  Bot,
-  Pencil,
   UserPlus,
   UserCog,
   FolderPlus,
@@ -15,6 +11,12 @@ import {
   FileCog,
   Shield,
   Tag,
+  QrCode,
+  CreditCard,
+  CalendarDays,
+  Newspaper,
+  CalendarCheck,
+  CalendarClock,
   LucideIcon,
 } from "lucide-react";
 import { NavUser } from "@/components/nav-user";
@@ -112,13 +114,17 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
     }
   }, [changeLang]);
 
-  /**
-   * Manejador para cerrar el sidebar en dispositivos móviles
-   */
+  const [openClientes, setOpenClientes] = React.useState(false);
+  const [openProyectos, setOpenProyectos] = React.useState(false);
+  const [openContenido, setOpenContenido] = React.useState(false);
+  const [openAdminProjects, setOpenAdminProjects] = React.useState(false);
+
   const handleItemClick = (): void => {
-    if (isMobile) {
-      setOpenMobile(false);
-    }
+    if (isMobile) setOpenMobile(false);
+    setOpenClientes(false);
+    setOpenProyectos(false);
+    setOpenContenido(false);
+    setOpenAdminProjects(false);
   };
 
   /**
@@ -129,42 +135,42 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
       id: "qr",
       name: "Generador de QR",
       url: "/dashboard/webapp/qr",
-      icon: Frame,
+      icon: QrCode,
       component: "QR",
     },
     {
       id: "vcard",
       name: "Tarjeta de Visita",
       url: "/dashboard/webapp/vcard",
-      icon: Map,
+      icon: CreditCard,
       component: "Vcard",
     },
     {
       id: "calendar",
       name: "Calendario",
       url: "/dashboard/webapp/calendar",
-      icon: PieChart,
+      icon: CalendarDays,
       component: "calendar",
     },
     {
       id: "blogs",
       name: "Gestor de Blogs",
       url: "/dashboard/webapp/blogs",
-      icon: Bot,
+      icon: Newspaper,
       component: "blogs",
     },
     {
       id: "reforma",
       name: "Calendario Reforma",
       url: "/dashboard/webapp/calendar-reforma",
-      icon: PieChart,
+      icon: CalendarCheck,
       component: "Reforma",
     },
     {
       id: "monge",
       name: "Calendario Monge",
       url: "/dashboard/webapp/calendar-monge",
-      icon: PieChart,
+      icon: CalendarClock,
       component: "Monge",
     },
     {
@@ -181,42 +187,42 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
       id: "qr",
       name: "QR Generator",
       url: "/dashboard/webapp/qr",
-      icon: Frame,
+      icon: QrCode,
       component: "QR",
     },
     {
       id: "vcard",
       name: "VCard Builder",
       url: "/dashboard/webapp/vcard",
-      icon: Map,
+      icon: CreditCard,
       component: "Vcard",
     },
     {
       id: "calendar",
       name: "Calendar",
       url: "/dashboard/webapp/calendar",
-      icon: PieChart,
+      icon: CalendarDays,
       component: "calendar",
     },
     {
       id: "blogs",
       name: "Blog Manager",
       url: "/dashboard/webapp/blogs",
-      icon: Bot,
+      icon: Newspaper,
       component: "blogs",
     },
     {
       id: "reforma",
       name: "Reforma Calendar",
       url: "/dashboard/webapp/calendar-reforma",
-      icon: PieChart,
+      icon: CalendarCheck,
       component: "Reforma",
     },
     {
       id: "monge",
       name: "Monge Calendar",
       url: "/dashboard/webapp/calendar-monge",
-      icon: PieChart,
+      icon: CalendarClock,
       component: "Monge",
     },
     {
@@ -426,7 +432,7 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
               {groupedActions.clientes &&
                 groupedActions.clientes.length > 0 && (
                   <SidebarMenuItem>
-                    <DropdownMenu>
+                    <DropdownMenu open={openClientes} onOpenChange={setOpenClientes}>
                       <DropdownMenuTrigger asChild>
                         <SidebarMenuButton className="w-full flex justify-between items-center">
                           <div className="flex items-center gap-2">
@@ -480,7 +486,7 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
               {groupedActions.proyectos &&
                 groupedActions.proyectos.length > 0 && (
                   <SidebarMenuItem>
-                    <DropdownMenu>
+                    <DropdownMenu open={openProyectos} onOpenChange={setOpenProyectos}>
                       <DropdownMenuTrigger asChild>
                         <SidebarMenuButton className="w-full flex justify-between items-center">
                           <div className="flex items-center gap-2">
@@ -534,7 +540,7 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
               {groupedActions.contenido &&
                 groupedActions.contenido.length > 0 && (
                   <SidebarMenuItem>
-                    <DropdownMenu>
+                    <DropdownMenu open={openContenido} onOpenChange={setOpenContenido}>
                       <DropdownMenuTrigger asChild>
                         <SidebarMenuButton className="w-full flex justify-between items-center">
                           <div className="flex items-center gap-2">
@@ -609,13 +615,13 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
 
         {/* Sección de Proyectos */}
         {visibleProjects.length > 0 && (
-          <SidebarGroup className="group-data-[collapsible=icon]:hidden">
+          <SidebarGroup className={user?.role === "admin" ? "group-data-[collapsible=icon]:hidden" : ""}>
             <SidebarGroupLabel>
               {lang === "es" ? "Proyectos" : "Projects"}
             </SidebarGroupLabel>
             <SidebarMenu>
               {user?.role === "admin" ? (
-                <DropdownMenu>
+                <DropdownMenu open={openAdminProjects} onOpenChange={setOpenAdminProjects}>
                   <DropdownMenuTrigger asChild>
                     <SidebarMenuButton className="w-full flex justify-between items-center">
                       <span>
@@ -663,7 +669,10 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
               ) : (
                 visibleProjects.map((project: Project) => (
                   <SidebarMenuItem key={project.id}>
-                    <SidebarMenuButton asChild>
+                    <SidebarMenuButton
+                      asChild
+                      tooltip={project.title ?? project.project_name}
+                    >
                       <Link
                         href={`/dashboard/${project.project_name}`}
                         onClick={handleItemClick}
@@ -681,12 +690,12 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
 
         {/* Sección de Aplicaciones */}
         {filteredApps.length > 0 && (
-          <SidebarGroup className="group-data-[collapsible=icon]:hidden">
+          <SidebarGroup>
             <SidebarGroupLabel>Apps</SidebarGroupLabel>
             <SidebarMenu>
               {filteredApps.map((app: AppItem) => (
                 <SidebarMenuItem key={app.id}>
-                  <SidebarMenuButton asChild>
+                  <SidebarMenuButton asChild tooltip={app.name}>
                     <Link href={app.url} onClick={handleItemClick}>
                       <app.icon className="mr-2" />
                       <span>{app.name}</span>
@@ -702,22 +711,42 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
         {lang && (
           <SidebarGroup className="group-data-[collapsible=icon]:hidden">
             <SidebarGroupLabel>
-              {lang === "es" ? "Cambiar idioma" : "Change language"}
+              {lang === "es" ? "Idioma" : "Language"}
             </SidebarGroupLabel>
             <SidebarMenu>
-              {lang === "es" ? (
-                <SidebarMenuItem>
-                  <SidebarMenuButton onClick={() => changeLang("en")}>
-                    🇬🇧 English
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ) : (
-                <SidebarMenuItem>
-                  <SidebarMenuButton onClick={() => changeLang("es")}>
-                    🇪🇸 Español
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              )}
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  onClick={() => changeLang(lang === "es" ? "en" : "es")}
+                  className="gap-2"
+                >
+                  {lang === "es" ? (
+                    <>
+                      {/* Bandera USA */}
+                      <svg width="20" height="14" viewBox="0 0 20 14" className="rounded-[2px] flex-shrink-0">
+                        <rect width="20" height="14" fill="#B22234" />
+                        <rect y="1.08" width="20" height="1.08" fill="white" />
+                        <rect y="3.23" width="20" height="1.08" fill="white" />
+                        <rect y="5.38" width="20" height="1.08" fill="white" />
+                        <rect y="7.54" width="20" height="1.08" fill="white" />
+                        <rect y="9.69" width="20" height="1.08" fill="white" />
+                        <rect y="11.85" width="20" height="1.08" fill="white" />
+                        <rect width="8" height="7.54" fill="#3C3B6E" />
+                      </svg>
+                      <span className="text-sm">English</span>
+                    </>
+                  ) : (
+                    <>
+                      {/* Bandera México */}
+                      <svg width="20" height="14" viewBox="0 0 20 14" className="rounded-[2px] flex-shrink-0">
+                        <rect width="20" height="14" fill="white" />
+                        <rect width="6.67" height="14" fill="#006847" />
+                        <rect x="13.33" width="6.67" height="14" fill="#CE1126" />
+                      </svg>
+                      <span className="text-sm">Español</span>
+                    </>
+                  )}
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroup>
         )}

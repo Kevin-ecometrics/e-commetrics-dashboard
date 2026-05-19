@@ -3,6 +3,14 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 
+type Appointment = {
+  id: number;
+  date: string;
+  name?: string;
+  email?: string;
+  phone?: string;
+};
+
 const DAYS_OF_WEEK = [
   "Lunes",
   "Martes",
@@ -14,13 +22,13 @@ const DAYS_OF_WEEK = [
 const WORKING_HOURS = Array.from({ length: 9 }, (_, i) => i + 9); // 9 AM to 5 PM
 
 export default function AppointmentDashboard() {
-  const [bookedAppointments, setBookedAppointments] = useState([]);
+  const [bookedAppointments, setBookedAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentWeekOffset, setCurrentWeekOffset] = useState(0);
-  const [selectedDay, setSelectedDay] = useState(null);
-  const [selectedAppointment, setSelectedAppointment] = useState(null);
+  const [selectedDay, setSelectedDay] = useState<string | null>(null);
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [blockDate, setBlockDate] = useState(null);
+  const [blockDate, setBlockDate] = useState<Date | null>(null);
   const [blockStartTime, setBlockStartTime] = useState("");
   const [blockDuration, setBlockDuration] = useState("");
 
@@ -55,17 +63,17 @@ export default function AppointmentDashboard() {
     fetchAppointments();
   }, []);
 
-  const handleWeekChange = (direction) => {
+  const handleWeekChange = (direction: number) => {
     setCurrentWeekOffset(currentWeekOffset + direction);
     setSelectedDay(null);
   };
 
-  const handleSelectAppointment = (appointment) => {
+  const handleSelectAppointment = (appointment: Appointment) => {
     setSelectedAppointment(appointment);
     setIsDrawerOpen(true);
   };
 
-  const handleBlockTime = async (e) => {
+  const handleBlockTime = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (!blockDate || !blockStartTime || !blockDuration) {
@@ -74,7 +82,7 @@ export default function AppointmentDashboard() {
     }
 
     try {
-      const dates = [];
+      const dates: string[] = [];
       const startHour = parseInt(blockStartTime);
       const duration = parseInt(blockDuration);
 
@@ -164,7 +172,7 @@ export default function AppointmentDashboard() {
     }
   };
 
-  const formatDate = (date) => {
+  const formatDate = (date: Date): string => {
     return date.toLocaleDateString("es-ES", {
       year: "numeric",
       month: "long",
@@ -172,7 +180,7 @@ export default function AppointmentDashboard() {
     });
   };
 
-  const formatTime = (date) => {
+  const formatTime = (date: Date): string => {
     const hours = date.getHours();
     return hours <= 12 ? `${hours}:00 AM` : `${hours - 12}:00 PM`;
   };

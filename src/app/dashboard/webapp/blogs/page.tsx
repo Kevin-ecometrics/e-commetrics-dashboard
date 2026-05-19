@@ -1,13 +1,28 @@
 "use client";
 import React, { useEffect, useState } from "react";
 
+type Comment = {
+  id: number;
+  nombre: string;
+  correo: string;
+  comentario: string;
+  estatus: string;
+  fecha_creacion: string;
+  blog_id: number;
+};
+
+type BlogName = {
+  id: number;
+  name: string;
+};
+
 function Comments() {
-  const [comments, setComments] = useState([]);
+  const [comments, setComments] = useState<Comment[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [showModal, setShowModal] = useState(false);
-  const [selectedComment, setSelectedComment] = useState(null);
-  const [modalAction, setModalAction] = useState(null);
-  const [blogNames, setBlogNames] = useState([]);
+  const [selectedComment, setSelectedComment] = useState<Comment | null>(null);
+  const [modalAction, setModalAction] = useState<string | null>(null);
+  const [blogNames, setBlogNames] = useState<BlogName[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCommentModal, setShowCommentModal] = useState(false);
   const [selectedCommentText, setSelectedCommentText] = useState("");
@@ -47,20 +62,20 @@ function Comments() {
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = comments.slice(indexOfFirstItem, indexOfLastItem);
 
-  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+  const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
 
-  const getBlogName = (id) => {
+  const getBlogName = (id: number): string => {
     const blog = blogNames.find((blog) => blog.id === id);
-    return blog ? blog.name : id;
+    return blog ? blog.name : String(id);
   };
 
-  const handleApproveClick = (comment) => {
+  const handleApproveClick = (comment: Comment) => {
     setSelectedComment(comment);
     setModalAction("approve");
     setShowModal(true);
   };
 
-  const handleRejectClick = (comment) => {
+  const handleRejectClick = (comment: Comment) => {
     setSelectedComment(comment);
     setModalAction("reject");
     setShowModal(true);
@@ -95,7 +110,7 @@ function Comments() {
     }
   };
 
-  const handleCommentClick = (commentText, blogId) => {
+  const handleCommentClick = (commentText: string, blogId: number) => {
     setSelectedCommentText(commentText);
     setSelectedBlogName(getBlogName(blogId));
     setShowCommentModal(true);
@@ -335,7 +350,7 @@ function Comments() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="6" className="px-6 py-12 text-center">
+                    <td colSpan={6} className="px-6 py-12 text-center">
                       <div className="text-gray-500 dark:text-gray-400">
                         <svg
                           className="w-12 h-12 mx-auto mb-4 text-gray-300"

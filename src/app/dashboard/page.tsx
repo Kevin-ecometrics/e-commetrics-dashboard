@@ -92,21 +92,29 @@ export default function Page() {
             </div>
 
             {/* Stats */}
-            <div className="flex items-center gap-6">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+            <div className="flex items-center gap-3 flex-wrap">
+              <div className="px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-center min-w-[80px]">
+                <div className="text-2xl font-bold text-[#BD155C]">
                   {projects.length}
                 </div>
-                <div className="text-sm text-gray-500 dark:text-gray-400">
-                  {lang === "es" ? "Proyectos" : "Projects"}
+                <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                  {lang === "es" ? "Total" : "Total"}
                 </div>
               </div>
-              <div className="text-center">
+              <div className="px-4 py-3 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-center min-w-[80px]">
                 <div className="text-2xl font-bold text-green-600 dark:text-green-400">
                   {projects.filter((p) => p.percentage >= 80).length}
                 </div>
-                <div className="text-sm text-gray-500 dark:text-gray-400">
+                <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                   {lang === "es" ? "Completados" : "Completed"}
+                </div>
+              </div>
+              <div className="px-4 py-3 rounded-xl bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 text-center min-w-[80px]">
+                <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
+                  {projects.filter((p) => p.percentage >= 50 && p.percentage < 80).length}
+                </div>
+                <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                  {lang === "es" ? "En progreso" : "In progress"}
                 </div>
               </div>
             </div>
@@ -167,7 +175,7 @@ export default function Page() {
             </p>
             <button
               onClick={() => fetchProjects(Number(user.id))}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 dark:bg-blue-500 text-white font-medium rounded-xl hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors duration-200"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-[#BD155C] text-white font-medium rounded-xl hover:bg-[#a01050] transition-colors duration-200"
             >
               <svg
                 className="w-4 h-4"
@@ -211,7 +219,7 @@ export default function Page() {
                   <div className="p-6 pb-0">
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex-1">
-                        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-1 line-clamp-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200">
+                        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-1 line-clamp-2 group-hover:text-[#BD155C] transition-colors duration-200">
                           {project.title}
                         </h2>
                       </div>
@@ -225,30 +233,32 @@ export default function Page() {
 
                   {/* Contenido principal */}
                   <div className="px-6 pb-6 space-y-4">
-                    {/* Nombre del proyecto */}
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <svg
-                          className="w-4 h-4 text-gray-400 dark:text-gray-500"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-                          />
-                        </svg>
-                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                          {lang === "es" ? "Proyecto" : "Project"}
-                        </span>
+                    {/* Nombre técnico del proyecto — solo si difiere del título */}
+                    {project.project_name !== project.title && (
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <svg
+                            className="w-4 h-4 text-gray-400 dark:text-gray-500"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                            />
+                          </svg>
+                          <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                            {lang === "es" ? "ID del proyecto" : "Project ID"}
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 font-mono">
+                          {project.project_name}
+                        </p>
                       </div>
-                      <p className="text-lg font-semibold text-gray-800 dark:text-gray-200 ">
-                        {project.project_name}
-                      </p>
-                    </div>
+                    )}
 
                     {/* Progreso */}
                     <div className="space-y-3">
@@ -303,7 +313,7 @@ export default function Page() {
                     <div className="pt-4 border-t border-gray-100 dark:border-gray-800">
                       <Link
                         href={`/dashboard/${project.project_name}`}
-                        className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 dark:bg-blue-500 text-white font-medium rounded-xl hover:bg-blue-700 dark:hover:bg-blue-600 transition-all duration-200 group/link"
+                        className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 bg-[#BD155C] text-white font-medium rounded-xl hover:bg-[#a01050] transition-all duration-200 group/link"
                       >
                         <span>
                           {lang === "es" ? "Ir al proyecto" : "Go to project"}

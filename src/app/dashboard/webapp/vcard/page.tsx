@@ -14,9 +14,20 @@ import {
 } from "react-icons/fa";
 import { useLang } from "@/app/context/LangContext";
 
+type FormData = {
+  name: string;
+  lastname: string;
+  org: string;
+  phone: string;
+  email: string;
+  address: string;
+};
+
+type FieldKey = keyof FormData;
+
 export default function InnovativeQRGenerator() {
   const { lang } = useLang();
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     name: "",
     lastname: "",
     org: "",
@@ -27,10 +38,10 @@ export default function InnovativeQRGenerator() {
   const [showQR, setShowQR] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
-  const qrRef = useRef(null);
-  const ticketRef = useRef(null);
+  const qrRef = useRef<HTMLDivElement>(null);
+  const ticketRef = useRef<HTMLDivElement>(null);
 
-  const fieldIcons = {
+  const fieldIcons: Record<FieldKey, React.ElementType> = {
     name: FaUser,
     lastname: FaUser,
     org: FaBuilding,
@@ -39,7 +50,7 @@ export default function InnovativeQRGenerator() {
     address: FaMapMarkerAlt,
   };
 
-  const fieldLabels = {
+  const fieldLabels: Record<FieldKey, string> = {
     name: lang === "es" ? "Nombre" : "First Name",
     lastname: lang === "es" ? "Apellido" : "Last Name",
     org: lang === "es" ? "Organización" : "Organization",
@@ -77,6 +88,7 @@ export default function InnovativeQRGenerator() {
       // Crear un canvas para dibujar el ticket
       const canvas = document.createElement("canvas");
       const ctx = canvas.getContext("2d");
+      if (!ctx) return;
 
       // Configurar dimensiones del canvas (tamaño del ticket)
       const width = 400;
@@ -241,7 +253,7 @@ export default function InnovativeQRGenerator() {
               <h1 className="text-6xl lg:text-8xl font-bold mb-4 leading-tight">
                 {formData.name || "Your"}
               </h1>
-              <p className="text-3xl text-whitw mb-4 font-bold">
+              <p className="text-3xl text-white mb-4 font-bold">
                 {lang === "es" ? "Tarjeta de Contacto" : "VCard"}
               </p>
               <p className="text-xl text-gray-400 mb-8">
@@ -259,8 +271,7 @@ export default function InnovativeQRGenerator() {
                 <div className="relative z-10 flex items-center gap-4">
                   {isDownloading ? (
                     <>
-                      <div className="w-6 h-6 border-3 border-white/30 border-t-white rounded-full animate-spin" />
-
+                      <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                       <span>
                         {lang === "es"
                           ? "GENERANDO TICKET..."
@@ -413,8 +424,8 @@ export default function InnovativeQRGenerator() {
         </div>
 
         {/* Form */}
-        <div className="space-y-4 ">
-          {Object.entries(formData).map(([key, value], index) => {
+        <div className="space-y-4">
+          {(Object.entries(formData) as [FieldKey, string][]).map(([key, value]) => {
             const Icon = fieldIcons[key];
             return (
               <div key={key} className="relative group">

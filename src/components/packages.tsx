@@ -19,8 +19,40 @@ import {
 import { MdEmail, MdPhone, MdOpenInNew } from "react-icons/md";
 import axios from "axios";
 
+type Locale = "en" | "es";
+
+type ServiceItem = {
+  name: string;
+  details: string;
+};
+
+type ExtraItem = {
+  id: string;
+  name: string;
+  price: number;
+  description: string;
+};
+
+type ExtraCategory = {
+  category: string;
+  items: ExtraItem[];
+};
+
+type Package = {
+  id: number;
+  title: string;
+  subtitle: string;
+  price: string;
+  description: string;
+  overview: string;
+  services: ServiceItem[];
+  additionalDetails: string[];
+  popular?: boolean;
+  extraServices: ExtraCategory[];
+};
+
 // Diccionario de íconos por tipo de servicio
-const iconMap = {
+const iconMap: Record<string, React.ReactNode> = {
   sitio: <FaGlobe className="text-[#BD155C]" />,
   seo: <FaSearch className="text-[#BD155C]" />,
   redes: <FaChartLine className="text-[#BD155C]" />,
@@ -38,13 +70,12 @@ const iconMap = {
 };
 
 // Detecta qué ícono usar
-const getIcon = (text) => {
+const getIcon = (text: string): React.ReactNode => {
   const t = text.toLowerCase();
   if (t.includes("seo")) return iconMap.seo;
   if (t.includes("redes")) return iconMap.redes;
   if (t.includes("analytics") || t.includes("pixel")) return iconMap.analytics;
-  if (t.includes("shopify") || t.includes("ecommerce"))
-    return iconMap.ecommerce;
+  if (t.includes("shopify") || t.includes("ecommerce")) return iconMap.ecommerce;
   if (t.includes("reels") || t.includes("posts")) return iconMap.diseño;
   if (t.includes("publicidad")) return iconMap.publicidad;
   if (t.includes("branding")) return iconMap.branding;
@@ -58,7 +89,7 @@ const getIcon = (text) => {
 };
 
 // Información de los paquetes
-const packagesData = {
+const packagesData: Record<Locale, Package[]> = {
   es: [
     {
       id: 1,
@@ -68,56 +99,15 @@ const packagesData = {
       description: "Incluye Paquete Básico",
       overview: "Un paquete ideal para establecer presencia en línea.",
       services: [
-        {
-          name: "Sitio Web Básico",
-          details:
-            "Desarrollo de una landing page en React o Astro según necesidad o templete en Shopify.",
-        },
-        {
-          name: "SEO Inicial",
-          details:
-            "Optimización básica en motores de búsqueda para mejorar visibilidad.",
-        },
-        {
-          name: "Configuración de Redes Sociales",
-          details:
-            "Creación y optimización de perfiles en redes sociales principales.",
-        },
-        {
-          name: "Google Analytics & Facebook Pixel",
-          details:
-            "Configuración de herramientas de seguimiento para análisis de tráfico.",
-        },
+        { name: "Sitio Web Básico", details: "Desarrollo de una landing page en React o Astro según necesidad o templete en Shopify." },
+        { name: "SEO Inicial", details: "Optimización básica en motores de búsqueda para mejorar visibilidad." },
+        { name: "Configuración de Redes Sociales", details: "Creación y optimización de perfiles en redes sociales principales." },
+        { name: "Google Analytics & Facebook Pixel", details: "Configuración de herramientas de seguimiento para análisis de tráfico." },
       ],
-      additionalDetails: [
-        "Ideal para emprendedores que están comenzando.",
-        "Soporte técnico básico incluido.",
-        "Entrega en un plazo de 2 semanas.",
-      ],
+      additionalDetails: ["Ideal para emprendedores que están comenzando.", "Soporte técnico básico incluido.", "Entrega en un plazo de 2 semanas."],
       extraServices: [
-        {
-          category: "Diseño",
-          items: [
-            {
-              id: "diseno-premium",
-              name: "Diseño Premium",
-              price: 150,
-              description:
-                "Paquete de diseño visual mejorado con gráficos personalizados",
-            },
-          ],
-        },
-        {
-          category: "Desarrollo",
-          items: [
-            {
-              id: "pagina-adicional",
-              name: "Página Adicional",
-              price: 75,
-              description: "Añadir una página más a tu sitio web",
-            },
-          ],
-        },
+        { category: "Diseño", items: [{ id: "diseno-premium", name: "Diseño Premium", price: 150, description: "Paquete de diseño visual mejorado con gráficos personalizados" }] },
+        { category: "Desarrollo", items: [{ id: "pagina-adicional", name: "Página Adicional", price: 75, description: "Añadir una página más a tu sitio web" }] },
       ],
     },
     {
@@ -128,64 +118,16 @@ const packagesData = {
       description: "Incluye Paquete Básico más:",
       overview: "Un paquete avanzado para pequeñas empresas.",
       services: [
-        {
-          name: "Ecommerce con Shopify",
-          details:
-            "Configuración y personalización de tienda en Shopify con diseño profesional.",
-        },
-        {
-          name: "SEO Avanzado",
-          details:
-            "Optimización técnica y estrategia de contenido para posicionamiento orgánico.",
-        },
-        {
-          name: "Sitio Web Avanzado",
-          details:
-            "Desarrollo de una landing page en React o Astro según necesidad con desarrollo avanzado.",
-        },
-        {
-          name: "Diseño de Posts & Reels",
-          details:
-            "Creación de contenido visual optimizado para redes sociales.",
-        },
+        { name: "Ecommerce con Shopify", details: "Configuración y personalización de tienda en Shopify con diseño profesional." },
+        { name: "SEO Avanzado", details: "Optimización técnica y estrategia de contenido para posicionamiento orgánico." },
+        { name: "Sitio Web Avanzado", details: "Desarrollo de una landing page en React o Astro según necesidad con desarrollo avanzado." },
+        { name: "Diseño de Posts & Reels", details: "Creación de contenido visual optimizado para redes sociales." },
       ],
-      additionalDetails: [
-        "Incluye análisis de mercado para estrategias de SEO.",
-        "Soporte técnico avanzado.",
-        "Entrega en un plazo de 4 semanas.",
-        "Este es el paquete más popular entre nuestros clientes.",
-      ],
+      additionalDetails: ["Incluye análisis de mercado para estrategias de SEO.", "Soporte técnico avanzado.", "Entrega en un plazo de 4 semanas.", "Este es el paquete más popular entre nuestros clientes."],
       popular: true,
       extraServices: [
-        {
-          category: "SEO",
-          items: [
-            {
-              id: "seo-avanzado",
-              name: "SEO Avanzado",
-              price: 300,
-              description: "Estrategia SEO integral para mejores rankings",
-            },
-            {
-              id: "optimizacion-contenido",
-              name: "Optimización de Contenido",
-              price: 250,
-              description:
-                "Optimiza el contenido de tu sitio web para motores de búsqueda",
-            },
-          ],
-        },
-        {
-          category: "Marketing",
-          items: [
-            {
-              id: "campana-email",
-              name: "Campaña de Email",
-              price: 180,
-              description: "Crear y gestionar campañas de email marketing",
-            },
-          ],
-        },
+        { category: "SEO", items: [{ id: "seo-avanzado", name: "SEO Avanzado", price: 300, description: "Estrategia SEO integral para mejores rankings" }, { id: "optimizacion-contenido", name: "Optimización de Contenido", price: 250, description: "Optimiza el contenido de tu sitio web para motores de búsqueda" }] },
+        { category: "Marketing", items: [{ id: "campana-email", name: "Campaña de Email", price: 180, description: "Crear y gestionar campañas de email marketing" }] },
       ],
     },
     {
@@ -196,51 +138,14 @@ const packagesData = {
       description: "Incluye Paquete Pro más:",
       overview: "Un paquete diseñado para empresas en expansión.",
       services: [
-        {
-          name: "Desarrollo Web Personalizado",
-          details:
-            "Creación de un sitio web en React o Astro con diseño a medida.",
-        },
-        {
-          name: "Estrategia en Redes Sociales",
-          details:
-            "Gestión de contenido con planificación mensual y analítica avanzada.",
-        },
-        {
-          name: "Publicidad Digital",
-          details:
-            "Campañas en Google Ads, Facebook Ads e Instagram con segmentación avanzada.",
-        },
-        {
-          name: "Branding & Diseño Gráfico",
-          details:
-            "Diseño de identidad visual en Figma, Photoshop e Illustrator.",
-        },
+        { name: "Desarrollo Web Personalizado", details: "Creación de un sitio web en React o Astro con diseño a medida." },
+        { name: "Estrategia en Redes Sociales", details: "Gestión de contenido con planificación mensual y analítica avanzada." },
+        { name: "Publicidad Digital", details: "Campañas en Google Ads, Facebook Ads e Instagram con segmentación avanzada." },
+        { name: "Branding & Diseño Gráfico", details: "Diseño de identidad visual en Figma, Photoshop e Illustrator." },
       ],
-      additionalDetails: [
-        "Incluye análisis detallado de métricas de campañas.",
-        "Soporte técnico premium.",
-        "Entrega en un plazo de 6 semanas.",
-      ],
+      additionalDetails: ["Incluye análisis detallado de métricas de campañas.", "Soporte técnico premium.", "Entrega en un plazo de 6 semanas."],
       extraServices: [
-        {
-          category: "Analítica",
-          items: [
-            {
-              id: "analisis-trafico",
-              name: "Análisis de Tráfico",
-              price: 120,
-              description:
-                "Análisis detallado del tráfico del sitio web y el comportamiento del usuario",
-            },
-            {
-              id: "seguimiento-conversiones",
-              name: "Seguimiento de Conversiones",
-              price: 150,
-              description: "Seguimiento y optimización de tasas de conversión",
-            },
-          ],
-        },
+        { category: "Analítica", items: [{ id: "analisis-trafico", name: "Análisis de Tráfico", price: 120, description: "Análisis detallado del tráfico del sitio web y el comportamiento del usuario" }, { id: "seguimiento-conversiones", name: "Seguimiento de Conversiones", price: 150, description: "Seguimiento y optimización de tasas de conversión" }] },
       ],
     },
     {
@@ -251,57 +156,15 @@ const packagesData = {
       description: "Incluye Paquete Empresa más:",
       overview: "Un paquete completo para grandes corporaciones.",
       services: [
-        {
-          name: "Consultoría Estratégica",
-          details:
-            "Asesoramiento personalizado para expansión digital y crecimiento.",
-        },
-        {
-          name: "Automatización de Marketing",
-          details:
-            "Estrategias omnicanal para posicionamiento premium en el mercado.",
-        },
-        {
-          name: "Producción Audiovisual",
-          details:
-            "Videograbación y edición profesional para campañas publicitarias.",
-        },
-        {
-          name: "Desarrollo de Apps",
-          details:
-            "Aplicaciones web y móviles personalizadas para optimizar procesos internos.",
-        },
+        { name: "Consultoría Estratégica", details: "Asesoramiento personalizado para expansión digital y crecimiento." },
+        { name: "Automatización de Marketing", details: "Estrategias omnicanal para posicionamiento premium en el mercado." },
+        { name: "Producción Audiovisual", details: "Videograbación y edición profesional para campañas publicitarias." },
+        { name: "Desarrollo de Apps", details: "Aplicaciones web y móviles personalizadas para optimizar procesos internos." },
       ],
-      additionalDetails: [
-        "Incluye soporte dedicado 24/7.",
-        "Entrega en un plazo de 8 semanas.",
-        "Acceso a herramientas exclusivas de análisis de datos.",
-      ],
+      additionalDetails: ["Incluye soporte dedicado 24/7.", "Entrega en un plazo de 8 semanas.", "Acceso a herramientas exclusivas de análisis de datos."],
       extraServices: [
-        {
-          category: "Desarrollo",
-          items: [
-            {
-              id: "formulario-contacto",
-              name: "Formulario de Contacto",
-              price: 100,
-              description:
-                "Formulario de contacto con notificaciones por email",
-            },
-          ],
-        },
-        {
-          category: "Marketing",
-          items: [
-            {
-              id: "anuncios-redes",
-              name: "Anuncios en Redes Sociales",
-              price: 220,
-              description:
-                "Ejecutar anuncios dirigidos en plataformas de redes sociales",
-            },
-          ],
-        },
+        { category: "Desarrollo", items: [{ id: "formulario-contacto", name: "Formulario de Contacto", price: 100, description: "Formulario de contacto con notificaciones por email" }] },
+        { category: "Marketing", items: [{ id: "anuncios-redes", name: "Anuncios en Redes Sociales", price: 220, description: "Ejecutar anuncios dirigidos en plataformas de redes sociales" }] },
       ],
     },
   ],
@@ -314,55 +177,15 @@ const packagesData = {
       description: "Includes Basic Package",
       overview: "An ideal package to establish an online presence.",
       services: [
-        {
-          name: "Basic Website",
-          details:
-            "Development of a landing page in React or Astro based on needs or Shopify template.",
-        },
-        {
-          name: "Initial SEO",
-          details:
-            "Basic optimization in search engines to improve visibility.",
-        },
-        {
-          name: "Social Media Setup",
-          details:
-            "Creation and optimization of profiles on major social networks.",
-        },
-        {
-          name: "Google Analytics & Facebook Pixel",
-          details: "Setup of tracking tools for traffic analysis.",
-        },
+        { name: "Basic Website", details: "Development of a landing page in React or Astro based on needs or Shopify template." },
+        { name: "Initial SEO", details: "Basic optimization in search engines to improve visibility." },
+        { name: "Social Media Setup", details: "Creation and optimization of profiles on major social networks." },
+        { name: "Google Analytics & Facebook Pixel", details: "Setup of tracking tools for traffic analysis." },
       ],
-      additionalDetails: [
-        "Ideal for entrepreneurs starting out.",
-        "Basic technical support included.",
-        "Delivery within 2 weeks.",
-      ],
+      additionalDetails: ["Ideal for entrepreneurs starting out.", "Basic technical support included.", "Delivery within 2 weeks."],
       extraServices: [
-        {
-          category: "Design",
-          items: [
-            {
-              id: "diseno-premium",
-              name: "Premium Design",
-              price: 150,
-              description:
-                "Enhanced visual design package with custom graphics",
-            },
-          ],
-        },
-        {
-          category: "Development",
-          items: [
-            {
-              id: "pagina-adicional",
-              name: "Additional Page",
-              price: 75,
-              description: "Add one more page to your website",
-            },
-          ],
-        },
+        { category: "Design", items: [{ id: "diseno-premium", name: "Premium Design", price: 150, description: "Enhanced visual design package with custom graphics" }] },
+        { category: "Development", items: [{ id: "pagina-adicional", name: "Additional Page", price: 75, description: "Add one more page to your website" }] },
       ],
     },
     {
@@ -373,62 +196,16 @@ const packagesData = {
       description: "Includes Basic Package plus:",
       overview: "An advanced package for small businesses.",
       services: [
-        {
-          name: "Shopify Ecommerce",
-          details:
-            "Setup and customization of a Shopify store with professional design.",
-        },
-        {
-          name: "Advanced SEO",
-          details:
-            "Technical optimization and content strategy for organic positioning.",
-        },
-        {
-          name: "Advanced Website",
-          details:
-            "Development of a landing page in React or Astro with advanced development.",
-        },
-        {
-          name: "Post & Reel Design",
-          details: "Creation of visually optimized content for social media.",
-        },
+        { name: "Shopify Ecommerce", details: "Setup and customization of a Shopify store with professional design." },
+        { name: "Advanced SEO", details: "Technical optimization and content strategy for organic positioning." },
+        { name: "Advanced Website", details: "Development of a landing page in React or Astro with advanced development." },
+        { name: "Post & Reel Design", details: "Creation of visually optimized content for social media." },
       ],
-      additionalDetails: [
-        "Includes market analysis for SEO strategies.",
-        "Advanced technical support.",
-        "Delivery within 4 weeks.",
-        "This is the most popular package among our clients.",
-      ],
+      additionalDetails: ["Includes market analysis for SEO strategies.", "Advanced technical support.", "Delivery within 4 weeks.", "This is the most popular package among our clients."],
       popular: true,
       extraServices: [
-        {
-          category: "SEO",
-          items: [
-            {
-              id: "seo-avanzado",
-              name: "Advanced SEO",
-              price: 300,
-              description: "Comprehensive SEO strategy for better rankings",
-            },
-            {
-              id: "optimizacion-contenido",
-              name: "Content Optimization",
-              price: 250,
-              description: "Optimize your website content for search engines",
-            },
-          ],
-        },
-        {
-          category: "Marketing",
-          items: [
-            {
-              id: "campana-email",
-              name: "Email Campaign",
-              price: 180,
-              description: "Create and manage email marketing campaigns",
-            },
-          ],
-        },
+        { category: "SEO", items: [{ id: "seo-avanzado", name: "Advanced SEO", price: 300, description: "Comprehensive SEO strategy for better rankings" }, { id: "optimizacion-contenido", name: "Content Optimization", price: 250, description: "Optimize your website content for search engines" }] },
+        { category: "Marketing", items: [{ id: "campana-email", name: "Email Campaign", price: 180, description: "Create and manage email marketing campaigns" }] },
       ],
     },
     {
@@ -439,51 +216,14 @@ const packagesData = {
       description: "Includes Pro Package plus:",
       overview: "A package designed for expanding businesses.",
       services: [
-        {
-          name: "Custom Web Development",
-          details:
-            "Creation of a website in React or Astro with tailored design.",
-        },
-        {
-          name: "Social Media Strategy",
-          details:
-            "Content management with monthly planning and advanced analytics.",
-        },
-        {
-          name: "Digital Advertising",
-          details:
-            "Campaigns on Google Ads, Facebook Ads, and Instagram with advanced targeting.",
-        },
-        {
-          name: "Branding & Graphic Design",
-          details:
-            "Visual identity design in Figma, Photoshop, and Illustrator.",
-        },
+        { name: "Custom Web Development", details: "Creation of a website in React or Astro with tailored design." },
+        { name: "Social Media Strategy", details: "Content management with monthly planning and advanced analytics." },
+        { name: "Digital Advertising", details: "Campaigns on Google Ads, Facebook Ads, and Instagram with advanced targeting." },
+        { name: "Branding & Graphic Design", details: "Visual identity design in Figma, Photoshop, and Illustrator." },
       ],
-      additionalDetails: [
-        "Includes detailed campaign metrics analysis.",
-        "Premium technical support.",
-        "Delivery within 6 weeks.",
-      ],
+      additionalDetails: ["Includes detailed campaign metrics analysis.", "Premium technical support.", "Delivery within 6 weeks."],
       extraServices: [
-        {
-          category: "Analytics",
-          items: [
-            {
-              id: "analisis-trafico",
-              name: "Traffic Analysis",
-              price: 120,
-              description:
-                "Detailed analysis of website traffic and user behavior",
-            },
-            {
-              id: "seguimiento-conversiones",
-              name: "Conversion Tracking",
-              price: 150,
-              description: "Track and optimize conversion rates",
-            },
-          ],
-        },
+        { category: "Analytics", items: [{ id: "analisis-trafico", name: "Traffic Analysis", price: 120, description: "Detailed analysis of website traffic and user behavior" }, { id: "seguimiento-conversiones", name: "Conversion Tracking", price: 150, description: "Track and optimize conversion rates" }] },
       ],
     },
     {
@@ -494,78 +234,37 @@ const packagesData = {
       description: "Includes Business Package plus:",
       overview: "A complete package for large corporations.",
       services: [
-        {
-          name: "Strategic Consulting",
-          details: "Personalized advice for digital expansion and growth.",
-        },
-        {
-          name: "Marketing Automation",
-          details: "Omnichannel strategies for premium market positioning.",
-        },
-        {
-          name: "Audiovisual Production",
-          details:
-            "Professional video recording and editing for advertising campaigns.",
-        },
-        {
-          name: "App Development",
-          details:
-            "Custom web and mobile applications to optimize internal processes.",
-        },
+        { name: "Strategic Consulting", details: "Personalized advice for digital expansion and growth." },
+        { name: "Marketing Automation", details: "Omnichannel strategies for premium market positioning." },
+        { name: "Audiovisual Production", details: "Professional video recording and editing for advertising campaigns." },
+        { name: "App Development", details: "Custom web and mobile applications to optimize internal processes." },
       ],
-      additionalDetails: [
-        "Includes 24/7 dedicated support.",
-        "Delivery within 8 weeks.",
-        "Access to exclusive data analysis tools.",
-      ],
+      additionalDetails: ["Includes 24/7 dedicated support.", "Delivery within 8 weeks.", "Access to exclusive data analysis tools."],
       extraServices: [
-        {
-          category: "Development",
-          items: [
-            {
-              id: "formulario-contacto",
-              name: "Contact Form",
-              price: 100,
-              description: "Contact form with email notifications",
-            },
-          ],
-        },
-        {
-          category: "Marketing",
-          items: [
-            {
-              id: "anuncios-redes",
-              name: "Social Media Ads",
-              price: 220,
-              description: "Run targeted ads on social media platforms",
-            },
-          ],
-        },
+        { category: "Development", items: [{ id: "formulario-contacto", name: "Contact Form", price: 100, description: "Contact form with email notifications" }] },
+        { category: "Marketing", items: [{ id: "anuncios-redes", name: "Social Media Ads", price: 220, description: "Run targeted ads on social media platforms" }] },
       ],
     },
   ],
 };
 
-const Packages = ({ locale }) => {
-  const [selectedPackage, setSelectedPackage] = useState(null);
-  const [selectedExtras, setSelectedExtras] = useState([]);
+const Packages = ({ locale }: { locale: Locale }) => {
+  const [selectedPackage, setSelectedPackage] = useState<number | null>(null);
+  const [selectedExtras, setSelectedExtras] = useState<string[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
   const [email, setEmail] = useState("");
   const packages = packagesData[locale] || [];
   const pkgSelected = packages.find((p) => p.id === selectedPackage);
 
-  // Usa los servicios extra del paquete seleccionado
   const extraServices = pkgSelected?.extraServices || [];
 
-  // Calcula el precio base del paquete seleccionado
   const basePrice = pkgSelected
     ? Number((pkgSelected.price.match(/[\d.]+/) || [0])[0])
     : 0;
 
-  // Suma de servicios adicionales seleccionados
   const extrasTotal = selectedExtras.reduce((sum, id) => {
     for (const cat of extraServices) {
       const found = cat.items.find((item) => item.id === id);
@@ -574,32 +273,27 @@ const Packages = ({ locale }) => {
     return sum;
   }, 0);
 
-  // Precio total
   const totalPrice = basePrice + extrasTotal;
 
-  // Maneja selección/deselección de extras
-  const handleExtraChange = (id) => {
+  const handleExtraChange = (id: string) => {
     setSelectedExtras((prev) =>
       prev.includes(id) ? prev.filter((e) => e !== id) : [...prev, id]
     );
   };
 
-  // Limpia extras al cambiar de paquete
-  const handleSelectPackage = (id) => {
+  const handleSelectPackage = (id: number) => {
     setSelectedPackage(id);
     setSelectedExtras([]);
   };
 
-  // Obtiene los servicios extra seleccionados con info
   const selectedExtrasInfo = extraServices
     .flatMap((cat) => cat.items)
     .filter((item) => selectedExtras.includes(item.id));
 
-  // Validación simple de email
   const isEmailValid = email.includes("@");
 
-  // Enviar el paquete por correo
   const handleSendEmail = async () => {
+    if (!pkgSelected) return;
     setSending(true);
     setError(null);
     setSent(false);
@@ -617,8 +311,8 @@ const Packages = ({ locale }) => {
         email,
       });
       setSent(true);
-      setEmail(""); // Limpiar el input después de enviar
-    } catch (err) {
+      setEmail("");
+    } catch {
       setError("Error al enviar el correo.");
     }
     setSending(false);
@@ -641,9 +335,7 @@ const Packages = ({ locale }) => {
             >
               <h3 className="text-2xl font-bold text-[#BD155C]">{pkg.title}</h3>
               <p className="text-sm text-gray-500 mb-2">{pkg.subtitle}</p>
-              <p className="text-3xl font-extrabold text-gray-900">
-                {pkg.price}
-              </p>
+              <p className="text-3xl font-extrabold text-gray-900">{pkg.price}</p>
               <p className="text-gray-700 mt-4">{pkg.overview}</p>
               {pkg.popular && (
                 <span className="text-sm text-white bg-[#BD155C] px-3 py-1 rounded-full absolute top-4 right-4">
@@ -686,12 +378,11 @@ const Packages = ({ locale }) => {
             <tbody>
               {pkgSelected.services.map((service, idx) => (
                 <tr key={idx} className="hover:bg-gray-50">
-                  <td className="border border-gray-300 px-4 py-2">
+                  <td className="border border-gray-300 px-4 py-2 flex items-center gap-2">
+                    {getIcon(service.name)}
                     {service.name}
                   </td>
-                  <td className="border border-gray-300 px-4 py-2">
-                    {service.details}
-                  </td>
+                  <td className="border border-gray-300 px-4 py-2">{service.details}</td>
                 </tr>
               ))}
             </tbody>
@@ -711,9 +402,7 @@ const Packages = ({ locale }) => {
           {extraServices.length > 0 && (
             <div className="mb-8">
               <h4 className="text-xl font-semibold text-[#BD155C] mb-2">
-                {locale === "es"
-                  ? "Servicios Adicionales"
-                  : "Additional Services"}
+                {locale === "es" ? "Servicios Adicionales" : "Additional Services"}
               </h4>
               {extraServices.map((cat) => (
                 <div key={cat.category} className="mb-4">
@@ -732,12 +421,8 @@ const Packages = ({ locale }) => {
                         />
                         <div>
                           <span className="font-medium">{item.name}</span>
-                          <span className="ml-2 text-[#BD155C] font-semibold">
-                            +${item.price}
-                          </span>
-                          <div className="text-xs text-gray-500">
-                            {item.description}
-                          </div>
+                          <span className="ml-2 text-[#BD155C] font-semibold">+${item.price}</span>
+                          <div className="text-xs text-gray-500">{item.description}</div>
                         </div>
                       </label>
                     ))}
@@ -778,9 +463,7 @@ const Packages = ({ locale }) => {
                   ×
                 </button>
                 <h3 className="text-2xl font-bold text-[#BD155C] mb-4 text-center">
-                  {locale === "es"
-                    ? "Resumen de tu paquete"
-                    : "Your Package Summary"}
+                  {locale === "es" ? "Resumen de tu paquete" : "Your Package Summary"}
                 </h3>
                 {/* Input para el correo */}
                 <div className="mb-4">
@@ -793,9 +476,7 @@ const Packages = ({ locale }) => {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder={
-                      locale === "es" ? "ejemplo@correo.com" : "your@email.com"
-                    }
+                    placeholder={locale === "es" ? "ejemplo@correo.com" : "your@email.com"}
                     className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#BD155C]"
                     required
                     disabled={sending}
@@ -803,9 +484,7 @@ const Packages = ({ locale }) => {
                 </div>
                 <div className="mb-2">
                   <span className="font-semibold">{pkgSelected.title}</span>
-                  <span className="ml-2 text-gray-600">
-                    {pkgSelected.price}
-                  </span>
+                  <span className="ml-2 text-gray-600">{pkgSelected.price}</span>
                 </div>
                 <div className="mb-2">
                   <span className="font-semibold">
@@ -820,9 +499,7 @@ const Packages = ({ locale }) => {
                 {selectedExtrasInfo.length > 0 && (
                   <div className="mb-2">
                     <span className="font-semibold">
-                      {locale === "es"
-                        ? "Servicios Adicionales:"
-                        : "Additional Services:"}
+                      {locale === "es" ? "Servicios Adicionales:" : "Additional Services:"}
                     </span>
                     <ul className="list-disc pl-5 text-gray-700 text-sm">
                       {selectedExtrasInfo.map((item) => (
@@ -839,35 +516,24 @@ const Packages = ({ locale }) => {
                     {locale === "es" ? "Total:" : "Total:"} ${totalPrice}
                   </span>
                 </div>
-                {/* Botón para enviar por correo */}
                 <div className="mt-6 flex flex-col gap-2">
                   <button
                     onClick={handleSendEmail}
                     disabled={sending || !isEmailValid}
                     className={`w-full text-white bg-[#BD155C] hover:bg-[#BD155C]/90 px-4 py-2 rounded-lg font-medium ${
-                      !isEmailValid || sending
-                        ? "opacity-60 cursor-not-allowed"
-                        : ""
+                      !isEmailValid || sending ? "opacity-60 cursor-not-allowed" : ""
                     }`}
                   >
                     {sending
-                      ? locale === "es"
-                        ? "Enviando..."
-                        : "Sending..."
-                      : locale === "es"
-                      ? "Enviar por correo"
-                      : "Send by Email"}
+                      ? locale === "es" ? "Enviando..." : "Sending..."
+                      : locale === "es" ? "Enviar por correo" : "Send by Email"}
                   </button>
                   {sent && (
                     <div className="text-green-600 text-center">
-                      {locale === "es"
-                        ? "¡Correo enviado correctamente!"
-                        : "Email sent successfully!"}
+                      {locale === "es" ? "¡Correo enviado correctamente!" : "Email sent successfully!"}
                     </div>
                   )}
-                  {error && (
-                    <div className="text-red-600 text-center">{error}</div>
-                  )}
+                  {error && <div className="text-red-600 text-center">{error}</div>}
                 </div>
               </div>
             </div>
@@ -878,23 +544,15 @@ const Packages = ({ locale }) => {
       <div className="mt-16 text-center text-gray-700 space-y-4">
         <p className="flex justify-center items-center gap-2 flex-col md:flex-row">
           <MdEmail className="text-[#BD155C] hidden md:block" />
-          <strong>
-            {locale === "es" ? "Correo electrónico:" : "Email:"}
-          </strong>{" "}
-          <a
-            href="mailto:juanmanuel@ecommetrica.com"
-            className="text-[#BD155C] underline hover:text-pink-700 transition-colors"
-          >
+          <strong>{locale === "es" ? "Correo electrónico:" : "Email:"}</strong>{" "}
+          <a href="mailto:juanmanuel@ecommetrica.com" className="text-[#BD155C] underline hover:text-pink-700 transition-colors">
             juanmanuel@ecommetrica.com
           </a>
         </p>
         <p className="flex justify-center items-center gap-2 flex-col md:flex-row">
           <MdPhone className="text-[#BD155C] hidden md:block" />
           <strong>{locale === "es" ? "Teléfono:" : "Phone:"}</strong>{" "}
-          <a
-            href="tel:+526646429633"
-            className="text-[#BD155C] underline hover:text-pink-700 transition-colors"
-          >
+          <a href="tel:+526646429633" className="text-[#BD155C] underline hover:text-pink-700 transition-colors">
             +52 664 6429 633
           </a>
         </p>
@@ -905,12 +563,7 @@ const Packages = ({ locale }) => {
               ? "Para checar más a detalle los paquetes, revisa mi otro sitio web:"
               : "To see the packages in more detail, check out my other website:"}
           </span>{" "}
-          <a
-            href="https://ecommetrica.com/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-[#BD155C] underline hover:text-pink-700 transition-colors"
-          >
+          <a href="https://ecommetrica.com/" target="_blank" rel="noopener noreferrer" className="text-[#BD155C] underline hover:text-pink-700 transition-colors">
             ecommetrica.com
           </a>
         </p>
