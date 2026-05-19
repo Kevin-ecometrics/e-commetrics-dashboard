@@ -48,15 +48,32 @@ const types_en = [
   "Apps",
 ];
 
-export default function ProjectContent({ project }: { project: Project[] }) {
-  const currentProject = project[0];
+export default function ProjectContent({ project: initialProject }: { project: Project[] }) {
   const { user } = useAuth();
   const { lang } = useLang();
   const types = lang === "es" ? types_es : types_en;
 
+  const [currentProject, setCurrentProject] = useState<Project | null>(initialProject[0] ?? null);
   const [contents, setContents] = useState<ProjectContentItem[]>([]);
   const [filteredType, setFilteredType] = useState(types[0]);
   const [loading, setLoading] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true);
+
+  // Re-fetch project from API so id_user is always fresh (not stale from build time)
+  useEffect(() => {
+    if (!initialProject[0]?.project_name) return;
+    axios
+      .get(`${process.env.NEXT_PUBLIC_URL}/api/project/${initialProject[0].project_name}`)
+      .then((res) => {
+        if (Array.isArray(res.data) && res.data.length > 0) setCurrentProject(res.data[0]);
+      })
+      .catch(() => {});
+  }, [initialProject[0]?.project_name]);
+
+  // Wait for user to finish loading before checking access
+  useEffect(() => {
+    if (user !== undefined) setAuthLoading(false);
+  }, [user]);
 
   const isOwner = Number(user?.id) === currentProject?.id_user;
   const isAdmin = user?.role === "admin";
@@ -87,6 +104,14 @@ export default function ProjectContent({ project }: { project: Project[] }) {
     filteredType === types[0]
       ? contents
       : contents.filter((item) => item.type === filteredType);
+
+  if (authLoading) {
+    return (
+      <div className="flex justify-center items-center py-24">
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent" />
+      </div>
+    );
+  }
 
   if (!canAccess) {
     return (
