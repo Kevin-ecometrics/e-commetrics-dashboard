@@ -344,6 +344,7 @@ app.post("/api/bookings", async (req, res) => {
       total,
       nights,
       pricePerNight,
+      source,
     } = req.body;
 
     // Validaciones
@@ -397,8 +398,8 @@ app.post("/api/bookings", async (req, res) => {
       INSERT INTO bookings (
         room_id, check_in, check_out, guests, full_name,
         email, phone, certified_doctor, special_requests, extras, total,
-        nights, price_per_night, confirmation_number, status, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'confirmed', NOW())
+        nights, price_per_night, confirmation_number, status, source, created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'confirmed', ?, NOW())
     `;
 
     const [result] = await pool.execute(insertQuery, [
@@ -416,6 +417,7 @@ app.post("/api/bookings", async (req, res) => {
       nights,
       pricePerNight,
       confirmationNumber,
+      source || 'website',
     ]);
 
     console.log("✅ Booking created successfully, ID:", result.insertId);
@@ -815,6 +817,42 @@ app.post("/api/bookings/:id/cancel", async (req, res) => {
     res.json({ success: true, message: "Booking cancelled successfully" });
   } catch (err) {
     console.error("Error cancelling booking:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Endpoint para editar una reserva
+app.patch("/api/bookings/:id", async (req, res) => {
+  const { id } = req.params;
+  const {
+    room_id, check_in, check_out, nights, guests,
+    full_name, email, phone, certified_doctor,
+    special_requests, extras, total, price_per_night,
+  } = req.body;
+
+  try {
+    const [result] = await pool.execute(
+      `UPDATE bookings SET
+        room_id = ?, check_in = ?, check_out = ?, nights = ?, guests = ?,
+        full_name = ?, email = ?, phone = ?, certified_doctor = ?,
+        special_requests = ?, extras = ?, total = ?, price_per_night = ?
+      WHERE id = ?`,
+      [
+        room_id, check_in, check_out, nights, guests,
+        full_name, email, phone, certified_doctor,
+        special_requests || null,
+        JSON.stringify(extras || []),
+        total, price_per_night,
+        id,
+      ]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: "Booking not found" });
+    }
+    res.json({ success: true, message: "Booking updated successfully" });
+  } catch (err) {
+    console.error("Error updating booking:", err);
     res.status(500).json({ error: err.message });
   }
 });
