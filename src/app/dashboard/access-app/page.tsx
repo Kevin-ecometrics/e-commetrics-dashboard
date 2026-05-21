@@ -32,7 +32,8 @@ type ComponentAccess = {
     | "calendar"
     | "Reforma"
     | "Monge"
-    | "PromoPalmas";
+    | "PromoPalmas"
+    | "CalendarioPalmas";
   can_view: boolean;
 };
 
@@ -44,6 +45,7 @@ const AVAILABLE_COMPONENTS: ComponentAccess["component"][] = [
   "Reforma",
   "Monge",
   "PromoPalmas",
+  "CalendarioPalmas",
 ];
 
 // Mapeo de componentes a iconos y nombres legibles
@@ -85,6 +87,12 @@ const COMPONENT_CONFIG = {
     name: "Promo Palmas",
     color:
       "text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-900",
+  },
+  CalendarioPalmas: {
+    icon: Calendar,
+    name: "Calendario Palmas",
+    color:
+      "text-amber-600 bg-amber-50 dark:text-amber-400 dark:bg-amber-900",
   },
 };
 

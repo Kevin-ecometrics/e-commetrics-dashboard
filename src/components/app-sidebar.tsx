@@ -180,6 +180,13 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
       icon: Tag,
       component: "PromoPalmas",
     },
+    {
+      id: "calendario-palmas",
+      name: "Calendario Palmas",
+      url: "/dashboard/webapp/calendario-palmas",
+      icon: CalendarDays,
+      component: "CalendarioPalmas",
+    },
   ];
 
   const appsEn: AppItem[] = [
@@ -231,6 +238,13 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
       url: "/dashboard/webapp/promo-palmas",
       icon: Tag,
       component: "PromoPalmas",
+    },
+    {
+      id: "calendario-palmas",
+      name: "Palmas Calendar",
+      url: "/dashboard/webapp/calendario-palmas",
+      icon: CalendarDays,
+      component: "CalendarioPalmas",
     },
   ];
 
