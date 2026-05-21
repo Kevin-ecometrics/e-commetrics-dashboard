@@ -850,6 +850,24 @@ app.patch("/api/bookings/:id", async (req, res) => {
     if (result.affectedRows === 0) {
       return res.status(404).json({ error: "Booking not found" });
     }
+
+    // Obtener el número de confirmación para el email
+    const [rows] = await pool.execute(
+      "SELECT confirmation_number FROM bookings WHERE id = ?",
+      [id]
+    );
+
+    try {
+      await sendBookingUpdateEmail({
+        full_name, email, phone, certified_doctor,
+        room_id, check_in, check_out, nights, guests,
+        extras: extras || [], total, price_per_night,
+        confirmation_number: rows[0]?.confirmation_number,
+      });
+    } catch (emailErr) {
+      console.error("❌ Error sending booking update email:", emailErr);
+    }
+
     res.json({ success: true, message: "Booking updated successfully" });
   } catch (err) {
     console.error("Error updating booking:", err);
@@ -902,6 +920,172 @@ const sendCancellationEmail = async (booking) => {
   };
 
   await transporter.sendMail(mailOptions);
+};
+
+// Función para enviar email de actualización de reserva
+const sendBookingUpdateEmail = async (bookingData) => {
+  const {
+    full_name, email, phone, certified_doctor,
+    room_id, check_in, check_out, nights, guests,
+    extras, total, price_per_night, confirmation_number,
+  } = bookingData;
+
+  const roomNames = {
+    private: "Private Room",
+    shared: "Shared Room",
+    "large-private": "Large Private Room",
+    vip: "VIP Suite",
+  };
+
+  const roomName = roomNames[room_id] || room_id;
+  const roomSubtotal = price_per_night * nights;
+
+  const getExtraTitle = (extraId) => {
+    const extraTitles = {
+      lymphatic: "Lymphatic Massage",
+      "5massages": "5 Lymphatic Massages Package",
+      b01g: "ORIGINAL RECOVERY BRA - STYLE NO. B01G",
+      fvom: "OPEN BUST VEST - 3/4 LENGTH SLEEVES - STYLE NO. FVOM",
+      sfbhrs: "REINFORCED GIRDLE WITH HIGH-BACK AND LAYERED PANELS - SHORT LENGTH - STYLES NO. SFBHRS",
+      sfbhs2: "GIRDLE WITH HIGH-BACK - NO CLOSURES - SHORT LENGHT - STYLE NO. SFBHS2",
+    };
+    return extraTitles[extraId] || extraId;
+  };
+
+  const getExtraPrice = (extraId) => {
+    const extraPrices = {
+      lymphatic: 60,
+      "5massages": 270,
+      b01g: 80,
+      fvom: 80,
+      sfbhrs: 140,
+      sfbhs2: 140,
+    };
+    return extraPrices[extraId] || 0;
+  };
+
+  let extrasList = [];
+  if (extras) {
+    if (typeof extras === "string") {
+      try { extrasList = JSON.parse(extras); } catch (e) { extrasList = []; }
+    } else if (Array.isArray(extras)) {
+      extrasList = extras;
+    }
+  }
+
+  const extrasTotal = extrasList.reduce((sum, extraId) => sum + getExtraPrice(extraId), 0);
+
+  const extrasHtml = extrasList.length > 0
+    ? `
+    <div style="margin-top: 20px;">
+      <h3 style="color: #371510; border-bottom: 2px solid #e5c8bd; padding-bottom: 10px;">Extra Services:</h3>
+      <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+        <thead>
+          <tr style="background-color: #e5c8bd;">
+            <th style="padding: 10px; text-align: left; color: #371510;">Service</th>
+            <th style="padding: 10px; text-align: right; color: #371510;">Price</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${extrasList.map((extraId) => `
+            <tr>
+              <td style="padding: 10px; border-bottom: 1px solid #e5c8bd; color: #50492e;">${getExtraTitle(extraId)}</td>
+              <td style="padding: 10px; border-bottom: 1px solid #e5c8bd; text-align: right; color: #50492e;">$${getExtraPrice(extraId)}</td>
+            </tr>
+          `).join("")}
+          <tr style="background-color: #f2e9dc;">
+            <td style="padding: 10px; font-weight: bold; color: #371510;">Extras Total:</td>
+            <td style="padding: 10px; text-align: right; font-weight: bold; color: #371510;">$${extrasTotal}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>`
+    : "";
+
+  const mailOptions = {
+    from: '"Palmas Recovery Reservations" <contact@palmasrecovery.com>',
+    to: email,
+    cc: "palmasrecoveryspa@gmail.com",
+    subject: `Booking Updated #${confirmation_number} - Palmas Recovery`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #50492e; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background-color: #371510; color: #f2e9dc; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+          .content { background-color: #f2e9dc; padding: 30px; border: 1px solid #e5c8bd; border-top: none; }
+          .confirmation-box { background: #e5c8bd; border-left: 4px solid #9f9977; padding: 15px; margin: 20px 0; text-align: center; border-radius: 8px; }
+          .confirmation-number { font-size: 24px; font-weight: bold; color: #371510; letter-spacing: 2px; }
+          .details-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+          .details-table td { padding: 10px; border-bottom: 1px solid #e5c8bd; }
+          .details-table td:first-child { font-weight: bold; color: #371510; width: 40%; }
+          .check-times { background: #e5c8bd; border: 1px solid #9f9977; color: #371510; padding: 10px; border-radius: 5px; margin: 15px 0; }
+          .footer { text-align: center; padding: 20px; font-size: 12px; color: #9f9977; background: #f2e9dc; border-radius: 0 0 10px 10px; border-top: 1px solid #e5c8bd; }
+          h1, h2, h3 { color: #371510; }
+          h2 { border-bottom: 2px solid #e5c8bd; padding-bottom: 10px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1 style="color: #ffffff; margin: 0;">Booking Updated</h1>
+          </div>
+          <div class="content">
+            <h2>Your booking has been updated, ${full_name}!</h2>
+            <p>Your reservation has been modified. Below you'll find the updated details.</p>
+
+            <div class="confirmation-box">
+              <div style="font-size: 14px; margin-bottom: 5px;">Confirmation number:</div>
+              <div class="confirmation-number">#${confirmation_number}</div>
+            </div>
+
+            <div class="check-times">
+              <strong>Important:</strong>
+              <p>✓ Check-in: 2:00 PM (14:00 hrs)</p>
+              <p>✓ Check-out: 11:00 AM</p>
+            </div>
+
+            <h3>Updated Booking Details:</h3>
+            <table class="details-table">
+              <tr><td>Name:</td><td>${full_name}</td></tr>
+              <tr><td>Email:</td><td>${email}</td></tr>
+              <tr><td>Phone:</td><td>${phone || "Not provided"}</td></tr>
+              <tr><td>Certified Plastic Surgeon:</td><td>${certified_doctor}</td></tr>
+              <tr><td>Room:</td><td>${roomName}</td></tr>
+              <tr><td>Check-in:</td><td>${check_in} (2:00 PM)</td></tr>
+              <tr><td>Check-out:</td><td>${check_out} (11:00 AM)</td></tr>
+              <tr><td>Nights:</td><td>${nights}</td></tr>
+              <tr><td>Guests:</td><td>${guests}</td></tr>
+              <tr><td>Room Subtotal:</td><td>$${roomSubtotal}</td></tr>
+            </table>
+
+            ${extrasHtml}
+
+            <table class="details-table">
+              <tr style="font-size: 20px; background: #e5c8bd;">
+                <td style="padding: 15px; font-size: 20px; font-weight: bold;">Total Amount:</td>
+                <td style="padding: 15px; font-size: 24px; color: #371510; font-weight: bold;">$${total} USD</td>
+              </tr>
+            </table>
+
+            <p>If you did not request this change or have any questions, please contact us immediately.</p>
+          </div>
+          <div class="footer">
+            <p>Palmas Recovery - Your recovery journey starts here</p>
+            <p>📍 Fray Servando Teresa de Mier 15-Interior 2<br>Zona Urbana Río Tijuana, 22010 Tijuana, B.C.</p>
+            <p>📞 +1 (619) 967-9558 | 📧 contact@palmasrecovery.com</p>
+            <p>&copy; ${new Date().getFullYear()} Palmas Recovery. All rights reserved.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `,
+  };
+
+  await transporter.sendMail(mailOptions);
+  console.log("✅ Booking update email sent to:", email);
 };
 
 // ==================== PROMO CODES ENDPOINTS ====================

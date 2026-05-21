@@ -140,14 +140,6 @@ function bookingOnDayLocal(booking: Booking, day: Date): boolean {
   return day >= checkIn && day < checkOut;
 }
 
-function datesOverlap(
-  newIn: Date,
-  newOut: Date,
-  existIn: Date,
-  existOut: Date
-): boolean {
-  return !(newOut <= existIn || newIn >= existOut);
-}
 
 function getDaysInMonth(year: number, month: number): Date[] {
   const days: Date[] = [];
@@ -240,25 +232,17 @@ interface FormData {
   manualTotal: boolean;
 }
 
-interface AvailabilityResult {
-  available: boolean;
-  conflictName?: string;
-  conflictIn?: string;
-  conflictOut?: string;
-}
 
 function BookingFormModal({
   booking,
   defaultDate,
   defaultRoom,
-  existingBookings,
   onClose,
   onSuccess,
 }: {
   booking: Booking | null;
   defaultDate?: string;
   defaultRoom?: string;
-  existingBookings: Booking[];
   onClose: () => void;
   onSuccess: () => void;
 }) {
@@ -340,32 +324,6 @@ function BookingFormModal({
     }
   }, [autoTotal, form.manualTotal]);
 
-  // ── availability check (client-side, instant) ─────────────────────────────
-  const availability = useMemo<AvailabilityResult | null>(() => {
-    if (!form.roomId || !form.checkIn || !form.checkOut || nights <= 0) return null;
-
-    const newIn = parseDateLocal(form.checkIn);
-    const newOut = parseDateLocal(form.checkOut);
-
-    const conflict = existingBookings.find((b) => {
-      if (b.status === "cancelled") return false;
-      if (isEdit && b.id === booking!.id) return false; // skip self when editing
-      if (b.room_id !== form.roomId) return false;
-      const bIn = parseDateLocal(b.check_in.slice(0, 10));
-      const bOut = parseDateLocal(b.check_out.slice(0, 10));
-      return datesOverlap(newIn, newOut, bIn, bOut);
-    });
-
-    if (conflict) {
-      return {
-        available: false,
-        conflictName: conflict.full_name,
-        conflictIn: conflict.check_in.slice(0, 10),
-        conflictOut: conflict.check_out.slice(0, 10),
-      };
-    }
-    return { available: true };
-  }, [form.roomId, form.checkIn, form.checkOut, nights, existingBookings, isEdit, booking]);
 
   const applyPromo = async () => {
     if (!promoCode.trim()) return;
@@ -416,8 +374,6 @@ function BookingFormModal({
 
   const extrasTotal = form.extras.reduce((s, e) => s + (EXTRA_PRICES[e] ?? 0), 0);
 
-  const canSubmit = availability === null || availability.available;
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -445,11 +401,6 @@ function BookingFormModal({
         return;
       }
     }
-    if (!canSubmit) {
-      toast.error("La habitación no está disponible en esas fechas");
-      return;
-    }
-
     setSubmitting(true);
     try {
       if (isEdit) {
@@ -630,40 +581,6 @@ function BookingFormModal({
               />
             </div>
 
-            {/* Availability indicator */}
-            {availability && (
-              <div
-                className={`mt-3 flex items-start gap-2 px-3 py-2.5 rounded-lg text-sm border ${
-                  availability.available
-                    ? "bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-900/20 dark:border-emerald-800 dark:text-emerald-400"
-                    : "bg-red-50 border-red-200 text-red-700 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400"
-                }`}
-              >
-                {availability.available ? (
-                  <>
-                    <CheckCircle className="h-4 w-4 mt-0.5 shrink-0" />
-                    <span>Habitación disponible para las fechas seleccionadas</span>
-                  </>
-                ) : (
-                  <>
-                    <XCircle className="h-4 w-4 mt-0.5 shrink-0" />
-                    <span>
-                      No disponible —{" "}
-                      <strong>{availability.conflictName}</strong> tiene reservado del{" "}
-                      {parseDateLocal(availability.conflictIn!).toLocaleDateString("es-MX", {
-                        day: "numeric",
-                        month: "short",
-                      })}{" "}
-                      al{" "}
-                      {parseDateLocal(availability.conflictOut!).toLocaleDateString("es-MX", {
-                        day: "numeric",
-                        month: "short",
-                      })}
-                    </span>
-                  </>
-                )}
-              </div>
-            )}
           </div>
 
           {/* Pricing */}
@@ -852,8 +769,7 @@ function BookingFormModal({
             </button>
             <button
               type="submit"
-              disabled={submitting || !canSubmit}
-              title={!canSubmit ? "La habitación no está disponible en esas fechas" : undefined}
+              disabled={submitting}
               className="px-5 py-2 rounded-lg bg-amber-500 hover:bg-amber-600 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:cursor-not-allowed text-white text-sm font-medium transition-colors flex items-center gap-2"
             >
               {submitting && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
@@ -1590,7 +1506,6 @@ export default function CalendarioPalmasPage() {
           booking={editingBooking}
           defaultDate={createDefaultDate}
           defaultRoom={createDefaultRoom}
-          existingBookings={bookings}
           onClose={closeFormModal}
           onSuccess={() => fetchBookings()}
         />
