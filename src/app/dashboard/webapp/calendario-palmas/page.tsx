@@ -62,8 +62,8 @@ interface ContactMessage {
 // ── constants ─────────────────────────────────────────────────────────────────
 
 const ROOM_NAMES: Record<string, string> = {
-  private: "Private Room",
   shared: "Shared Room",
+  private: "Private Room",
   "large-private": "Large Private Room",
   vip: "VIP Suite",
 };
@@ -89,6 +89,13 @@ const ROOM_COLORS: Record<string, { bg: string; text: string; dot: string }> = {
     text: "text-amber-700 dark:text-amber-300",
     dot: "bg-amber-500",
   },
+};
+
+const ROOM_PRICES: Record<string, number> = {
+  shared: 170,
+  private: 180,
+  "large-private": 200,
+  vip: 250,
 };
 
 const EXTRA_NAMES: Record<string, string> = {
@@ -118,8 +125,16 @@ function parseDateLocal(dateStr: string): Date {
   return new Date(y, m - 1, d);
 }
 
+// Used for availability checks — excludes cancelled
 function bookingOccupiesDayLocal(booking: Booking, day: Date): boolean {
   if (booking.status === "cancelled") return false;
+  const checkIn = parseDateLocal(booking.check_in.slice(0, 10));
+  const checkOut = parseDateLocal(booking.check_out.slice(0, 10));
+  return day >= checkIn && day < checkOut;
+}
+
+// Used for calendar display — includes cancelled
+function bookingOnDayLocal(booking: Booking, day: Date): boolean {
   const checkIn = parseDateLocal(booking.check_in.slice(0, 10));
   const checkOut = parseDateLocal(booking.check_out.slice(0, 10));
   return day >= checkIn && day < checkOut;
@@ -285,6 +300,14 @@ function BookingFormModal({
   });
 
   const [submitting, setSubmitting] = useState(false);
+  const [promoCode, setPromoCode] = useState("");
+  const [promoApplied, setPromoApplied] = useState<{
+    code: string;
+    discount_type: "percentage" | "fixed";
+    discount_value: number;
+  } | null>(null);
+  const [promoLoading, setPromoLoading] = useState(false);
+  const [promoError, setPromoError] = useState("");
 
   const todayStr = useMemo(() => dateToInputStr(new Date()), []);
 
@@ -296,10 +319,20 @@ function BookingFormModal({
     return Math.max(0, Math.round(diff / 86400000));
   }, [form.checkIn, form.checkOut]);
 
-  const autoTotal = useMemo(() => {
+  const baseTotal = useMemo(() => {
     const extTotal = form.extras.reduce((s, e) => s + (EXTRA_PRICES[e] ?? 0), 0);
     return nights * Number(form.pricePerNight || 0) + extTotal;
   }, [nights, form.pricePerNight, form.extras]);
+
+  const discountAmount = useMemo(() => {
+    if (!promoApplied) return 0;
+    if (promoApplied.discount_type === "percentage") {
+      return Math.round(baseTotal * promoApplied.discount_value / 100);
+    }
+    return Math.min(promoApplied.discount_value, baseTotal);
+  }, [promoApplied, baseTotal]);
+
+  const autoTotal = useMemo(() => baseTotal - discountAmount, [baseTotal, discountAmount]);
 
   useEffect(() => {
     if (!form.manualTotal) {
@@ -333,6 +366,41 @@ function BookingFormModal({
     }
     return { available: true };
   }, [form.roomId, form.checkIn, form.checkOut, nights, existingBookings, isEdit, booking]);
+
+  const applyPromo = async () => {
+    if (!promoCode.trim()) return;
+    setPromoLoading(true);
+    setPromoError("");
+    try {
+      const res = await fetch(`${API_BASE_URL}/promo-codes/validate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: promoCode.trim() }),
+      });
+      const data = await res.json();
+      if (!data.valid) {
+        setPromoError(data.reason ?? "Código inválido");
+        return;
+      }
+      setPromoApplied({
+        code: promoCode.trim().toUpperCase(),
+        discount_type: data.discount_type,
+        discount_value: data.discount_value,
+      });
+      setPromoCode("");
+      setPromoError("");
+      setForm((f) => ({ ...f, manualTotal: false }));
+    } catch {
+      setPromoError("Error al validar el código");
+    } finally {
+      setPromoLoading(false);
+    }
+  };
+
+  const removePromo = () => {
+    setPromoApplied(null);
+    setForm((f) => ({ ...f, manualTotal: false }));
+  };
 
   const setField = <K extends keyof FormData>(key: K, value: FormData[K]) =>
     setForm((f) => ({ ...f, [key]: value }));
@@ -477,7 +545,17 @@ function BookingFormModal({
                 <button
                   key={id}
                   type="button"
-                  onClick={() => setField("roomId", id)}
+                  onClick={() => {
+                    setField("roomId", id);
+                    if (!isEdit) {
+                      setForm((f) => ({
+                        ...f,
+                        roomId: id,
+                        pricePerNight: String(ROOM_PRICES[id] ?? ""),
+                        manualTotal: false,
+                      }));
+                    }
+                  }}
                   className={`p-2.5 rounded-lg border text-xs font-medium transition-colors text-center ${
                     form.roomId === id
                       ? `${ROOM_COLORS[id].bg} ${ROOM_COLORS[id].text} border-current`
@@ -667,6 +745,85 @@ function BookingFormModal({
                 Subtotal extras:{" "}
                 <strong className="text-gray-700 dark:text-gray-300">${extrasTotal}</strong>
               </p>
+            )}
+          </div>
+
+          {/* Promo code */}
+          <div>
+            <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+              Código promocional
+            </label>
+            {promoApplied ? (
+              <div className="flex items-center justify-between px-3 py-2.5 bg-emerald-50 border border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-800 rounded-lg">
+                <div className="flex items-center gap-2 text-sm">
+                  <CheckCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                  <span className="font-mono font-semibold text-emerald-700 dark:text-emerald-400">
+                    {promoApplied.code}
+                  </span>
+                  <span className="text-emerald-600 dark:text-emerald-400">
+                    —{" "}
+                    {promoApplied.discount_type === "percentage"
+                      ? `${promoApplied.discount_value}% de descuento`
+                      : `$${promoApplied.discount_value} de descuento`}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={removePromo}
+                  className="p-1 rounded hover:bg-emerald-100 dark:hover:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={promoCode}
+                  onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                  onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), applyPromo())}
+                  placeholder="CÓDIGO"
+                  className="flex-1 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm font-mono uppercase focus:outline-none focus:ring-2 focus:ring-amber-500"
+                />
+                <button
+                  type="button"
+                  onClick={applyPromo}
+                  disabled={!promoCode.trim() || promoLoading}
+                  className="px-4 py-2 rounded-lg bg-gray-800 dark:bg-gray-200 hover:bg-gray-700 dark:hover:bg-gray-300 text-white dark:text-gray-900 text-sm font-medium disabled:opacity-40 flex items-center gap-1.5 transition-colors"
+                >
+                  {promoLoading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                  Aplicar
+                </button>
+              </div>
+            )}
+            {promoError && (
+              <p className="flex items-center gap-1 text-xs text-red-600 dark:text-red-400 mt-1.5">
+                <XCircle className="h-3.5 w-3.5 shrink-0" />
+                {promoError}
+              </p>
+            )}
+            {/* Discount breakdown */}
+            {promoApplied && discountAmount > 0 && (
+              <div className="mt-2 space-y-1 px-1 text-sm border-t border-gray-100 dark:border-gray-800 pt-2">
+                <div className="flex justify-between text-gray-500 dark:text-gray-400">
+                  <span>Subtotal</span>
+                  <span>${baseTotal}</span>
+                </div>
+                <div className="flex justify-between text-emerald-600 dark:text-emerald-400">
+                  <span>
+                    Descuento (
+                    {promoApplied.discount_type === "percentage"
+                      ? `${promoApplied.discount_value}%`
+                      : `$${promoApplied.discount_value}`}
+                    )
+                  </span>
+                  <span>-${discountAmount}</span>
+                </div>
+                <div className="flex justify-between font-semibold text-gray-900 dark:text-white pt-1 border-t border-gray-200 dark:border-gray-700">
+                  <span>Total con descuento</span>
+                  <span>${autoTotal}</span>
+                </div>
+              </div>
             )}
           </div>
 
@@ -929,22 +1086,27 @@ function CalendarView({
     setSelectedDay(null);
   };
 
-  // Which rooms are booked on a given day
-  const roomsBookedOnDay = (day: Date): string[] =>
+  // Confirmed rooms on a day (for availability coloring)
+  const confirmedRoomsOnDay = (day: Date): string[] =>
+    bookings.filter((b) => bookingOccupiesDayLocal(b, day)).map((b) => b.room_id);
+
+  // Cancelled rooms on a day (for gray dots)
+  const cancelledRoomsOnDay = (day: Date): string[] =>
     bookings
-      .filter((b) => bookingOccupiesDayLocal(b, day))
+      .filter((b) => b.status === "cancelled" && bookingOnDayLocal(b, day))
       .map((b) => b.room_id);
 
-  // Is a specific room booked on a day
+  // Is a specific room booked (confirmed only — for availability)
   const isRoomBooked = (roomId: string, day: Date): boolean =>
     bookings.some((b) => b.room_id === roomId && bookingOccupiesDayLocal(b, day));
 
-  // Are ALL rooms booked (fully booked day)
+  // Are ALL rooms booked (confirmed only)
   const isFullyBooked = (day: Date): boolean =>
     Object.keys(ROOM_NAMES).every((rid) => isRoomBooked(rid, day));
 
+  // All bookings (confirmed + cancelled) for the side panel
   const bookingsForSelected = selectedDay
-    ? bookings.filter((b) => bookingOccupiesDayLocal(b, selectedDay))
+    ? bookings.filter((b) => bookingOnDayLocal(b, selectedDay))
     : [];
 
   const isToday = (d: Date) =>
@@ -1062,7 +1224,8 @@ function CalendarView({
             <div key={`pad-${i}`} />
           ))}
           {days.map((day) => {
-            const rooms = roomsBookedOnDay(day);
+            const confirmedRooms = confirmedRoomsOnDay(day);
+            const cancelledRooms = cancelledRoomsOnDay(day);
             const selected = isSelected(day);
             const todayMark = isToday(day);
             const bookedByFilter = roomFilter ? isRoomBooked(roomFilter, day) : false;
@@ -1086,11 +1249,18 @@ function CalendarView({
                 {/* dots — hide when filter active, replaced by background color */}
                 {!roomFilter && (
                   <div className="flex flex-wrap gap-0.5 justify-center">
-                    {[...new Set(rooms)].map((roomId) => (
+                    {[...new Set(confirmedRooms)].map((roomId) => (
                       <span
                         key={roomId}
                         className={`w-2 h-2 rounded-full ${ROOM_COLORS[roomId]?.dot ?? "bg-gray-400"}`}
                         title={ROOM_NAMES[roomId] ?? roomId}
+                      />
+                    ))}
+                    {[...new Set(cancelledRooms)].map((roomId) => (
+                      <span
+                        key={`c-${roomId}`}
+                        className="w-2 h-2 rounded-full bg-gray-300 dark:bg-gray-600"
+                        title={`${ROOM_NAMES[roomId] ?? roomId} (cancelada)`}
                       />
                     ))}
                   </div>
@@ -1119,6 +1289,10 @@ function CalendarView({
                 {name}
               </div>
             ))}
+            <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+              <span className="w-2.5 h-2.5 rounded-full bg-gray-300 dark:bg-gray-600" />
+              Cancelada
+            </div>
             <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
               <span className="w-2.5 h-2.5 rounded bg-red-200 dark:bg-red-900/50" />
               Todo ocupado
@@ -1177,37 +1351,55 @@ function CalendarView({
               <p className="text-sm text-gray-500 dark:text-gray-400">Sin reservas este día.</p>
             ) : (
               <div className="space-y-2">
-                {bookingsForSelected.map((b) => (
-                  <div
-                    key={b.id}
-                    className={`p-3 rounded-lg ${ROOM_COLORS[b.room_id]?.bg ?? "bg-gray-50"}`}
-                  >
-                    <div className="flex items-center justify-between mb-1">
-                      <p
-                        className={`text-xs font-semibold ${ROOM_COLORS[b.room_id]?.text ?? "text-gray-600"}`}
-                      >
-                        {ROOM_NAMES[b.room_id] ?? b.room_id}
+                {bookingsForSelected.map((b) => {
+                  const isCancelled = b.status === "cancelled";
+                  return (
+                    <div
+                      key={b.id}
+                      className={`p-3 rounded-lg border ${
+                        isCancelled
+                          ? "bg-gray-50 dark:bg-gray-800/40 border-gray-200 dark:border-gray-700 opacity-70"
+                          : `${ROOM_COLORS[b.room_id]?.bg ?? "bg-gray-50"} border-transparent`
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <p
+                          className={`text-xs font-semibold ${
+                            isCancelled
+                              ? "text-gray-400 dark:text-gray-500"
+                              : ROOM_COLORS[b.room_id]?.text ?? "text-gray-600"
+                          }`}
+                        >
+                          {ROOM_NAMES[b.room_id] ?? b.room_id}
+                        </p>
+                        <div className="flex items-center gap-1">
+                          {isCancelled && (
+                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400">
+                              <XCircle className="h-2.5 w-2.5" /> Cancelada
+                            </span>
+                          )}
+                          <SourceBadge source={b.source} />
+                        </div>
+                      </div>
+                      <p className={`text-sm font-medium ${isCancelled ? "line-through text-gray-400 dark:text-gray-500" : "text-gray-900 dark:text-white"}`}>
+                        {b.full_name}
                       </p>
-                      <SourceBadge source={b.source} />
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {parseDateLocal(b.check_in.slice(0, 10)).toLocaleDateString("es-MX", {
+                          day: "numeric",
+                          month: "short",
+                        })}
+                        {" → "}
+                        {parseDateLocal(b.check_out.slice(0, 10)).toLocaleDateString("es-MX", {
+                          day: "numeric",
+                          month: "short",
+                        })}
+                        {" · "}
+                        {b.nights}n
+                      </p>
                     </div>
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">
-                      {b.full_name}
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {parseDateLocal(b.check_in.slice(0, 10)).toLocaleDateString("es-MX", {
-                        day: "numeric",
-                        month: "short",
-                      })}
-                      {" → "}
-                      {parseDateLocal(b.check_out.slice(0, 10)).toLocaleDateString("es-MX", {
-                        day: "numeric",
-                        month: "short",
-                      })}
-                      {" · "}
-                      {b.nights}n
-                    </p>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </>
