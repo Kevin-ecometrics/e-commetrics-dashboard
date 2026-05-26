@@ -82,7 +82,7 @@
 │ ACCIONES            │
 │  > Clientes      ▾  │  ← dropdown: Crear / Actualizar
 │  > Proyectos     ▾  │  ← dropdown: Crear / Actualizar
-│  > Contenido     ▾  │  ← dropdown: Crear / Actualizar
+│  > Cont. Proy.   ▾  │  ← dropdown: Crear / Actualizar
 │    🛡 Permisos       │
 ├─────────────────────┤
 │ PROYECTOS           │
@@ -96,6 +96,7 @@
 │  📅 Cal. Reforma    │
 │  📅 Cal. Monge      │
 │  🏷 Promo Palmas    │
+│  📅 Cal. Palmas     │  ← NUEVO
 ├─────────────────────┤
 │ IDIOMA              │
 │  🇬🇧 English        │
@@ -316,6 +317,7 @@
 │  │  📅  Cal. Reforma      [can_view: ○ / ●]       │  │
 │  │  📅  Cal. Monge        [can_view: ○ / ●]       │  │
 │  │  🏷  Promo Palmas      [can_view: ○ / ●]       │  │
+│  │  📅  Cal. Palmas       [can_view: ○ / ●]       │  │  ← NUEVO
 │  └────────────────────────────────────────────────┘  │
 │                                                      │
 │                    [ 💾 Guardar ]                    │
@@ -415,6 +417,117 @@
 └──────────────────────────────────────────────┘
 ```
 
+### 10.7 Calendario Palmas `/dashboard/webapp/calendario-palmas`  ← NUEVO
+
+> Dashboard de reservas para Palmas Recovery (`palmasrecovery.com`).
+> Color de acento: `amber-500` en lugar del `#BD155C` corporativo.
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│  [🕐] Calendario Palmas          [+ Nueva Reserva] [↺]       │
+│  Panel de reservas y contactos · Palmas Recovery             │
+├─────────────────┬──────────────┬──────────────┬─────────────┤
+│  🛏 Total Res.  │  ✓ Confirm.  │  $ Ingresos  │  💬 Contact.│
+│     — (num)     │    — (num)   │  $0 USD      │   — (num)   │
+├─────────────────┴──────────────┴──────────────┴─────────────┤
+│  [ Calendario ]  [ Reservas (N) ]  [ Contactos (N) ]        │
+├──────────────────────────────────────────────────────────────┤
+│  TAB: CALENDARIO                                             │
+│                                                              │
+│  Filtros habitación: [Todas] [Shared] [Private]             │
+│                      [Large Private] [VIP Suite]             │
+│                                                              │
+│  ┌────────────────────────────┐  ┌──────────────────────┐   │
+│  │  ◀  Mayo 2026  ▶           │  │  Día seleccionado    │   │
+│  │  Dom Lun Mar Mié Jue Vie Sáb│  │                      │   │
+│  │   .   .   .   .   1   2   3│  │  [+ Nueva] (si futuro│   │
+│  │   4   5   6  ...          │  │                      │   │
+│  │  ● = habitac. confirmada  │  │  Reserva 1:          │   │
+│  │  ○ = habitac. cancelada   │  │   [Room badge]       │   │
+│  │  🔴 = todo ocupado        │  │   Nombre huésped     │   │
+│  │                            │  │   check-in → checkout│   │
+│  │  Leyenda: 🔵🟢🟣🟡 salas  │  │   [Cancelada badge]  │   │
+│  └────────────────────────────┘  └──────────────────────┘   │
+├──────────────────────────────────────────────────────────────┤
+│  TAB: RESERVAS                                               │
+│                                                              │
+│  Tabla: # Confirm. | Huésped | Habitación | Check-in        │
+│         Check-out | Noches | Total | Estado | Origen | [👁]  │
+│                                                              │
+│  Origen badge: 🖥 Manual (dashboard) | 🌐 Sitio web         │
+│  Estado badge: ✓ Confirmada (verde) | ✕ Cancelada (rojo)    │
+├──────────────────────────────────────────────────────────────┤
+│  TAB: CONTACTOS                                              │
+│                                                              │
+│  Tabla: Nombre | Email + Teléfono | Mensaje | Fecha         │
+└──────────────────────────────────────────────────────────────┘
+```
+
+**Modal "Nueva / Editar Reserva":**
+```
+┌──────────────────────────────────────────────┐
+│  Nueva Reserva / Editar Reserva          [X] │
+├──────────────────────────────────────────────┤
+│  Habitación *                                │
+│  [Shared] [Private] [Large Private] [VIP]    │
+│                                              │
+│  Datos del huésped                           │
+│  Nombre *   [___________] Email *  [_______] │
+│  Teléfono * [___________] Cirujano*[_______] │
+│                                              │
+│  Fechas *                                    │
+│  Check-in [____] Check-out [____] Noches(auto│
+│                                              │
+│  Precios                                     │
+│  Huéspedes [_] Precio/noche[$__] Total[$___] │
+│                                    (auto)    │
+│                                              │
+│  Extras (checkboxes con precio)              │
+│  ☑ Lymphatic Massage          $60            │
+│  ☐ 5 Massages Package         $270           │
+│  ☐ Recovery Bra B01G          $80   ...      │
+│                                              │
+│  Código promocional                          │
+│  [CÓDIGO____] [ Aplicar ]                    │
+│  ← descuento % o fijo, con breakdown        │
+│                                              │
+│  Solicitudes especiales [________________]   │
+│                                              │
+│            [Cancelar] [Crear reserva]        │
+└──────────────────────────────────────────────┘
+```
+
+**Modal "Detalle de Reserva":**
+```
+┌──────────────────────────────────────────────┐
+│  #CONF-NUMBER                           [X]  │
+│  Nombre del huésped    [Editar] [Cancelar]   │
+├──────────────────────────────────────────────┤
+│  [✓ Confirmada] [🛏 Room] [🖥 Manual/🌐Web] │
+│                                              │
+│  Email / Teléfono / Cirujano / Solicitudes   │
+│                                              │
+│  [ Check-in ] | [ Noches ] | [ Check-out ]   │
+│                                              │
+│  Extras desglosados con precios              │
+│                                              │
+│  ┌──────────────────────────────────────┐    │
+│  │  Total: $X,XXX USD          (amber)  │    │
+│  └──────────────────────────────────────┘    │
+└──────────────────────────────────────────────┘
+```
+
+**Habitaciones disponibles:**
+
+| ID | Nombre | Precio base |
+|---|---|---|
+| `shared` | Shared Room | $170/noche |
+| `private` | Private Room | $180/noche |
+| `large-private` | Large Private Room | $200/noche |
+| `vip` | VIP Suite | $250/noche |
+
+**Extras disponibles:** Lymphatic Massage ($60), 5 Massages Package ($270), Recovery Bra B01G ($80), Open Bust Vest FVOM ($80), Reinforced Girdle SFBHRS ($140), Girdle High-Back SFBHS2 ($140).
+
 ---
 
 ## 11. Cuenta de Usuario `/dashboard/account`
@@ -485,6 +598,7 @@
 │               ├── /dashboard/webapp/calendar-monge
 │               ├── /dashboard/webapp/blogs
 │               ├── /dashboard/webapp/promo-palmas
+│               ├── /dashboard/webapp/calendario-palmas  ← NUEVO
 │               └── (admin only)
 │                   ├── /dashboard/create-client
 │                   ├── /dashboard/update-client
