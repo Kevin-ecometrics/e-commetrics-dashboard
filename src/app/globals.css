@@ -10,6 +10,8 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-serif: var(--font-instrument-serif);
+  --font-jetbrains: var(--font-jetbrains-mono);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -45,75 +47,152 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
+/* ============================================
+   E-commetrics Design Tokens — Light
+   ============================================ */
 :root {
   --radius: 0.65rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.141 0.005 285.823);
+
+  /* shadcn/ui base tokens */
+  --background: oklch(0.97 0.002 320);
+  --foreground: oklch(0.141 0.005 320);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.141 0.005 285.823);
+  --card-foreground: oklch(0.141 0.005 320);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.141 0.005 285.823);
-  --primary: oklch(0.623 0.214 259.815);
-  --primary-foreground: oklch(0.97 0.014 254.604);
-  --secondary: oklch(0.967 0.001 286.375);
-  --secondary-foreground: oklch(0.21 0.006 285.885);
-  --muted: oklch(0.967 0.001 286.375);
-  --muted-foreground: oklch(0.552 0.016 285.938);
-  --accent: oklch(0.967 0.001 286.375);
-  --accent-foreground: oklch(0.21 0.006 285.885);
+  --popover-foreground: oklch(0.141 0.005 320);
+  --primary: #BD155C;
+  --primary-foreground: oklch(0.97 0 0);
+  --secondary: oklch(0.967 0.001 320);
+  --secondary-foreground: oklch(0.21 0.006 320);
+  --muted: oklch(0.967 0.001 320);
+  --muted-foreground: oklch(0.552 0.016 320);
+  --accent: oklch(0.967 0.001 320);
+  --accent-foreground: oklch(0.21 0.006 320);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.92 0.004 286.32);
-  --input: oklch(0.92 0.004 286.32);
-  --ring: oklch(0.623 0.214 259.815);
+  --border: oklch(0.92 0.004 320);
+  --input: oklch(0.92 0.004 320);
+  --ring: #BD155C;
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
   --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.141 0.005 285.823);
-  --sidebar-primary: oklch(0.623 0.214 259.815);
-  --sidebar-primary-foreground: oklch(0.97 0.014 254.604);
-  --sidebar-accent: oklch(0.967 0.001 286.375);
-  --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
-  --sidebar-border: oklch(0.92 0.004 286.32);
-  --sidebar-ring: oklch(0.623 0.214 259.815);
+  --sidebar-foreground: oklch(0.141 0.005 320);
+  --sidebar-primary: #BD155C;
+  --sidebar-primary-foreground: oklch(0.97 0 0);
+  --sidebar-accent: oklch(0.967 0.001 320);
+  --sidebar-accent-foreground: oklch(0.21 0.006 320);
+  --sidebar-border: oklch(0.92 0.004 320);
+  --sidebar-ring: #BD155C;
+
+  /* E-commetrics editorial tokens — light */
+  --ec-bg-deep:    #F0EAEC;
+  --ec-bg:         #F7F2F4;
+  --ec-surface:    #FFFFFF;
+  --ec-surface-1:  #FFFFFF;
+  --ec-surface-2:  #F7F2F4;
+  --ec-surface-3:  #ECE4E7;
+  --ec-hairline:        rgba(20, 10, 15, 0.07);
+  --ec-hairline-strong: rgba(20, 10, 15, 0.14);
+  --ec-hairline-glow:   rgba(189, 21, 92, 0.35);
+  --ec-border:          rgba(20, 10, 15, 0.14);
+  --ec-text:       #1A0F14;
+  --ec-text-muted: #6B5560;
+  --ec-text-dim:   #8E7882;
+  --ec-text-faint: #BBA8B0;
+  --ec-brand:        #BD155C;
+  --ec-brand-soft:   rgba(189, 21, 92, 0.08);
+  --ec-brand-softer: rgba(189, 21, 92, 0.03);
+  --ec-brand-glow:   #BD155C;
+  --ec-brand-deep:   #7A0E3B;
+  --ec-brand-on:     #FFFFFF;
+  --ec-success:      #16A34A;
+  --ec-success-soft: rgba(22, 163, 74, 0.10);
+  --ec-warning:      #CA8A04;
+  --ec-warning-soft: rgba(202, 138, 4, 0.10);
+  --ec-danger:       #DC2626;
+  --ec-danger-soft:  rgba(220, 38, 38, 0.10);
+  --ec-info:         #2563EB;
+  --ec-info-soft:    rgba(37, 99, 235, 0.10);
+  --ec-shadow-sm: 0 1px 2px rgba(20,10,15,0.04);
+  --ec-shadow-md: 0 8px 24px -8px rgba(20,10,15,0.10), 0 2px 6px rgba(20,10,15,0.05);
+  --ec-shadow-lg: 0 32px 64px -16px rgba(20,10,15,0.15), 0 4px 12px rgba(20,10,15,0.08);
+  --ec-shadow-brand: 0 0 0 1px rgba(189,21,92,0.4), 0 8px 32px -8px rgba(189,21,92,0.35);
+  --ec-grid-line: rgba(20,10,15,0.04);
 }
 
+/* ============================================
+   E-commetrics Design Tokens — Dark
+   ============================================ */
 .dark {
-  --background: oklch(0.141 0.005 285.823);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.21 0.006 285.885);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.21 0.006 285.885);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.546 0.245 262.881);
-  --primary-foreground: oklch(0.379 0.146 265.522);
-  --secondary: oklch(0.274 0.006 286.033);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.274 0.006 286.033);
-  --muted-foreground: oklch(0.705 0.015 286.067);
-  --accent: oklch(0.274 0.006 286.033);
-  --accent-foreground: oklch(0.985 0 0);
+  --background: oklch(0.095 0.008 320);
+  --foreground: oklch(0.96 0.004 320);
+  --card: oklch(0.13 0.007 320);
+  --card-foreground: oklch(0.96 0.004 320);
+  --popover: oklch(0.13 0.007 320);
+  --popover-foreground: oklch(0.96 0.004 320);
+  --primary: #BD155C;
+  --primary-foreground: oklch(0.97 0 0);
+  --secondary: oklch(0.19 0.007 320);
+  --secondary-foreground: oklch(0.96 0.004 320);
+  --muted: oklch(0.19 0.007 320);
+  --muted-foreground: oklch(0.65 0.015 320);
+  --accent: oklch(0.19 0.007 320);
+  --accent-foreground: oklch(0.96 0.004 320);
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.488 0.243 264.376);
+  --border: oklch(1 0 0 / 8%);
+  --input: oklch(1 0 0 / 12%);
+  --ring: #BD155C;
   --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.769 0.188 70.08);
   --chart-4: oklch(0.627 0.265 303.9);
   --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.21 0.006 285.885);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(100% 0.00011 271.152);
-  --sidebar-primary-foreground: oklch(0.379 0.146 265.522);
-  --sidebar-accent: oklch(0.274 0.006 286.033);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.488 0.243 264.376);
-}
+  --sidebar: oklch(0.10 0.007 320);
+  --sidebar-foreground: oklch(0.96 0.004 320);
+  --sidebar-primary: #BD155C;
+  --sidebar-primary-foreground: oklch(0.97 0 0);
+  --sidebar-accent: oklch(0.19 0.007 320);
+  --sidebar-accent-foreground: oklch(0.96 0.004 320);
+  --sidebar-border: oklch(1 0 0 / 8%);
+  --sidebar-ring: #BD155C;
 
+  /* E-commetrics editorial tokens — dark */
+  --ec-bg-deep:    #0A070A;
+  --ec-bg:         #100B10;
+  --ec-surface:    rgba(22, 17, 22, 0.9);
+  --ec-surface-1:  #1A141A;
+  --ec-surface-2:  #221B22;
+  --ec-surface-3:  #2A222A;
+  --ec-hairline:        rgba(255, 240, 245, 0.06);
+  --ec-hairline-strong: rgba(255, 240, 245, 0.12);
+  --ec-hairline-glow:   rgba(189, 21, 92, 0.35);
+  --ec-border:          rgba(255, 240, 245, 0.12);
+  --ec-text:       #F5EEF1;
+  --ec-text-muted: #9D8D95;
+  --ec-text-dim:   #6B5961;
+  --ec-text-faint: #46383F;
+  --ec-brand:        #BD155C;
+  --ec-brand-soft:   rgba(189, 21, 92, 0.10);
+  --ec-brand-softer: rgba(189, 21, 92, 0.04);
+  --ec-brand-glow:   #E73B85;
+  --ec-brand-deep:   #7A0E3B;
+  --ec-brand-on:     #FFFFFF;
+  --ec-success:      #4ADE80;
+  --ec-success-soft: rgba(74, 222, 128, 0.12);
+  --ec-warning:      #F5B544;
+  --ec-warning-soft: rgba(245, 181, 68, 0.12);
+  --ec-danger:       #F87171;
+  --ec-danger-soft:  rgba(248, 113, 113, 0.12);
+  --ec-info:         #60A5FA;
+  --ec-info-soft:    rgba(96, 165, 250, 0.12);
+  --ec-shadow-sm: 0 1px 2px rgba(0,0,0,0.4);
+  --ec-shadow-md: 0 8px 24px -8px rgba(0,0,0,0.6), 0 2px 6px rgba(0,0,0,0.3);
+  --ec-shadow-lg: 0 32px 64px -16px rgba(0,0,0,0.7), 0 4px 12px rgba(0,0,0,0.4);
+  --ec-shadow-brand: 0 0 0 1px rgba(189,21,92,0.4), 0 8px 32px -8px rgba(189,21,92,0.4);
+  --ec-grid-line: rgba(255,255,255,0.025);
+}
 
 @layer base {
   * {
@@ -124,9 +203,432 @@
   }
 }
 
-.sidebar-expanded .sidebar-username {
-  display: block;
+/* ============================================
+   Typography utilities
+   ============================================ */
+.font-serif {
+  font-family: var(--font-instrument-serif), 'Cormorant Garamond', Georgia, serif;
+  font-weight: 400;
+  letter-spacing: -0.01em;
 }
-.sidebar-collapsed .sidebar-username {
-  display: none;
+
+.font-mono-ec {
+  font-family: var(--font-jetbrains-mono), var(--font-geist-mono), monospace;
+}
+
+.h-display {
+  font-family: var(--font-instrument-serif), serif;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+}
+
+.h-eyebrow {
+  font-family: var(--font-jetbrains-mono), var(--font-geist-mono), monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ec-text-dim);
+  font-weight: 500;
+}
+
+/* ============================================
+   Circuit grid background
+   ============================================ */
+.circuit-bg {
+  position: relative;
+}
+.circuit-bg::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(to right, var(--ec-grid-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--ec-grid-line) 1px, transparent 1px);
+  background-size: 56px 56px;
+  pointer-events: none;
+  z-index: 0;
+  mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+}
+.circuit-bg > * { position: relative; z-index: 1; }
+
+/* ============================================
+   Status dot (animated pulse)
+   ============================================ */
+.status-dot {
+  display: inline-block;
+  border-radius: 50%;
+  position: relative;
+  flex-shrink: 0;
+}
+.status-dot::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  background: inherit;
+  opacity: 0.3;
+  animation: ec-pulse 2s infinite;
+}
+@keyframes ec-pulse {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 0; transform: scale(1.8); }
+}
+
+/* ============================================
+   Progress bar
+   ============================================ */
+.ec-progress {
+  height: 6px;
+  background: var(--ec-surface-2);
+  border-radius: 999px;
+  overflow: hidden;
+  position: relative;
+}
+.ec-progress-bar {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 600ms cubic-bezier(.2,.7,.2,1);
+}
+.ec-progress-bar.success { background: linear-gradient(90deg, #22c55e, #4ade80); }
+.ec-progress-bar.warning { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+.ec-progress-bar.danger  { background: linear-gradient(90deg, #ef4444, #f87171); }
+.ec-progress-bar.brand   { background: linear-gradient(90deg, var(--ec-brand), var(--ec-brand-glow)); }
+
+/* ============================================
+   Project card
+   ============================================ */
+.ec-project-card {
+  background: var(--ec-surface-1);
+  border: 1px solid var(--ec-hairline-strong);
+  border-radius: 16px;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  cursor: pointer;
+  transition: all 220ms cubic-bezier(.2,.7,.2,1);
+  position: relative;
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+}
+.ec-project-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--ec-shadow-md);
+}
+.ec-project-card > * { position: relative; }
+
+/* ============================================
+   Stat tile
+   ============================================ */
+.ec-stat-tile {
+  display: flex;
+  flex-direction: column;
+  min-width: 92px;
+  padding: 10px 14px;
+  background: var(--ec-surface-1);
+  border: 1px solid var(--ec-hairline);
+  border-radius: 10px;
+  transition: all 200ms;
+}
+.ec-stat-tile-num {
+  font-family: var(--font-instrument-serif), serif;
+  font-size: 28px;
+  line-height: 1;
+  font-weight: 400;
+}
+.ec-stat-tile-label {
+  font-family: var(--font-jetbrains-mono), var(--font-geist-mono), monospace;
+  font-size: 9.5px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--ec-text-dim);
+  margin-top: 6px;
+}
+
+/* ============================================
+   Segmented control
+   ============================================ */
+.ec-segmented {
+  display: inline-flex;
+  background: var(--ec-surface-1);
+  border: 1px solid var(--ec-hairline);
+  padding: 3px;
+  border-radius: 10px;
+  gap: 2px;
+}
+.ec-segmented button {
+  padding: 6px 14px;
+  border-radius: 7px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--ec-text-muted);
+  transition: all 140ms;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+.ec-segmented button:hover { color: var(--ec-text); }
+.ec-segmented button.active {
+  background: var(--ec-surface-3);
+  color: var(--ec-text);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+/* ============================================
+   Badge
+   ============================================ */
+.ec-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+.ec-badge-success { background: var(--ec-success-soft); color: var(--ec-success); }
+.ec-badge-warning { background: var(--ec-warning-soft); color: var(--ec-warning); }
+.ec-badge-danger  { background: var(--ec-danger-soft);  color: var(--ec-danger); }
+.ec-badge-brand   { background: var(--ec-brand-soft);   color: var(--ec-brand); }
+.ec-badge-neutral {
+  background: var(--ec-surface-2);
+  color: var(--ec-text-muted);
+  box-shadow: inset 0 0 0 1px var(--ec-hairline);
+}
+.ec-badge-mono {
+  font-family: var(--font-jetbrains-mono), var(--font-geist-mono), monospace;
+  font-size: 10.5px;
+  padding: 4px 8px;
+}
+
+/* ============================================
+   Page header
+   ============================================ */
+.ec-page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 32px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--ec-hairline);
+}
+.ec-page-title {
+  font-family: var(--font-instrument-serif), serif;
+  font-size: 44px;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--ec-text);
+}
+.ec-page-subtitle {
+  margin-top: 10px;
+  color: var(--ec-text-muted);
+  font-size: 14px;
+  max-width: 60ch;
+}
+
+/* ============================================
+   Shared keyframes
+   ============================================ */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* ============================================
+   Fade in up animation
+   ============================================ */
+.fade-in-up {
+  animation: ec-fade-in-up 360ms cubic-bezier(.2,.7,.2,1) both;
+}
+@keyframes ec-fade-in-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* stagger for child elements */
+.stagger-children > *:nth-child(1) { animation: ec-fade-in-up 320ms cubic-bezier(.2,.7,.2,1) both 0ms; }
+.stagger-children > *:nth-child(2) { animation: ec-fade-in-up 320ms cubic-bezier(.2,.7,.2,1) both 60ms; }
+.stagger-children > *:nth-child(3) { animation: ec-fade-in-up 320ms cubic-bezier(.2,.7,.2,1) both 120ms; }
+.stagger-children > *:nth-child(4) { animation: ec-fade-in-up 320ms cubic-bezier(.2,.7,.2,1) both 180ms; }
+.stagger-children > *:nth-child(5) { animation: ec-fade-in-up 320ms cubic-bezier(.2,.7,.2,1) both 240ms; }
+.stagger-children > *:nth-child(6) { animation: ec-fade-in-up 320ms cubic-bezier(.2,.7,.2,1) both 300ms; }
+.stagger-children > *:nth-child(7) { animation: ec-fade-in-up 320ms cubic-bezier(.2,.7,.2,1) both 360ms; }
+.stagger-children > *:nth-child(8) { animation: ec-fade-in-up 320ms cubic-bezier(.2,.7,.2,1) both 420ms; }
+
+/* ============================================
+   Phase card (project detail)
+   ============================================ */
+.ec-phase-card {
+  background: var(--ec-surface-1);
+  border: 1px solid var(--ec-hairline-strong);
+  border-radius: 14px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  transition: all 200ms;
+  cursor: pointer;
+  text-align: left;
+}
+.ec-phase-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--ec-shadow-md);
+}
+
+/* ============================================
+   Entry screen — hero background
+   ============================================ */
+.hero-bg {
+  position: fixed; inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 75% 50%, rgba(189,21,92,0.35), transparent 60%),
+    radial-gradient(ellipse 50% 80% at 10% 90%, rgba(189,21,92,0.15), transparent 60%),
+    linear-gradient(135deg, #1A0A12 0%, #0A0508 100%);
+  z-index: 0;
+}
+.hero-grid {
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
+  background-size: 80px 80px;
+  mask-image: radial-gradient(ellipse at center, black 0%, transparent 70%);
+  -webkit-mask-image: radial-gradient(ellipse at center, black 0%, transparent 70%);
+}
+.entry-toggle-pill {
+  display: inline-flex;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 999px;
+  padding: 3px;
+}
+.entry-toggle-pill button {
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.55);
+  transition: all 140ms;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+.entry-toggle-pill button.active {
+  background: var(--ec-brand);
+  color: #fff;
+}
+.entry-icon-btn {
+  width: 32px; height: 32px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.55);
+  cursor: pointer;
+  transition: all 140ms;
+}
+.entry-icon-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
+
+/* ============================================
+   Sidebar legacy fixes
+   ============================================ */
+.sidebar-expanded .sidebar-username { display: block; }
+.sidebar-collapsed .sidebar-username { display: none; }
+
+/* ============================================
+   EC Buttons
+   ============================================ */
+.ec-btn-primary {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 10px 20px; border-radius: 10px; font-size: 14px; font-weight: 600;
+  font-family: var(--font-inter), var(--font-sans);
+  background: var(--ec-brand); color: #fff; border: none; cursor: pointer;
+  transition: opacity 150ms, transform 150ms, box-shadow 150ms;
+  box-shadow: 0 2px 8px rgba(189,21,92,0.25);
+}
+.ec-btn-primary:hover { opacity: 0.88; transform: translateY(-1px); }
+.ec-btn-primary:disabled { opacity: 0.45; cursor: not-allowed; transform: none; box-shadow: none; }
+
+.ec-btn-secondary {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 10px 20px; border-radius: 10px; font-size: 14px; font-weight: 500;
+  font-family: var(--font-inter), var(--font-sans);
+  background: var(--ec-surface-2); color: var(--ec-text);
+  border: 1px solid var(--ec-hairline-strong); cursor: pointer;
+  transition: background 150ms, transform 150ms;
+}
+.ec-btn-secondary:hover { background: var(--ec-surface-3); }
+.ec-btn-secondary:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.ec-btn-danger {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 10px 20px; border-radius: 10px; font-size: 14px; font-weight: 600;
+  font-family: var(--font-inter), var(--font-sans);
+  background: rgba(239,68,68,0.1); color: #ef4444;
+  border: 1px solid rgba(239,68,68,0.3); cursor: pointer;
+  transition: background 150ms;
+}
+.ec-btn-danger:hover { background: rgba(239,68,68,0.2); }
+.ec-btn-danger:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* ============================================
+   EC Form Fields
+   ============================================ */
+.ec-field-label {
+  display: block; font-size: 11px; font-weight: 600; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--ec-text-muted);
+  font-family: var(--font-jetbrains-mono), monospace;
+  margin-bottom: 6px;
+}
+
+.ec-field-input {
+  width: 100%; padding: 10px 14px; border-radius: 8px; font-size: 14px;
+  background: var(--ec-surface-2); color: var(--ec-text);
+  border: 1px solid var(--ec-hairline-strong);
+  font-family: var(--font-inter), var(--font-sans);
+  outline: none; transition: border-color 150ms, box-shadow 150ms;
+  appearance: none;
+}
+.ec-field-input:focus {
+  border-color: var(--ec-brand);
+  box-shadow: 0 0 0 3px rgba(189,21,92,0.12);
+}
+.ec-field-input::placeholder { color: var(--ec-text-muted); opacity: 0.7; }
+.ec-field-input option { background: var(--ec-surface-1); color: var(--ec-text); }
+
+/* ============================================
+   EC Table
+   ============================================ */
+.ec-table {
+  width: 100%; border-collapse: collapse; font-size: 13px;
+}
+.ec-table thead th {
+  padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 600;
+  letter-spacing: 0.07em; text-transform: uppercase; color: var(--ec-text-muted);
+  font-family: var(--font-jetbrains-mono), monospace;
+  border-bottom: 1px solid var(--ec-hairline);
+}
+.ec-table tbody td {
+  padding: 12px 14px; border-bottom: 1px solid var(--ec-hairline);
+  color: var(--ec-text);
+}
+.ec-table tbody tr:last-child td { border-bottom: none; }
+.ec-table tbody tr:hover td { background: var(--ec-surface-2); }
+.ec-table tbody tr.ec-table-selected td { background: rgba(189,21,92,0.06); }
+
+/* ============================================
+   EC Avatar Pill
+   ============================================ */
+.ec-avatar {
+  width: 32px; height: 32px; border-radius: 50%; display: inline-flex;
+  align-items: center; justify-content: center; font-size: 13px; font-weight: 700;
+  background: rgba(189,21,92,0.15); color: var(--ec-brand);
+  font-family: var(--font-inter), var(--font-sans);
+  flex-shrink: 0;
 }

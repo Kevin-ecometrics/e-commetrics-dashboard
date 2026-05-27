@@ -68,28 +68,13 @@ const ROOM_NAMES: Record<string, string> = {
   vip: "VIP Suite",
 };
 
-const ROOM_COLORS: Record<string, { bg: string; text: string; dot: string }> = {
-  private: {
-    bg: "bg-blue-100 dark:bg-blue-900/40",
-    text: "text-blue-700 dark:text-blue-300",
-    dot: "bg-blue-500",
-  },
-  shared: {
-    bg: "bg-emerald-100 dark:bg-emerald-900/40",
-    text: "text-emerald-700 dark:text-emerald-300",
-    dot: "bg-emerald-500",
-  },
-  "large-private": {
-    bg: "bg-purple-100 dark:bg-purple-900/40",
-    text: "text-purple-700 dark:text-purple-300",
-    dot: "bg-purple-500",
-  },
-  vip: {
-    bg: "bg-amber-100 dark:bg-amber-900/40",
-    text: "text-amber-700 dark:text-amber-300",
-    dot: "bg-amber-500",
-  },
+const ROOM_COLORS: Record<string, { bg: string; color: string; dot: string }> = {
+  private:       { bg: "rgba(59,130,246,0.1)",  color: "#3b82f6", dot: "#3b82f6" },
+  shared:        { bg: "rgba(16,185,129,0.1)",  color: "#10b981", dot: "#10b981" },
+  "large-private": { bg: "rgba(168,85,247,0.1)", color: "#a855f7", dot: "#a855f7" },
+  vip:           { bg: "rgba(245,158,11,0.1)",  color: "#f59e0b", dot: "#f59e0b" },
 };
+const DEFAULT_ROOM_COLOR = { bg: "rgba(100,116,139,0.1)", color: "#94a3b8", dot: "#94a3b8" };
 
 const ROOM_PRICES: Record<string, number> = {
   shared: 170,
@@ -160,14 +145,8 @@ function dateToInputStr(date: Date): string {
 function SourceBadge({ source }: { source?: string }) {
   const isManual = source === "dashboard";
   return (
-    <span
-      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
-        isManual
-          ? "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400"
-          : "bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400"
-      }`}
-    >
-      {isManual ? <Monitor className="h-3 w-3" /> : <Globe className="h-3 w-3" />}
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "2px 8px", borderRadius: 99, fontSize: 11, fontWeight: 500, background: isManual ? "rgba(168,85,247,0.12)" : "rgba(14,165,233,0.12)", color: isManual ? "#a855f7" : "#0ea5e9" }}>
+      {isManual ? <Monitor size={11} /> : <Globe size={11} />}
       {isManual ? "Manual" : "Sitio web"}
     </span>
   );
@@ -194,9 +173,7 @@ function FormField({
 }) {
   return (
     <div>
-      <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-        {label}
-      </label>
+      <label className="ec-field-label" style={{ marginBottom: 4, display: "block" }}>{label}</label>
       <input
         type={type}
         value={value}
@@ -204,11 +181,8 @@ function FormField({
         readOnly={readOnly}
         placeholder={placeholder}
         min={min}
-        className={`w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 ${
-          readOnly
-            ? "bg-gray-50 dark:bg-gray-800/50 cursor-default"
-            : "bg-white dark:bg-gray-800"
-        }`}
+        className="ec-field-input"
+        style={readOnly ? { cursor: "default", opacity: 0.7 } : undefined}
       />
     </div>
   );
@@ -466,64 +440,50 @@ function BookingFormModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+      style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.65)", padding: 16 }}
       onClick={onClose}
     >
       <div
-        className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+        className="ec-project-card"
+        style={{ borderRadius: 16, width: "100%", maxWidth: 680, maxHeight: "90vh", overflowY: "auto" }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between p-5 border-b border-gray-200 dark:border-gray-700 sticky top-0 bg-white dark:bg-gray-900 z-10 rounded-t-2xl">
-          <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 22px", borderBottom: "1px solid var(--ec-border)", position: "sticky", top: 0, background: "var(--ec-surface-1)", zIndex: 10, borderRadius: "16px 16px 0 0" }}>
+          <h2 className="font-serif" style={{ fontSize: 20, fontWeight: 400, color: "var(--ec-text)" }}>
             {isEdit ? "Editar Reserva" : "Nueva Reserva"}
           </h2>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+            style={{ padding: 6, borderRadius: 8, border: "none", background: "transparent", cursor: "pointer", color: "var(--ec-text-dim)" }}
+            className="hover:bg-[var(--ec-surface-2)]"
           >
-            <X className="h-4 w-4 text-gray-500" />
+            <X className="h-4 w-4" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-5 space-y-5">
           {/* Room */}
           <div>
-            <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
-              Habitación *
-            </label>
+            <label className="ec-field-label" style={{ marginBottom: 8, display: "block" }}>Habitación *</label>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              {Object.entries(ROOM_NAMES).map(([id, name]) => (
-                <button
-                  key={id}
-                  type="button"
-                  onClick={() => {
-                    setField("roomId", id);
-                    if (!isEdit) {
-                      setForm((f) => ({
-                        ...f,
-                        roomId: id,
-                        pricePerNight: String(ROOM_PRICES[id] ?? ""),
-                        manualTotal: false,
-                      }));
-                    }
-                  }}
-                  className={`p-2.5 rounded-lg border text-xs font-medium transition-colors text-center ${
-                    form.roomId === id
-                      ? `${ROOM_COLORS[id].bg} ${ROOM_COLORS[id].text} border-current`
-                      : "border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
-                  }`}
-                >
-                  {name}
-                </button>
-              ))}
+              {Object.entries(ROOM_NAMES).map(([id, name]) => {
+                const rc = ROOM_COLORS[id] ?? DEFAULT_ROOM_COLOR;
+                const isSelected = form.roomId === id;
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => { setField("roomId", id); if (!isEdit) setForm((f) => ({ ...f, roomId: id, pricePerNight: String(ROOM_PRICES[id] ?? ""), manualTotal: false })); }}
+                    style={{ padding: "10px 8px", borderRadius: 10, border: `2px solid ${isSelected ? rc.color : "var(--ec-border)"}`, background: isSelected ? rc.bg : "transparent", color: isSelected ? rc.color : "var(--ec-text-muted)", fontSize: 12, fontWeight: 500, cursor: "pointer", transition: "all 140ms", textAlign: "center" }}
+                  >{name}</button>
+                );
+              })}
             </div>
           </div>
 
           {/* Guest info */}
           <div>
-            <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
-              Datos del huésped
-            </label>
+            <label className="ec-field-label" style={{ marginBottom: 8, display: "block" }}>Datos del huésped</label>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <FormField
                 label="Nombre completo *"
@@ -555,9 +515,7 @@ function BookingFormModal({
 
           {/* Dates */}
           <div>
-            <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
-              Fechas *
-            </label>
+            <label className="ec-field-label" style={{ marginBottom: 8, display: "block" }}>Fechas *</label>
             <div className="grid grid-cols-3 gap-3">
               <FormField
                 label="Check-in"
@@ -585,194 +543,85 @@ function BookingFormModal({
 
           {/* Pricing */}
           <div>
-            <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
-              Precios
-            </label>
+            <label className="ec-field-label" style={{ marginBottom: 8, display: "block" }}>Precios</label>
             <div className="grid grid-cols-3 gap-3">
-              <FormField
-                label="Huéspedes"
-                type="number"
-                min="1"
-                value={form.guests}
-                onChange={(v) => setField("guests", v)}
-              />
-              <FormField
-                label="Precio / noche ($)"
-                type="number"
-                min="0"
-                value={form.pricePerNight}
-                onChange={(v) => {
-                  setField("pricePerNight", v);
-                  setField("manualTotal", false);
-                }}
-                placeholder="0"
-              />
+              <FormField label="Huéspedes" type="number" min="1" value={form.guests} onChange={(v) => setField("guests", v)} />
+              <FormField label="Precio / noche ($)" type="number" min="0" value={form.pricePerNight} onChange={(v) => { setField("pricePerNight", v); setField("manualTotal", false); }} placeholder="0" />
               <div>
-                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-                  Total ($){" "}
-                  {!form.manualTotal && (
-                    <span className="text-gray-400 font-normal">(auto)</span>
-                  )}
+                <label className="ec-field-label" style={{ marginBottom: 4, display: "block" }}>
+                  Total ($) {!form.manualTotal && <span style={{ fontWeight: 400, opacity: 0.6 }}>(auto)</span>}
                 </label>
-                <input
-                  type="number"
-                  min="0"
-                  value={form.total}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, total: e.target.value, manualTotal: true }))
-                  }
-                  className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
-                />
+                <input type="number" min="0" value={form.total} onChange={(e) => setForm((f) => ({ ...f, total: e.target.value, manualTotal: true }))} className="ec-field-input" />
               </div>
             </div>
           </div>
 
           {/* Extras */}
           <div>
-            <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
-              Extras
-            </label>
+            <label className="ec-field-label" style={{ marginBottom: 8, display: "block" }}>Extras</label>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {Object.entries(EXTRA_NAMES).map(([id, name]) => (
-                <label
-                  key={id}
-                  className={`flex items-center gap-2.5 p-2.5 rounded-lg border cursor-pointer transition-colors ${
-                    form.extras.includes(id)
-                      ? "bg-amber-50 border-amber-300 dark:bg-amber-900/20 dark:border-amber-700"
-                      : "border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
-                  }`}
-                >
-                  <input
-                    type="checkbox"
-                    checked={form.extras.includes(id)}
-                    onChange={() => toggleExtra(id)}
-                    className="rounded border-gray-300 accent-amber-500"
-                  />
-                  <span className="text-sm text-gray-700 dark:text-gray-300 flex-1 leading-tight">
-                    {name}
-                  </span>
-                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400 shrink-0">
-                    ${EXTRA_PRICES[id]}
-                  </span>
-                </label>
-              ))}
+              {Object.entries(EXTRA_NAMES).map(([id, name]) => {
+                const checked = form.extras.includes(id);
+                return (
+                  <label key={id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", borderRadius: 10, border: `1px solid ${checked ? "rgba(245,158,11,0.4)" : "var(--ec-border)"}`, background: checked ? "rgba(245,158,11,0.07)" : "transparent", cursor: "pointer", transition: "all 140ms" }}>
+                    <input type="checkbox" checked={checked} onChange={() => toggleExtra(id)} style={{ width: 16, height: 16, accentColor: "#f59e0b", cursor: "pointer", flexShrink: 0 }} />
+                    <span style={{ fontSize: 13, color: "var(--ec-text)", flex: 1, lineHeight: 1.3 }}>{name}</span>
+                    <span style={{ fontSize: 12, fontWeight: 500, color: "var(--ec-text-dim)", flexShrink: 0 }}>${EXTRA_PRICES[id]}</span>
+                  </label>
+                );
+              })}
             </div>
             {form.extras.length > 0 && (
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5 pl-1">
-                Subtotal extras:{" "}
-                <strong className="text-gray-700 dark:text-gray-300">${extrasTotal}</strong>
-              </p>
+              <p style={{ fontSize: 12, color: "var(--ec-text-dim)", marginTop: 6 }}>Subtotal extras: <strong style={{ color: "var(--ec-text)" }}>${extrasTotal}</strong></p>
             )}
           </div>
 
           {/* Promo code */}
           <div>
-            <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
-              Código promocional
-            </label>
+            <label className="ec-field-label" style={{ marginBottom: 8, display: "block" }}>Código promocional</label>
             {promoApplied ? (
-              <div className="flex items-center justify-between px-3 py-2.5 bg-emerald-50 border border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-800 rounded-lg">
-                <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                  <span className="font-mono font-semibold text-emerald-700 dark:text-emerald-400">
-                    {promoApplied.code}
-                  </span>
-                  <span className="text-emerald-600 dark:text-emerald-400">
-                    —{" "}
-                    {promoApplied.discount_type === "percentage"
-                      ? `${promoApplied.discount_value}% de descuento`
-                      : `$${promoApplied.discount_value} de descuento`}
-                  </span>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: 10 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13 }}>
+                  <CheckCircle size={14} style={{ color: "#10b981", flexShrink: 0 }} />
+                  <span style={{ fontFamily: "JetBrains Mono, monospace", fontWeight: 600, color: "#10b981" }}>{promoApplied.code}</span>
+                  <span style={{ color: "#10b981" }}>— {promoApplied.discount_type === "percentage" ? `${promoApplied.discount_value}% de descuento` : `$${promoApplied.discount_value} de descuento`}</span>
                 </div>
-                <button
-                  type="button"
-                  onClick={removePromo}
-                  className="p-1 rounded hover:bg-emerald-100 dark:hover:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
+                <button type="button" onClick={removePromo} style={{ padding: 4, background: "none", border: "none", cursor: "pointer", color: "#10b981", display: "flex" }}><X size={14} /></button>
               </div>
             ) : (
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={promoCode}
-                  onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
-                  onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), applyPromo())}
-                  placeholder="CÓDIGO"
-                  className="flex-1 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm font-mono uppercase focus:outline-none focus:ring-2 focus:ring-amber-500"
-                />
-                <button
-                  type="button"
-                  onClick={applyPromo}
-                  disabled={!promoCode.trim() || promoLoading}
-                  className="px-4 py-2 rounded-lg bg-gray-800 dark:bg-gray-200 hover:bg-gray-700 dark:hover:bg-gray-300 text-white dark:text-gray-900 text-sm font-medium disabled:opacity-40 flex items-center gap-1.5 transition-colors"
-                >
-                  {promoLoading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+              <div style={{ display: "flex", gap: 8 }}>
+                <input type="text" value={promoCode} onChange={(e) => setPromoCode(e.target.value.toUpperCase())} onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), applyPromo())} placeholder="CÓDIGO" className="ec-field-input" style={{ flex: 1, fontFamily: "JetBrains Mono, monospace", textTransform: "uppercase" }} />
+                <button type="button" onClick={applyPromo} disabled={!promoCode.trim() || promoLoading} className="ec-btn-secondary" style={{ padding: "8px 16px", opacity: !promoCode.trim() || promoLoading ? 0.5 : 1 }}>
+                  {promoLoading && <Loader2 size={13} className="animate-spin" />}
                   Aplicar
                 </button>
               </div>
             )}
             {promoError && (
-              <p className="flex items-center gap-1 text-xs text-red-600 dark:text-red-400 mt-1.5">
-                <XCircle className="h-3.5 w-3.5 shrink-0" />
-                {promoError}
+              <p style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "#ef4444", marginTop: 6 }}>
+                <XCircle size={12} style={{ flexShrink: 0 }} /> {promoError}
               </p>
             )}
-            {/* Discount breakdown */}
             {promoApplied && discountAmount > 0 && (
-              <div className="mt-2 space-y-1 px-1 text-sm border-t border-gray-100 dark:border-gray-800 pt-2">
-                <div className="flex justify-between text-gray-500 dark:text-gray-400">
-                  <span>Subtotal</span>
-                  <span>${baseTotal}</span>
-                </div>
-                <div className="flex justify-between text-emerald-600 dark:text-emerald-400">
-                  <span>
-                    Descuento (
-                    {promoApplied.discount_type === "percentage"
-                      ? `${promoApplied.discount_value}%`
-                      : `$${promoApplied.discount_value}`}
-                    )
-                  </span>
-                  <span>-${discountAmount}</span>
-                </div>
-                <div className="flex justify-between font-semibold text-gray-900 dark:text-white pt-1 border-t border-gray-200 dark:border-gray-700">
-                  <span>Total con descuento</span>
-                  <span>${autoTotal}</span>
-                </div>
+              <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid var(--ec-hairline)", display: "flex", flexDirection: "column", gap: 4, fontSize: 13 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", color: "var(--ec-text-muted)" }}><span>Subtotal</span><span>${baseTotal}</span></div>
+                <div style={{ display: "flex", justifyContent: "space-between", color: "#10b981" }}><span>Descuento ({promoApplied.discount_type === "percentage" ? `${promoApplied.discount_value}%` : `$${promoApplied.discount_value}`})</span><span>-${discountAmount}</span></div>
+                <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 600, color: "var(--ec-text)", paddingTop: 4, borderTop: "1px solid var(--ec-hairline)" }}><span>Total con descuento</span><span>${autoTotal}</span></div>
               </div>
             )}
           </div>
 
           {/* Special requests */}
           <div>
-            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-              Solicitudes especiales
-            </label>
-            <textarea
-              value={form.specialRequests}
-              onChange={(e) => setField("specialRequests", e.target.value)}
-              rows={2}
-              placeholder="Requerimientos especiales..."
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 resize-none"
-            />
+            <label className="ec-field-label" style={{ marginBottom: 4, display: "block" }}>Solicitudes especiales</label>
+            <textarea value={form.specialRequests} onChange={(e) => setField("specialRequests", e.target.value)} rows={2} placeholder="Requerimientos especiales..." className="ec-field-input" style={{ resize: "none" }} />
           </div>
 
           {/* Actions */}
-          <div className="flex gap-2 justify-end pt-2 border-t border-gray-100 dark:border-gray-800">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={submitting}
-              className="px-5 py-2 rounded-lg bg-amber-500 hover:bg-amber-600 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:cursor-not-allowed text-white text-sm font-medium transition-colors flex items-center gap-2"
-            >
-              {submitting && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+          <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", paddingTop: 12, borderTop: "1px solid var(--ec-hairline)" }}>
+            <button type="button" onClick={onClose} className="ec-btn-secondary" style={{ padding: "8px 16px" }}>Cancelar</button>
+            <button type="submit" disabled={submitting} className="ec-btn-primary" style={{ padding: "8px 20px", opacity: submitting ? 0.7 : 1 }}>
+              {submitting && <Loader2 size={13} className="animate-spin" />}
               {isEdit ? "Guardar cambios" : "Crear reserva"}
             </button>
           </div>
@@ -807,19 +656,20 @@ function BookingDetailModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+      style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.65)", padding: 16 }}
       onClick={onClose}
     >
       <div
-        className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
+        className="ec-project-card"
+        style={{ borderRadius: 16, width: "100%", maxWidth: 520, maxHeight: "90vh", overflowY: "auto" }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between p-5 border-b border-gray-200 dark:border-gray-700">
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 22px", borderBottom: "1px solid var(--ec-border)" }}>
           <div>
-            <p className="text-xs text-gray-500 dark:text-gray-400 font-mono">
+            <p style={{ fontSize: 11, color: "var(--ec-text-dim)", fontFamily: "var(--font-jetbrains-mono, monospace)", marginBottom: 2 }}>
               #{booking.confirmation_number}
             </p>
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+            <h2 className="font-serif" style={{ fontSize: 20, fontWeight: 400, color: "var(--ec-text)" }}>
               {booking.full_name}
             </h2>
           </div>
@@ -828,7 +678,8 @@ function BookingDetailModal({
               <>
                 <button
                   onClick={() => onEdit(booking)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 transition-colors"
+                  className="ec-btn-secondary"
+                  style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13 }}
                 >
                   <Pencil className="h-3.5 w-3.5" />
                   Editar
@@ -836,7 +687,8 @@ function BookingDetailModal({
                 <button
                   onClick={handleCancel}
                   disabled={cancelling}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/40 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800 transition-colors disabled:opacity-50"
+                  className="ec-btn-danger"
+                  style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13 }}
                 >
                   {cancelling ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -849,9 +701,10 @@ function BookingDetailModal({
             )}
             <button
               onClick={onClose}
-              className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+              style={{ padding: 6, borderRadius: 8, border: "none", background: "transparent", cursor: "pointer", color: "var(--ec-text-dim)" }}
+              className="hover:bg-[var(--ec-surface-2)]"
             >
-              <X className="h-4 w-4 text-gray-500" />
+              <X className="h-4 w-4" />
             </button>
           </div>
         </div>
@@ -859,20 +712,20 @@ function BookingDetailModal({
         <div className="p-5 space-y-4">
           <div className="flex items-center gap-2 flex-wrap">
             {booking.status === "confirmed" ? (
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "2px 10px", borderRadius: 99, fontSize: 12, fontWeight: 500, background: "rgba(16,185,129,0.12)", color: "#10b981" }}>
                 <CheckCircle className="h-3 w-3" /> Confirmada
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "2px 10px", borderRadius: 99, fontSize: 12, fontWeight: 500, background: "rgba(239,68,68,0.12)", color: "#ef4444" }}>
                 <XCircle className="h-3 w-3" /> Cancelada
               </span>
             )}
-            <span
-              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${ROOM_COLORS[booking.room_id]?.bg ?? "bg-gray-100"} ${ROOM_COLORS[booking.room_id]?.text ?? "text-gray-600"}`}
-            >
-              <BedDouble className="h-3 w-3" />
-              {ROOM_NAMES[booking.room_id] ?? booking.room_id}
-            </span>
+            {(() => { const rc = ROOM_COLORS[booking.room_id] ?? DEFAULT_ROOM_COLOR; return (
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "2px 10px", borderRadius: 99, fontSize: 12, fontWeight: 500, background: rc.bg, color: rc.color }}>
+                <BedDouble className="h-3 w-3" />
+                {ROOM_NAMES[booking.room_id] ?? booking.room_id}
+              </span>
+            ); })()}
             <SourceBadge source={booking.source} />
           </div>
 
@@ -885,25 +738,25 @@ function BookingDetailModal({
             )}
           </div>
 
-          <div className="grid grid-cols-3 gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-xl">
-            <div className="text-center">
-              <p className="text-xs text-gray-500 dark:text-gray-400">Check-in</p>
-              <p className="font-semibold text-gray-900 dark:text-white text-sm">
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, padding: 12, background: "var(--ec-surface-2)", borderRadius: 12 }}>
+            <div style={{ textAlign: "center" }}>
+              <p style={{ fontSize: 11, color: "var(--ec-text-dim)", marginBottom: 2 }}>Check-in</p>
+              <p style={{ fontWeight: 600, color: "var(--ec-text)", fontSize: 14 }}>
                 {parseDateLocal(booking.check_in.slice(0, 10)).toLocaleDateString("es-MX", {
                   day: "numeric",
                   month: "short",
                 })}
               </p>
             </div>
-            <div className="text-center border-x border-gray-200 dark:border-gray-700">
-              <p className="text-xs text-gray-500 dark:text-gray-400">Noches</p>
-              <p className="font-semibold text-gray-900 dark:text-white text-sm">
+            <div style={{ textAlign: "center", borderLeft: "1px solid var(--ec-border)", borderRight: "1px solid var(--ec-border)" }}>
+              <p style={{ fontSize: 11, color: "var(--ec-text-dim)", marginBottom: 2 }}>Noches</p>
+              <p style={{ fontWeight: 600, color: "var(--ec-text)", fontSize: 14 }}>
                 {booking.nights}
               </p>
             </div>
-            <div className="text-center">
-              <p className="text-xs text-gray-500 dark:text-gray-400">Check-out</p>
-              <p className="font-semibold text-gray-900 dark:text-white text-sm">
+            <div style={{ textAlign: "center" }}>
+              <p style={{ fontSize: 11, color: "var(--ec-text-dim)", marginBottom: 2 }}>Check-out</p>
+              <p style={{ fontWeight: 600, color: "var(--ec-text)", fontSize: 14 }}>
                 {parseDateLocal(booking.check_out.slice(0, 10)).toLocaleDateString("es-MX", {
                   day: "numeric",
                   month: "short",
@@ -914,34 +767,24 @@ function BookingDetailModal({
 
           {booking.extras.length > 0 && (
             <div>
-              <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
-                Extras
-              </p>
-              <div className="space-y-1.5">
+              <p className="h-eyebrow" style={{ fontSize: 10, marginBottom: 8 }}>Extras</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                 {booking.extras.map((e) => (
-                  <div
-                    key={e}
-                    className="flex items-center justify-between px-3 py-2 bg-gray-50 dark:bg-gray-800 rounded-lg text-sm"
-                  >
-                    <span className="text-gray-700 dark:text-gray-300">{EXTRA_NAMES[e] ?? e}</span>
-                    <span className="font-medium text-gray-900 dark:text-white">
-                      ${EXTRA_PRICES[e] ?? 0}
-                    </span>
+                  <div key={e} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 12px", background: "var(--ec-surface-2)", borderRadius: 8, fontSize: 13 }}>
+                    <span style={{ color: "var(--ec-text-muted)" }}>{EXTRA_NAMES[e] ?? e}</span>
+                    <span style={{ fontWeight: 500, color: "var(--ec-text)" }}>${EXTRA_PRICES[e] ?? 0}</span>
                   </div>
                 ))}
-                <div className="flex items-center justify-between px-3 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
-                  <span>Subtotal extras</span>
-                  <span>${extrasTotal}</span>
+                <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 12px", fontSize: 13, fontWeight: 600, color: "var(--ec-text)" }}>
+                  <span>Subtotal extras</span><span>${extrasTotal}</span>
                 </div>
               </div>
             </div>
           )}
 
-          <div className="flex items-center justify-between px-4 py-3 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-200 dark:border-amber-800">
-            <span className="font-semibold text-amber-800 dark:text-amber-300">Total</span>
-            <span className="text-xl font-bold text-amber-800 dark:text-amber-300">
-              ${booking.total} USD
-            </span>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.3)", borderRadius: 12 }}>
+            <span style={{ fontWeight: 600, color: "#f59e0b" }}>Total</span>
+            <span style={{ fontSize: 20, fontWeight: 700, color: "#f59e0b" }}>${booking.total} USD</span>
           </div>
         </div>
       </div>
@@ -949,18 +792,12 @@ function BookingDetailModal({
   );
 }
 
-function DetailRow({
-  label,
-  value,
-}: {
-  label: string;
-  value: string | number | null | undefined;
-}) {
+function DetailRow({ label, value }: { label: string; value: string | number | null | undefined }) {
   if (!value) return null;
   return (
-    <div className="flex gap-2 text-sm">
-      <span className="text-gray-500 dark:text-gray-400 min-w-[90px] shrink-0">{label}</span>
-      <span className="text-gray-900 dark:text-white break-all">{value}</span>
+    <div style={{ display: "flex", gap: 8, fontSize: 13 }}>
+      <span style={{ color: "var(--ec-text-muted)", minWidth: 90, flexShrink: 0 }}>{label}</span>
+      <span style={{ color: "var(--ec-text)", wordBreak: "break-all" }}>{value}</span>
     </div>
   );
 }
@@ -1036,158 +873,85 @@ function CalendarView({
     d.getMonth() === selectedDay.getMonth() &&
     d.getFullYear() === selectedDay.getFullYear();
 
-  // Day cell background based on filter
-  const dayCellClass = (day: Date, selected: boolean, todayMark: boolean): string => {
-    const base = "relative rounded-lg p-1 min-h-[52px] flex flex-col items-center gap-0.5 transition-colors w-full";
-
-    if (selected) {
-      return `${base} bg-amber-100 dark:bg-amber-900/40 ring-2 ring-amber-500${todayMark ? " ring-offset-1" : ""}`;
-    }
-
+  // Day cell inline style based on filter
+  const dayCellStyle = (day: Date, selected: boolean, todayMark: boolean): React.CSSProperties => {
+    const base: React.CSSProperties = { position: "relative", borderRadius: 8, padding: 4, minHeight: 52, display: "flex", flexDirection: "column", alignItems: "center", gap: 2, transition: "background 140ms", width: "100%", border: "none", cursor: "pointer" };
+    if (selected) return { ...base, background: "rgba(245,158,11,0.15)", outline: `2px solid #f59e0b` };
     if (roomFilter) {
       const booked = isRoomBooked(roomFilter, day);
-      if (booked) {
-        return `${base} bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30${todayMark ? " ring-1 ring-red-400" : ""}`;
-      }
-      return `${base} bg-emerald-50/60 dark:bg-emerald-900/10 hover:bg-emerald-100/60 dark:hover:bg-emerald-900/20${todayMark ? " ring-1 ring-emerald-400" : ""}`;
+      if (booked) return { ...base, background: todayMark ? "rgba(239,68,68,0.12)" : "rgba(239,68,68,0.07)" };
+      return { ...base, background: todayMark ? "rgba(16,185,129,0.12)" : "rgba(16,185,129,0.05)" };
     }
-
-    // No filter: show red tint only if ALL rooms fully booked
     const fully = isFullyBooked(day);
-    if (fully) {
-      return `${base} bg-red-50/70 dark:bg-red-900/10 hover:bg-red-100/70 dark:hover:bg-red-900/20${todayMark ? " ring-1 ring-gray-400" : ""}`;
-    }
-    return `${base} hover:bg-gray-50 dark:hover:bg-gray-800${todayMark ? " ring-1 ring-gray-400 dark:ring-gray-500" : ""}`;
+    if (fully) return { ...base, background: "rgba(239,68,68,0.06)" };
+    return { ...base, background: "transparent" };
   };
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
       {/* calendar grid */}
-      <div className="lg:col-span-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
+      <div className="lg:col-span-2 ec-project-card" style={{ padding: "16px 20px", borderRadius: 14 }}>
         {/* month nav */}
-        <div className="flex items-center justify-between mb-3">
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
           <button
             onClick={prevMonth}
-            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+            style={{ padding: "6px 8px", borderRadius: 8, background: "var(--ec-surface-2)", border: "1px solid var(--ec-border)", color: "var(--ec-text)", cursor: "pointer", display: "flex" }}
           >
-            <ChevronLeft className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+            <ChevronLeft className="h-4 w-4" />
           </button>
-          <h3 className="font-semibold text-gray-900 dark:text-white capitalize">{monthName}</h3>
+          <h3 className="font-serif" style={{ fontSize: 18, fontWeight: 400, color: "var(--ec-text)", textTransform: "capitalize" }}>{monthName}</h3>
           <button
             onClick={nextMonth}
-            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+            style={{ padding: "6px 8px", borderRadius: 8, background: "var(--ec-surface-2)", border: "1px solid var(--ec-border)", color: "var(--ec-text)", cursor: "pointer", display: "flex" }}
           >
-            <ChevronRight className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+            <ChevronRight className="h-4 w-4" />
           </button>
         </div>
 
         {/* room filter */}
-        <div className="flex flex-wrap gap-1.5 mb-3 pb-3 border-b border-gray-100 dark:border-gray-800">
-          <button
-            onClick={() => setRoomFilter("")}
-            className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${
-              roomFilter === ""
-                ? "bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900"
-                : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
-            }`}
-          >
-            Todas
-          </button>
-          {Object.entries(ROOM_NAMES).map(([id, name]) => (
-            <button
-              key={id}
-              onClick={() => setRoomFilter(roomFilter === id ? "" : id)}
-              className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${
-                roomFilter === id
-                  ? `${ROOM_COLORS[id].bg} ${ROOM_COLORS[id].text}`
-                  : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
-              }`}
-            >
-              {name}
-            </button>
-          ))}
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12, paddingBottom: 12, borderBottom: "1px solid var(--ec-hairline)" }}>
+          <button onClick={() => setRoomFilter("")} style={{ padding: "4px 10px", borderRadius: 8, fontSize: 12, fontWeight: 500, cursor: "pointer", transition: "all 140ms", background: roomFilter === "" ? "var(--ec-brand)" : "var(--ec-surface-2)", color: roomFilter === "" ? "white" : "var(--ec-text-muted)", border: "1px solid var(--ec-border)" }}>Todas</button>
+          {Object.entries(ROOM_NAMES).map(([id, name]) => {
+            const rc = ROOM_COLORS[id] ?? DEFAULT_ROOM_COLOR;
+            const active = roomFilter === id;
+            return <button key={id} onClick={() => setRoomFilter(roomFilter === id ? "" : id)} style={{ padding: "4px 10px", borderRadius: 8, fontSize: 12, fontWeight: 500, cursor: "pointer", transition: "all 140ms", background: active ? rc.bg : "var(--ec-surface-2)", color: active ? rc.color : "var(--ec-text-muted)", border: `1px solid ${active ? rc.color : "var(--ec-border)"}` }}>{name}</button>;
+          })}
         </div>
 
         {/* availability legend when filter active */}
         {roomFilter && (
-          <div className="flex items-center gap-4 mb-3 text-xs text-gray-500 dark:text-gray-400">
-            <div className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded bg-red-100 dark:bg-red-900/40 border border-red-200 dark:border-red-800" />
-              Ocupado
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded bg-emerald-100/60 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800" />
-              Disponible
-            </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 10, fontSize: 12, color: "var(--ec-text-dim)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}><span style={{ width: 12, height: 12, borderRadius: 4, background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.3)", display: "inline-block" }} />Ocupado</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}><span style={{ width: 12, height: 12, borderRadius: 4, background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.25)", display: "inline-block" }} />Disponible</div>
           </div>
         )}
 
         {/* weekday headers */}
-        <div className="grid grid-cols-7 mb-1">
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", marginBottom: 4 }}>
           {["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"].map((d) => (
-            <div
-              key={d}
-              className="text-center text-xs font-medium text-gray-400 dark:text-gray-500 py-1"
-            >
-              {d}
-            </div>
+            <div key={d} style={{ textAlign: "center", fontSize: 11, fontWeight: 500, color: "var(--ec-text-dim)", padding: "4px 0", fontFamily: "JetBrains Mono, monospace" }}>{d}</div>
           ))}
         </div>
 
         {/* day cells */}
-        <div className="grid grid-cols-7 gap-0.5">
-          {Array.from({ length: firstDayOfWeek }).map((_, i) => (
-            <div key={`pad-${i}`} />
-          ))}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: 2 }}>
+          {Array.from({ length: firstDayOfWeek }).map((_, i) => <div key={`pad-${i}`} />)}
           {days.map((day) => {
             const confirmedRooms = confirmedRoomsOnDay(day);
             const cancelledRooms = cancelledRoomsOnDay(day);
             const selected = isSelected(day);
             const todayMark = isToday(day);
             const bookedByFilter = roomFilter ? isRoomBooked(roomFilter, day) : false;
-
             return (
-              <button
-                key={day.toISOString()}
-                onClick={() => setSelectedDay(selected ? null : day)}
-                className={dayCellClass(day, selected, todayMark)}
-              >
-                <span
-                  className={`text-xs font-medium w-5 h-5 flex items-center justify-center rounded-full ${
-                    todayMark
-                      ? "bg-amber-500 text-white"
-                      : "text-gray-700 dark:text-gray-300"
-                  }`}
-                >
-                  {day.getDate()}
-                </span>
-
-                {/* dots — hide when filter active, replaced by background color */}
+              <button key={day.toISOString()} onClick={() => setSelectedDay(selected ? null : day)} style={dayCellStyle(day, selected, todayMark)}>
+                <span style={{ fontSize: 12, fontWeight: 500, width: 20, height: 20, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%", background: todayMark ? "#f59e0b" : "transparent", color: todayMark ? "white" : "var(--ec-text)" }}>{day.getDate()}</span>
                 {!roomFilter && (
-                  <div className="flex flex-wrap gap-0.5 justify-center">
-                    {[...new Set(confirmedRooms)].map((roomId) => (
-                      <span
-                        key={roomId}
-                        className={`w-2 h-2 rounded-full ${ROOM_COLORS[roomId]?.dot ?? "bg-gray-400"}`}
-                        title={ROOM_NAMES[roomId] ?? roomId}
-                      />
-                    ))}
-                    {[...new Set(cancelledRooms)].map((roomId) => (
-                      <span
-                        key={`c-${roomId}`}
-                        className="w-2 h-2 rounded-full bg-gray-300 dark:bg-gray-600"
-                        title={`${ROOM_NAMES[roomId] ?? roomId} (cancelada)`}
-                      />
-                    ))}
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 2, justifyContent: "center" }}>
+                    {[...new Set(confirmedRooms)].map((roomId) => <span key={roomId} style={{ width: 6, height: 6, borderRadius: "50%", background: (ROOM_COLORS[roomId] ?? DEFAULT_ROOM_COLOR).dot, display: "inline-block" }} title={ROOM_NAMES[roomId] ?? roomId} />)}
+                    {[...new Set(cancelledRooms)].map((roomId) => <span key={`c-${roomId}`} style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--ec-text-dim)", display: "inline-block", opacity: 0.4 }} title={`${ROOM_NAMES[roomId] ?? roomId} (cancelada)`} />)}
                   </div>
                 )}
-
-                {/* icon when filter active */}
-                {roomFilter && (
-                  <span className="text-[9px] leading-none mt-0.5">
-                    {bookedByFilter ? "✕" : "✓"}
-                  </span>
-                )}
+                {roomFilter && <span style={{ fontSize: 9, marginTop: 2, color: bookedByFilter ? "#ef4444" : "#10b981" }}>{bookedByFilter ? "✕" : "✓"}</span>}
               </button>
             );
           })}
@@ -1195,123 +959,57 @@ function CalendarView({
 
         {/* legend */}
         {!roomFilter && (
-          <div className="mt-4 pt-3 border-t border-gray-100 dark:border-gray-800 flex flex-wrap gap-3">
-            {Object.entries(ROOM_NAMES).map(([id, name]) => (
-              <div
-                key={id}
-                className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400"
-              >
-                <span className={`w-2.5 h-2.5 rounded-full ${ROOM_COLORS[id]?.dot ?? "bg-gray-400"}`} />
-                {name}
-              </div>
-            ))}
-            <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
-              <span className="w-2.5 h-2.5 rounded-full bg-gray-300 dark:bg-gray-600" />
-              Cancelada
-            </div>
-            <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
-              <span className="w-2.5 h-2.5 rounded bg-red-200 dark:bg-red-900/50" />
-              Todo ocupado
-            </div>
+          <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px solid var(--ec-hairline)", display: "flex", flexWrap: "wrap", gap: 10 }}>
+            {Object.entries(ROOM_NAMES).map(([id, name]) => {
+              const rc = ROOM_COLORS[id] ?? DEFAULT_ROOM_COLOR;
+              return <div key={id} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, color: "var(--ec-text-dim)" }}><span style={{ width: 8, height: 8, borderRadius: "50%", background: rc.dot, display: "inline-block" }} />{name}</div>;
+            })}
+            <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, color: "var(--ec-text-dim)" }}><span style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--ec-text-dim)", opacity: 0.4, display: "inline-block" }} />Cancelada</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, color: "var(--ec-text-dim)" }}><span style={{ width: 8, height: 8, borderRadius: 2, background: "rgba(239,68,68,0.3)", display: "inline-block" }} />Todo ocupado</div>
           </div>
         )}
       </div>
 
       {/* side panel */}
-      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
+      <div className="ec-project-card" style={{ padding: "16px 18px", borderRadius: 14 }}>
         {selectedDay ? (
           <>
-            <div className="flex items-start justify-between mb-3 gap-2">
-              <h3 className="font-semibold text-gray-900 dark:text-white capitalize text-sm">
-                {selectedDay.toLocaleDateString("es-MX", {
-                  weekday: "long",
-                  day: "numeric",
-                  month: "long",
-                })}
+            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 12, gap: 8 }}>
+              <h3 style={{ fontSize: 14, fontWeight: 600, color: "var(--ec-text)", textTransform: "capitalize" }}>
+                {selectedDay.toLocaleDateString("es-MX", { weekday: "long", day: "numeric", month: "long" })}
               </h3>
               {selectedDay >= new Date(new Date().setHours(0, 0, 0, 0)) && (
-                <button
-                  onClick={() => onCreateForDay(dateToInputStr(selectedDay), roomFilter || undefined)}
-                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-xs font-medium transition-colors shrink-0"
-                >
-                  <Plus className="h-3 w-3" />
-                  Nueva
+                <button onClick={() => onCreateForDay(dateToInputStr(selectedDay), roomFilter || undefined)} style={{ display: "flex", alignItems: "center", gap: 4, padding: "5px 10px", borderRadius: 8, background: "#f59e0b", color: "white", fontSize: 12, fontWeight: 500, border: "none", cursor: "pointer", flexShrink: 0 }}>
+                  <Plus size={12} />Nueva
                 </button>
               )}
             </div>
 
-            {/* availability summary per room when filter active */}
             {roomFilter && (
-              <div
-                className={`mb-3 flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium border ${
-                  isRoomBooked(roomFilter, selectedDay)
-                    ? "bg-red-50 border-red-200 text-red-700 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400"
-                    : "bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-900/20 dark:border-emerald-800 dark:text-emerald-400"
-                }`}
-              >
-                {isRoomBooked(roomFilter, selectedDay) ? (
-                  <>
-                    <XCircle className="h-3.5 w-3.5 shrink-0" />
-                    {ROOM_NAMES[roomFilter]} — Ocupado
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle className="h-3.5 w-3.5 shrink-0" />
-                    {ROOM_NAMES[roomFilter]} — Disponible
-                  </>
-                )}
+              <div style={{ marginBottom: 10, display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 8, fontSize: 12, fontWeight: 500, background: isRoomBooked(roomFilter, selectedDay) ? "rgba(239,68,68,0.08)" : "rgba(16,185,129,0.08)", border: `1px solid ${isRoomBooked(roomFilter, selectedDay) ? "rgba(239,68,68,0.3)" : "rgba(16,185,129,0.3)"}`, color: isRoomBooked(roomFilter, selectedDay) ? "#ef4444" : "#10b981" }}>
+                {isRoomBooked(roomFilter, selectedDay) ? <><XCircle size={13} style={{ flexShrink: 0 }} />{ROOM_NAMES[roomFilter]} — Ocupado</> : <><CheckCircle size={13} style={{ flexShrink: 0 }} />{ROOM_NAMES[roomFilter]} — Disponible</>}
               </div>
             )}
 
             {bookingsForSelected.length === 0 ? (
-              <p className="text-sm text-gray-500 dark:text-gray-400">Sin reservas este día.</p>
+              <p style={{ fontSize: 13, color: "var(--ec-text-dim)" }}>Sin reservas este día.</p>
             ) : (
-              <div className="space-y-2">
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 {bookingsForSelected.map((b) => {
                   const isCancelled = b.status === "cancelled";
+                  const rc = ROOM_COLORS[b.room_id] ?? DEFAULT_ROOM_COLOR;
                   return (
-                    <div
-                      key={b.id}
-                      className={`p-3 rounded-lg border ${
-                        isCancelled
-                          ? "bg-gray-50 dark:bg-gray-800/40 border-gray-200 dark:border-gray-700 opacity-70"
-                          : `${ROOM_COLORS[b.room_id]?.bg ?? "bg-gray-50"} border-transparent`
-                      }`}
-                    >
-                      <div className="flex items-center justify-between mb-1">
-                        <p
-                          className={`text-xs font-semibold ${
-                            isCancelled
-                              ? "text-gray-400 dark:text-gray-500"
-                              : ROOM_COLORS[b.room_id]?.text ?? "text-gray-600"
-                          }`}
-                        >
-                          {ROOM_NAMES[b.room_id] ?? b.room_id}
-                        </p>
-                        <div className="flex items-center gap-1">
-                          {isCancelled && (
-                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400">
-                              <XCircle className="h-2.5 w-2.5" /> Cancelada
-                            </span>
-                          )}
+                    <div key={b.id} style={{ padding: "10px 12px", borderRadius: 10, border: "1px solid var(--ec-border)", background: isCancelled ? "var(--ec-surface-1)" : rc.bg, opacity: isCancelled ? 0.7 : 1 }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+                        <p style={{ fontSize: 12, fontWeight: 600, color: isCancelled ? "var(--ec-text-dim)" : rc.color }}>{ROOM_NAMES[b.room_id] ?? b.room_id}</p>
+                        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                          {isCancelled && <span style={{ display: "inline-flex", alignItems: "center", gap: 3, padding: "1px 6px", borderRadius: 99, fontSize: 11, fontWeight: 500, background: "rgba(239,68,68,0.1)", color: "#ef4444" }}><XCircle size={10} />Cancelada</span>}
                           <SourceBadge source={b.source} />
                         </div>
                       </div>
-                      <p className={`text-sm font-medium ${isCancelled ? "line-through text-gray-400 dark:text-gray-500" : "text-gray-900 dark:text-white"}`}>
-                        {b.full_name}
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {parseDateLocal(b.check_in.slice(0, 10)).toLocaleDateString("es-MX", {
-                          day: "numeric",
-                          month: "short",
-                        })}
-                        {" → "}
-                        {parseDateLocal(b.check_out.slice(0, 10)).toLocaleDateString("es-MX", {
-                          day: "numeric",
-                          month: "short",
-                        })}
-                        {" · "}
-                        {b.nights}n
+                      <p style={{ fontSize: 13, fontWeight: 500, color: "var(--ec-text)", textDecoration: isCancelled ? "line-through" : "none" }}>{b.full_name}</p>
+                      <p style={{ fontSize: 12, color: "var(--ec-text-dim)" }}>
+                        {parseDateLocal(b.check_in.slice(0, 10)).toLocaleDateString("es-MX", { day: "numeric", month: "short" })} → {parseDateLocal(b.check_out.slice(0, 10)).toLocaleDateString("es-MX", { day: "numeric", month: "short" })} · {b.nights}n
                       </p>
                     </div>
                   );
@@ -1320,11 +1018,9 @@ function CalendarView({
             )}
           </>
         ) : (
-          <div className="flex flex-col items-center justify-center h-full min-h-[160px] text-center gap-2">
-            <Calendar className="h-8 w-8 text-gray-300 dark:text-gray-600" />
-            <p className="text-sm text-gray-400 dark:text-gray-500">
-              Selecciona un día para ver las reservas
-            </p>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: 160, textAlign: "center", gap: 8 }}>
+            <Calendar size={32} style={{ color: "var(--ec-text-dim)" }} />
+            <p style={{ fontSize: 13, color: "var(--ec-text-dim)" }}>Selecciona un día para ver las reservas</p>
           </div>
         )}
       </div>
@@ -1336,21 +1032,21 @@ function CalendarView({
 
 function StatCard({
   icon,
-  iconBg,
+  iconStyle,
   label,
   value,
 }: {
   icon: React.ReactNode;
-  iconBg: string;
+  iconStyle: React.CSSProperties;
   label: string;
   value: string | number;
 }) {
   return (
-    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-4 flex items-center gap-3">
-      <div className={`p-2 ${iconBg} rounded-lg shrink-0`}>{icon}</div>
+    <div className="ec-project-card" style={{ padding: "14px 18px", borderRadius: 12, display: "flex", alignItems: "center", gap: 12 }}>
+      <div style={{ padding: 8, borderRadius: 8, flexShrink: 0, ...iconStyle }}>{icon}</div>
       <div>
-        <p className="text-xs text-gray-500 dark:text-gray-400">{label}</p>
-        <p className="text-2xl font-bold text-gray-900 dark:text-white">{value}</p>
+        <p className="h-eyebrow" style={{ fontSize: 10, marginBottom: 2 }}>{label}</p>
+        <p className="font-serif" style={{ fontSize: 26, color: "var(--ec-text)" }}>{value}</p>
       </div>
     </div>
   );
@@ -1366,12 +1062,10 @@ function EmptyState({
   desc: string;
 }) {
   return (
-    <div className="text-center py-20">
-      <div className="p-4 bg-gray-100 dark:bg-gray-800 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-        {icon}
-      </div>
-      <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-1">{title}</h3>
-      <p className="text-gray-500 dark:text-gray-400">{desc}</p>
+    <div style={{ textAlign: "center", padding: "60px 0" }}>
+      <div style={{ padding: 16, background: "var(--ec-surface-2)", borderRadius: "50%", width: 64, height: 64, margin: "0 auto 16px", display: "flex", alignItems: "center", justifyContent: "center" }}>{icon}</div>
+      <h3 style={{ fontSize: 16, fontWeight: 500, color: "var(--ec-text)", marginBottom: 4 }}>{title}</h3>
+      <p style={{ fontSize: 14, color: "var(--ec-text-dim)" }}>{desc}</p>
     </div>
   );
 }
@@ -1468,13 +1162,13 @@ export default function CalendarioPalmasPage() {
   const getStatusBadge = (status: string) => {
     if (status === "confirmed") {
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "2px 10px", borderRadius: 99, fontSize: 12, fontWeight: 500, background: "rgba(16,185,129,0.12)", color: "#10b981" }}>
           <CheckCircle className="h-3 w-3" /> Confirmada
         </span>
       );
     }
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
+      <span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "2px 10px", borderRadius: 99, fontSize: 12, fontWeight: 500, background: "rgba(239,68,68,0.12)", color: "#ef4444" }}>
         <XCircle className="h-3 w-3" /> Cancelada
       </span>
     );
@@ -1487,7 +1181,7 @@ export default function CalendarioPalmasPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-white dark:bg-black p-6">
+    <div className="fade-in-up" style={{ padding: "28px 24px" }}>
       <Toaster />
 
       {/* Detail modal */}
@@ -1511,39 +1205,32 @@ export default function CalendarioPalmasPage() {
         />
       )}
 
-      <div className="max-w-6xl mx-auto">
+      <div style={{ maxWidth: 1200, margin: "0 auto" }}>
         {/* Header */}
-        <div className="mb-8 flex items-center justify-between flex-wrap gap-4">
+        <div style={{ marginBottom: 28, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 16 }}>
           <div>
-            <div className="flex items-center gap-3 mb-1">
-              <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
-                <CalendarClock className="h-6 w-6 text-amber-600 dark:text-amber-400" />
-              </div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                Calendario Palmas
-              </h1>
-            </div>
-            <p className="text-gray-500 dark:text-gray-400 ml-1">
+            <div className="h-eyebrow" style={{ marginBottom: 6 }}>⎯⎯⎯  PALMAS RECOVERY</div>
+            <h1 className="font-serif" style={{ fontSize: 36, fontWeight: 400, lineHeight: 1, letterSpacing: "-0.025em", color: "var(--ec-text)", marginBottom: 6 }}>
+              Calendario Palmas
+            </h1>
+            <p style={{ color: "var(--ec-text-dim)", fontSize: 13 }}>
               Panel de reservas y contactos · Palmas Recovery
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium transition-colors"
+              style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 16px", borderRadius: 10, background: "#F59E0B", color: "white", fontSize: 14, fontWeight: 600, border: 0, cursor: "pointer" }}
             >
               <Plus className="h-4 w-4" />
               Nueva Reserva
             </button>
             <button
-              onClick={() => {
-                fetchBookings();
-                fetchContacts();
-              }}
-              className="p-2 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              onClick={() => { fetchBookings(); fetchContacts(); }}
+              style={{ padding: "8px", borderRadius: 10, border: "1px solid var(--ec-border)", background: "var(--ec-surface-2)", color: "var(--ec-text)", cursor: "pointer", display: "flex", alignItems: "center" }}
               title="Refrescar"
             >
-              <RefreshCw className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+              <RefreshCw className="h-4 w-4" />
             </button>
           </div>
         </div>
@@ -1551,42 +1238,44 @@ export default function CalendarioPalmasPage() {
         {/* Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <StatCard
-            icon={<BedDouble className="h-5 w-5 text-blue-600 dark:text-blue-400" />}
-            iconBg="bg-blue-100 dark:bg-blue-900/30"
+            icon={<BedDouble className="h-5 w-5" />}
+            iconStyle={{ background: "rgba(59,130,246,0.12)", color: "#3b82f6" }}
             label="Total Reservas"
             value={loadingBookings ? "—" : bookings.length}
           />
           <StatCard
-            icon={<CheckCircle className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />}
-            iconBg="bg-emerald-100 dark:bg-emerald-900/30"
+            icon={<CheckCircle className="h-5 w-5" />}
+            iconStyle={{ background: "rgba(16,185,129,0.12)", color: "#10b981" }}
             label="Confirmadas"
             value={loadingBookings ? "—" : confirmedBookings.length}
           />
           <StatCard
-            icon={<DollarSign className="h-5 w-5 text-amber-600 dark:text-amber-400" />}
-            iconBg="bg-amber-100 dark:bg-amber-900/30"
+            icon={<DollarSign className="h-5 w-5" />}
+            iconStyle={{ background: "rgba(245,158,11,0.12)", color: "#f59e0b" }}
             label="Ingresos"
             value={loadingBookings ? "—" : `$${totalRevenue.toLocaleString()}`}
           />
           <StatCard
-            icon={<MessageSquare className="h-5 w-5 text-purple-600 dark:text-purple-400" />}
-            iconBg="bg-purple-100 dark:bg-purple-900/30"
+            icon={<MessageSquare className="h-5 w-5" />}
+            iconStyle={{ background: "rgba(168,85,247,0.12)", color: "#a855f7" }}
             label="Contactos"
             value={loadingContacts ? "—" : contacts.length}
           />
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 mb-6 bg-gray-100 dark:bg-gray-900 rounded-lg p-1 w-fit flex-wrap">
+        <div style={{ display: "flex", gap: 4, marginBottom: 20, background: "var(--ec-surface-2)", borderRadius: 10, padding: 4, width: "fit-content", flexWrap: "wrap" }}>
           {tabs.map((t) => (
             <button
               key={t.id}
               onClick={() => setActiveTab(t.id)}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                activeTab === t.id
-                  ? "bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm"
-                  : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
-              }`}
+              style={{
+                padding: "7px 16px", borderRadius: 8, fontSize: 13, fontWeight: 500,
+                cursor: "pointer", border: 0, transition: "all 0.15s",
+                background: activeTab === t.id ? "var(--ec-surface-0)" : "transparent",
+                color: activeTab === t.id ? "var(--ec-text)" : "var(--ec-text-dim)",
+                boxShadow: activeTab === t.id ? "0 1px 3px rgba(0,0,0,0.12)" : "none",
+              }}
             >
               {t.label}
               {t.count !== undefined ? ` (${t.count})` : ""}
@@ -1606,7 +1295,7 @@ export default function CalendarioPalmasPage() {
 
         {/* Bookings tab */}
         {activeTab === "bookings" && (
-          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
+          <div className="ec-project-card" style={{ borderRadius: 14, overflow: "hidden" }}>
             {loadingBookings ? (
               <div className="flex items-center justify-center py-20">
                 <Loader2 className="h-8 w-8 animate-spin text-amber-600" />
@@ -1618,73 +1307,40 @@ export default function CalendarioPalmasPage() {
                 desc="Todavía no hay reservas registradas."
               />
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+              <div style={{ overflowX: "auto" }}>
+                <table style={{ width: "100%", fontSize: 13, borderCollapse: "collapse" }}>
                   <thead>
-                    <tr className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
-                      <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400">Confirmación</th>
-                      <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400">Huésped</th>
-                      <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400">Habitación</th>
-                      <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400">Check-in</th>
-                      <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400">Check-out</th>
-                      <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400">Noches</th>
-                      <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400">Total</th>
-                      <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400">Estado</th>
-                      <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400">Origen</th>
-                      <th className="px-4 py-3" />
+                    <tr style={{ borderBottom: "1px solid var(--ec-hairline)", background: "var(--ec-surface-1)" }}>
+                      {["Confirmación","Huésped","Habitación","Check-in","Check-out","Noches","Total","Estado","Origen",""].map((h, i) => (
+                        <th key={i} style={{ textAlign: "left", padding: "10px 16px", fontFamily: "JetBrains Mono, monospace", fontSize: 10, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--ec-text-dim)" }}>{h}</th>
+                      ))}
                     </tr>
                   </thead>
                   <tbody>
-                    {bookings.map((booking) => (
-                      <tr
-                        key={booking.id}
-                        className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors"
-                      >
-                        <td className="px-4 py-3 font-mono text-xs text-gray-500 dark:text-gray-400">
-                          #{booking.confirmation_number}
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="font-medium text-gray-900 dark:text-white">
-                            {booking.full_name}
-                          </div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400">
-                            {booking.email}
-                          </div>
-                        </td>
-                        <td className="px-4 py-3">
-                          <span
-                            className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${ROOM_COLORS[booking.room_id]?.bg ?? "bg-gray-100"} ${ROOM_COLORS[booking.room_id]?.text ?? "text-gray-600"}`}
-                          >
-                            {ROOM_NAMES[booking.room_id] ?? booking.room_id}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-gray-700 dark:text-gray-300 whitespace-nowrap">
-                          {parseDateLocal(booking.check_in.slice(0, 10)).toLocaleDateString("es-MX")}
-                        </td>
-                        <td className="px-4 py-3 text-gray-700 dark:text-gray-300 whitespace-nowrap">
-                          {parseDateLocal(booking.check_out.slice(0, 10)).toLocaleDateString("es-MX")}
-                        </td>
-                        <td className="px-4 py-3 text-center text-gray-700 dark:text-gray-300">
-                          {booking.nights}
-                        </td>
-                        <td className="px-4 py-3 font-semibold text-gray-900 dark:text-white">
-                          ${booking.total}
-                        </td>
-                        <td className="px-4 py-3">{getStatusBadge(booking.status)}</td>
-                        <td className="px-4 py-3">
-                          <SourceBadge source={booking.source} />
-                        </td>
-                        <td className="px-4 py-3">
-                          <button
-                            onClick={() => setSelectedBooking(booking)}
-                            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                            title="Ver detalle"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
+                    {bookings.map((booking) => {
+                      const rc = ROOM_COLORS[booking.room_id] ?? DEFAULT_ROOM_COLOR;
+                      return (
+                        <tr key={booking.id} style={{ borderBottom: "1px solid var(--ec-hairline)" }}>
+                          <td style={{ padding: "10px 16px", fontFamily: "JetBrains Mono, monospace", fontSize: 11, color: "var(--ec-text-dim)" }}>#{booking.confirmation_number}</td>
+                          <td style={{ padding: "10px 16px" }}>
+                            <div style={{ fontWeight: 500, color: "var(--ec-text)" }}>{booking.full_name}</div>
+                            <div style={{ fontSize: 12, color: "var(--ec-text-dim)" }}>{booking.email}</div>
+                          </td>
+                          <td style={{ padding: "10px 16px" }}>
+                            <span style={{ display: "inline-flex", alignItems: "center", padding: "2px 8px", borderRadius: 99, fontSize: 11, fontWeight: 500, background: rc.bg, color: rc.color }}>{ROOM_NAMES[booking.room_id] ?? booking.room_id}</span>
+                          </td>
+                          <td style={{ padding: "10px 16px", color: "var(--ec-text-muted)", whiteSpace: "nowrap" }}>{parseDateLocal(booking.check_in.slice(0, 10)).toLocaleDateString("es-MX")}</td>
+                          <td style={{ padding: "10px 16px", color: "var(--ec-text-muted)", whiteSpace: "nowrap" }}>{parseDateLocal(booking.check_out.slice(0, 10)).toLocaleDateString("es-MX")}</td>
+                          <td style={{ padding: "10px 16px", textAlign: "center", color: "var(--ec-text-muted)" }}>{booking.nights}</td>
+                          <td style={{ padding: "10px 16px", fontWeight: 600, color: "var(--ec-text)" }}>${booking.total}</td>
+                          <td style={{ padding: "10px 16px" }}>{getStatusBadge(booking.status)}</td>
+                          <td style={{ padding: "10px 16px" }}><SourceBadge source={booking.source} /></td>
+                          <td style={{ padding: "10px 16px" }}>
+                            <button onClick={() => setSelectedBooking(booking)} style={{ padding: "5px 6px", borderRadius: 6, background: "none", border: "none", cursor: "pointer", color: "var(--ec-text-dim)", display: "flex" }} title="Ver detalle"><Eye size={15} /></button>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -1694,7 +1350,7 @@ export default function CalendarioPalmasPage() {
 
         {/* Contacts tab */}
         {activeTab === "contacts" && (
-          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
+          <div className="ec-project-card" style={{ borderRadius: 14, overflow: "hidden" }}>
             {loadingContacts ? (
               <div className="flex items-center justify-center py-20">
                 <Loader2 className="h-8 w-8 animate-spin text-amber-600" />
@@ -1706,46 +1362,28 @@ export default function CalendarioPalmasPage() {
                 desc="Todavía no hay mensajes de contacto registrados."
               />
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+              <div style={{ overflowX: "auto" }}>
+                <table style={{ width: "100%", fontSize: 13, borderCollapse: "collapse" }}>
                   <thead>
-                    <tr className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
-                      <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400">Nombre</th>
-                      <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400">Contacto</th>
-                      <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400">Mensaje</th>
-                      <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400">Fecha</th>
+                    <tr style={{ borderBottom: "1px solid var(--ec-hairline)", background: "var(--ec-surface-1)" }}>
+                      {["Nombre","Contacto","Mensaje","Fecha"].map((h, i) => (
+                        <th key={i} style={{ textAlign: "left", padding: "10px 16px", fontFamily: "JetBrains Mono, monospace", fontSize: 10, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--ec-text-dim)" }}>{h}</th>
+                      ))}
                     </tr>
                   </thead>
                   <tbody>
                     {contacts.map((contact) => (
-                      <tr
-                        key={contact.id}
-                        className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors"
-                      >
-                        <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">
-                          {contact.name}
+                      <tr key={contact.id} style={{ borderBottom: "1px solid var(--ec-hairline)" }}>
+                        <td style={{ padding: "10px 16px", fontWeight: 500, color: "var(--ec-text)" }}>{contact.name}</td>
+                        <td style={{ padding: "10px 16px" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 13, color: "var(--ec-text-muted)" }}><Mail size={11} style={{ flexShrink: 0 }} />{contact.email}</div>
+                          {contact.phone && <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "var(--ec-text-dim)", marginTop: 2 }}><Phone size={11} style={{ flexShrink: 0 }} />{contact.phone}</div>}
                         </td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-1 text-gray-600 dark:text-gray-300">
-                            <Mail className="h-3 w-3 shrink-0" />
-                            {contact.email}
-                          </div>
-                          {contact.phone && (
-                            <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400 text-xs mt-0.5">
-                              <Phone className="h-3 w-3 shrink-0" />
-                              {contact.phone}
-                            </div>
-                          )}
+                        <td style={{ padding: "10px 16px", color: "var(--ec-text-muted)", maxWidth: 280 }}>
+                          <p style={{ overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{contact.message}</p>
                         </td>
-                        <td className="px-4 py-3 text-gray-600 dark:text-gray-300 max-w-xs">
-                          <p className="line-clamp-2">{contact.message}</p>
-                        </td>
-                        <td className="px-4 py-3 text-gray-500 dark:text-gray-400 whitespace-nowrap text-xs">
-                          {new Date(contact.created_at).toLocaleDateString("es-MX", {
-                            year: "numeric",
-                            month: "short",
-                            day: "numeric",
-                          })}
+                        <td style={{ padding: "10px 16px", color: "var(--ec-text-dim)", whiteSpace: "nowrap", fontSize: 12 }}>
+                          {new Date(contact.created_at).toLocaleDateString("es-MX", { year: "numeric", month: "short", day: "numeric" })}
                         </td>
                       </tr>
                     ))}

@@ -18,6 +18,7 @@ import {
   CalendarCheck,
   CalendarClock,
   LucideIcon,
+  Search,
 } from "lucide-react";
 import { NavUser } from "@/components/nav-user";
 import Cookies from "js-cookie";
@@ -55,6 +56,7 @@ interface AppItem {
   url: string;
   icon: LucideIcon;
   component: string; // Nombre que debe coincidir exactamente con los permisos en la base de datos
+  category: "app" | "calendar";
 }
 
 /**
@@ -84,6 +86,7 @@ interface Project {
   project_name: string;
   title?: string;
   id_user: number;
+  percentage?: number | null;
 }
 
 /**
@@ -114,18 +117,50 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
     }
   }, [changeLang]);
 
-  const [openClientes, setOpenClientes] = React.useState(false);
-  const [openProyectos, setOpenProyectos] = React.useState(false);
-  const [openContenido, setOpenContenido] = React.useState(false);
   const [openAdminProjects, setOpenAdminProjects] = React.useState(false);
+  const [projectSearch, setProjectSearch] = React.useState("");
+
+  const [openApps, setOpenApps] = React.useState(false);
+  const [openCalendars, setOpenCalendars] = React.useState(false);
+  const [appSearch, setAppSearch] = React.useState("");
+  const [calendarSearch, setCalendarSearch] = React.useState("");
 
   const handleItemClick = (): void => {
     if (isMobile) setOpenMobile(false);
-    setOpenClientes(false);
-    setOpenProyectos(false);
-    setOpenContenido(false);
     setOpenAdminProjects(false);
+    setProjectSearch("");
+    setOpenApps(false);
+    setOpenCalendars(false);
+    setAppSearch("");
+    setCalendarSearch("");
   };
+
+  const appsByCategory = (cat: "app" | "calendar") =>
+    (cat === "app" ? searchedApps : searchedCalendars).filter((app) => app.category === cat);
+
+  const statusColor = (pct: number | null | undefined): string => {
+    if (pct == null || pct === 0) return "var(--ec-danger)";
+    if (pct >= 80) return "var(--ec-success)";
+    if (pct >= 50) return "var(--ec-warning)";
+    return "var(--ec-danger)";
+  };
+
+  /**
+   * Proyectos visibles según el rol del usuario
+   */
+  const visibleProjects: Project[] =
+    user?.role === "admin"
+      ? projects
+      : projects.filter(
+          (project: Project) => project.id_user === Number(user?.id)
+        );
+
+  const filteredVisibleProjects = user?.role === "admin" && projectSearch
+    ? visibleProjects.filter((p) => {
+        const q = projectSearch.toLowerCase();
+        return (p.title ?? p.project_name).toLowerCase().includes(q) || p.project_name.toLowerCase().includes(q);
+      })
+    : visibleProjects;
 
   /**
    * Configuración de aplicaciones disponibles
@@ -137,6 +172,7 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
       url: "/dashboard/webapp/qr",
       icon: QrCode,
       component: "QR",
+      category: "app",
     },
     {
       id: "vcard",
@@ -144,6 +180,7 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
       url: "/dashboard/webapp/vcard",
       icon: CreditCard,
       component: "Vcard",
+      category: "app",
     },
     {
       id: "calendar",
@@ -151,6 +188,7 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
       url: "/dashboard/webapp/calendar",
       icon: CalendarDays,
       component: "calendar",
+      category: "calendar",
     },
     {
       id: "blogs",
@@ -158,6 +196,7 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
       url: "/dashboard/webapp/blogs",
       icon: Newspaper,
       component: "blogs",
+      category: "app",
     },
     {
       id: "reforma",
@@ -165,6 +204,7 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
       url: "/dashboard/webapp/calendar-reforma",
       icon: CalendarCheck,
       component: "Reforma",
+      category: "calendar",
     },
     {
       id: "monge",
@@ -172,6 +212,7 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
       url: "/dashboard/webapp/calendar-monge",
       icon: CalendarClock,
       component: "Monge",
+      category: "calendar",
     },
     {
       id: "promo-palmas",
@@ -179,6 +220,7 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
       url: "/dashboard/webapp/promo-palmas",
       icon: Tag,
       component: "PromoPalmas",
+      category: "app",
     },
     {
       id: "calendario-palmas",
@@ -186,6 +228,7 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
       url: "/dashboard/webapp/calendario-palmas",
       icon: CalendarDays,
       component: "CalendarioPalmas",
+      category: "calendar",
     },
   ];
 
@@ -196,6 +239,7 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
       url: "/dashboard/webapp/qr",
       icon: QrCode,
       component: "QR",
+      category: "app",
     },
     {
       id: "vcard",
@@ -203,6 +247,7 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
       url: "/dashboard/webapp/vcard",
       icon: CreditCard,
       component: "Vcard",
+      category: "app",
     },
     {
       id: "calendar",
@@ -210,6 +255,7 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
       url: "/dashboard/webapp/calendar",
       icon: CalendarDays,
       component: "calendar",
+      category: "calendar",
     },
     {
       id: "blogs",
@@ -217,6 +263,7 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
       url: "/dashboard/webapp/blogs",
       icon: Newspaper,
       component: "blogs",
+      category: "app",
     },
     {
       id: "reforma",
@@ -224,6 +271,7 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
       url: "/dashboard/webapp/calendar-reforma",
       icon: CalendarCheck,
       component: "Reforma",
+      category: "calendar",
     },
     {
       id: "monge",
@@ -231,6 +279,7 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
       url: "/dashboard/webapp/calendar-monge",
       icon: CalendarClock,
       component: "Monge",
+      category: "calendar",
     },
     {
       id: "promo-palmas",
@@ -238,6 +287,7 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
       url: "/dashboard/webapp/promo-palmas",
       icon: Tag,
       component: "PromoPalmas",
+      category: "app",
     },
     {
       id: "calendario-palmas",
@@ -245,6 +295,7 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
       url: "/dashboard/webapp/calendario-palmas",
       icon: CalendarDays,
       component: "CalendarioPalmas",
+      category: "calendar",
     },
   ];
 
@@ -267,6 +318,14 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
   const filteredApps: AppItem[] = getFilteredApps(
     lang === "es" ? apps : appsEn
   );
+
+  const searchedApps = appSearch
+    ? filteredApps.filter((a) => a.name.toLowerCase().includes(appSearch.toLowerCase()))
+    : filteredApps;
+
+  const searchedCalendars = calendarSearch
+    ? filteredApps.filter((a) => a.name.toLowerCase().includes(calendarSearch.toLowerCase()))
+    : filteredApps;
 
   /**
    * Configuración de acciones administrativas en español - AGRUPADAS POR CATEGORÍA
@@ -420,16 +479,6 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
     otros: lang === "es" ? "Otros" : "Others",
   };
 
-  /**
-   * Proyectos visibles según el rol del usuario
-   */
-  const visibleProjects: Project[] =
-    user?.role === "admin"
-      ? projects
-      : projects.filter(
-          (project: Project) => project.id_user === Number(user?.id)
-        );
-
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>{user && <TeamSwitcher user={user} />}</SidebarHeader>
@@ -437,7 +486,7 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
       <SidebarContent>
         {/* Sección de Acciones Administrativas - REESTRUCTURADA CON DROPDOWNS */}
         {user?.role === "admin" && Object.keys(groupedActions).length > 0 && (
-          <SidebarGroup className="group-data-[collapsible=icon]:hidden">
+          <SidebarGroup>
             <SidebarGroupLabel>
               {lang === "es" ? "Acciones" : "Actions"}
             </SidebarGroupLabel>
@@ -446,53 +495,16 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
               {groupedActions.clientes &&
                 groupedActions.clientes.length > 0 && (
                   <SidebarMenuItem>
-                    <DropdownMenu open={openClientes} onOpenChange={setOpenClientes}>
-                      <DropdownMenuTrigger asChild>
-                        <SidebarMenuButton className="w-full flex justify-between items-center">
-                          <div className="flex items-center gap-2">
-                            <UserPlus className="w-4 h-4" />
-                            <span>{categoryTranslations.clientes}</span>
-                          </div>
-                          <svg
-                            className="w-4 h-4 ml-2"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth={2}
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M6 9l6 6 6-6"
-                            />
-                          </svg>
-                        </SidebarMenuButton>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent
-                        className="w-56 p-0"
-                        side="right"
-                        align="start"
+                    <SidebarMenuButton asChild>
+                      <Link
+                        href="/dashboard/update-client"
+                        onClick={handleItemClick}
+                        className="flex items-center gap-2"
                       >
-                        <SidebarMenu>
-                          {groupedActions.clientes.map(
-                            (action: AdminAction) => (
-                              <SidebarMenuItem key={action.id}>
-                                <SidebarMenuButton asChild>
-                                  <Link
-                                    href={action.url}
-                                    onClick={handleItemClick}
-                                    className="flex items-center gap-2"
-                                  >
-                                    <action.icon className="w-4 h-4" />
-                                    <span>{action.name}</span>
-                                  </Link>
-                                </SidebarMenuButton>
-                              </SidebarMenuItem>
-                            )
-                          )}
-                        </SidebarMenu>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                        <UserCog className="w-4 h-4" />
+                        <span>{categoryTranslations.clientes}</span>
+                      </Link>
+                    </SidebarMenuButton>
                   </SidebarMenuItem>
                 )}
 
@@ -500,53 +512,16 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
               {groupedActions.proyectos &&
                 groupedActions.proyectos.length > 0 && (
                   <SidebarMenuItem>
-                    <DropdownMenu open={openProyectos} onOpenChange={setOpenProyectos}>
-                      <DropdownMenuTrigger asChild>
-                        <SidebarMenuButton className="w-full flex justify-between items-center">
-                          <div className="flex items-center gap-2">
-                            <FolderPlus className="w-4 h-4" />
-                            <span>{categoryTranslations.proyectos}</span>
-                          </div>
-                          <svg
-                            className="w-4 h-4 ml-2"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth={2}
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M6 9l6 6 6-6"
-                            />
-                          </svg>
-                        </SidebarMenuButton>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent
-                        className="w-56 p-0"
-                        side="right"
-                        align="start"
+                    <SidebarMenuButton asChild>
+                      <Link
+                        href="/dashboard/update-project"
+                        onClick={handleItemClick}
+                        className="flex items-center gap-2"
                       >
-                        <SidebarMenu>
-                          {groupedActions.proyectos.map(
-                            (action: AdminAction) => (
-                              <SidebarMenuItem key={action.id}>
-                                <SidebarMenuButton asChild>
-                                  <Link
-                                    href={action.url}
-                                    onClick={handleItemClick}
-                                    className="flex items-center gap-2"
-                                  >
-                                    <action.icon className="w-4 h-4" />
-                                    <span>{action.name}</span>
-                                  </Link>
-                                </SidebarMenuButton>
-                              </SidebarMenuItem>
-                            )
-                          )}
-                        </SidebarMenu>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                        <FolderCog className="w-4 h-4" />
+                        <span>{categoryTranslations.proyectos}</span>
+                      </Link>
+                    </SidebarMenuButton>
                   </SidebarMenuItem>
                 )}
 
@@ -554,53 +529,16 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
               {groupedActions.contenido &&
                 groupedActions.contenido.length > 0 && (
                   <SidebarMenuItem>
-                    <DropdownMenu open={openContenido} onOpenChange={setOpenContenido}>
-                      <DropdownMenuTrigger asChild>
-                        <SidebarMenuButton className="w-full flex justify-between items-center">
-                          <div className="flex items-center gap-2">
-                            <FilePlus className="w-4 h-4" />
-                            <span>{categoryTranslations.contenido}</span>
-                          </div>
-                          <svg
-                            className="w-4 h-4 ml-2"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth={2}
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M6 9l6 6 6-6"
-                            />
-                          </svg>
-                        </SidebarMenuButton>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent
-                        className="w-56 p-0"
-                        side="right"
-                        align="start"
+                    <SidebarMenuButton asChild>
+                      <Link
+                        href="/dashboard/update-project-content"
+                        onClick={handleItemClick}
+                        className="flex items-center gap-2"
                       >
-                        <SidebarMenu>
-                          {groupedActions.contenido.map(
-                            (action: AdminAction) => (
-                              <SidebarMenuItem key={action.id}>
-                                <SidebarMenuButton asChild>
-                                  <Link
-                                    href={action.url}
-                                    onClick={handleItemClick}
-                                    className="flex items-center gap-2"
-                                  >
-                                    <action.icon className="w-4 h-4" />
-                                    <span>{action.name}</span>
-                                  </Link>
-                                </SidebarMenuButton>
-                              </SidebarMenuItem>
-                            )
-                          )}
-                        </SidebarMenu>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                        <FileCog className="w-4 h-4" />
+                        <span>{categoryTranslations.contenido}</span>
+                      </Link>
+                    </SidebarMenuButton>
                   </SidebarMenuItem>
                 )}
 
@@ -635,7 +573,7 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
             </SidebarGroupLabel>
             <SidebarMenu>
               {user?.role === "admin" ? (
-                <DropdownMenu open={openAdminProjects} onOpenChange={setOpenAdminProjects}>
+                <DropdownMenu open={openAdminProjects} onOpenChange={(open) => { setOpenAdminProjects(open); if (!open) setProjectSearch(""); }}>
                   <DropdownMenuTrigger asChild>
                     <SidebarMenuButton className="w-full flex justify-between items-center">
                       <span>
@@ -657,46 +595,109 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
                     </SidebarMenuButton>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent
-                    className="w-60 p-0"
+                    className="w-72 p-0"
                     side="right"
                     align="start"
+                    style={{ borderRadius: 14, overflow: "hidden" }}
                   >
-                    <SidebarMenu>
-                      {visibleProjects.map((project: Project) => (
-                        <SidebarMenuItem key={project.id}>
-                          <SidebarMenuButton asChild>
-                            <Link
-                              href={`/dashboard/${project.project_name}`}
-                              onClick={handleItemClick}
-                            >
-                              <Frame className="mr-2" />
-                              <span>
-                                {project.title ?? project.project_name}
-                              </span>
-                            </Link>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                      ))}
-                    </SidebarMenu>
+                    {/* Search */}
+                    <div style={{ padding: "10px 12px", borderBottom: "1px solid var(--ec-hairline)" }}>
+                      <div style={{ position: "relative" }}>
+                        <Search
+                          size={13}
+                          style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "var(--ec-text-dim)", pointerEvents: "none" }}
+                        />
+                        <input
+                          value={projectSearch}
+                          onChange={(e) => setProjectSearch(e.target.value)}
+                          placeholder={lang === "es" ? "Buscar proyecto…" : "Search project…"}
+                          style={{
+                            width: "100%", padding: "7px 10px 7px 30px", fontSize: 12,
+                            border: "1px solid var(--ec-hairline)", borderRadius: 8,
+                            background: "var(--ec-surface-2)", color: "var(--ec-text)",
+                            outline: "none",
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Project list */}
+                    <div style={{ maxHeight: 280, overflowY: "auto" }}>
+                      {filteredVisibleProjects.length === 0 ? (
+                        <div style={{ padding: "24px 16px", textAlign: "center", color: "var(--ec-text-dim)", fontSize: 12 }}>
+                          {lang === "es" ? "Sin resultados" : "No results"}
+                        </div>
+                      ) : (
+                        <SidebarMenu>
+                          {filteredVisibleProjects.map((project: Project) => {
+                            const dotColor = statusColor(project.percentage);
+                            return (
+                              <SidebarMenuItem key={project.id}>
+                                <SidebarMenuButton asChild>
+                                  <Link
+                                    href={`/dashboard/${project.project_name}`}
+                                    onClick={handleItemClick}
+                                    style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 14px" }}
+                                  >
+                                    <div
+                                      style={{
+                                        width: 6, height: 6, borderRadius: "50%",
+                                        background: dotColor, flexShrink: 0,
+                                        boxShadow: `0 0 0 2px ${dotColor}25`,
+                                      }}
+                                    />
+                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                      <div style={{ fontSize: 13, color: "var(--ec-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                        {project.title ?? project.project_name}
+                                      </div>
+                                      <div style={{ fontSize: 10, color: "var(--ec-text-dim)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                        {project.project_name}
+                                      </div>
+                                    </div>
+                                    {project.percentage != null && (
+                                      <span style={{ fontSize: 11, color: dotColor, fontFamily: "var(--font-jetbrains-mono, monospace)", flexShrink: 0 }}>
+                                        {project.percentage}%
+                                      </span>
+                                    )}
+                                  </Link>
+                                </SidebarMenuButton>
+                              </SidebarMenuItem>
+                            );
+                          })}
+                        </SidebarMenu>
+                      )}
+                    </div>
                   </DropdownMenuContent>
                 </DropdownMenu>
               ) : (
-                visibleProjects.map((project: Project) => (
-                  <SidebarMenuItem key={project.id}>
-                    <SidebarMenuButton
-                      asChild
-                      tooltip={project.title ?? project.project_name}
-                    >
-                      <Link
-                        href={`/dashboard/${project.project_name}`}
-                        onClick={handleItemClick}
-                      >
-                        <Frame className="mr-2" />
-                        <span>{project.title ?? project.project_name}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))
+                <div style={{ maxHeight: 320, overflowY: "auto" }}>
+                  {visibleProjects.map((project: Project) => {
+                    const dotColor = statusColor(project.percentage);
+                    return (
+                      <SidebarMenuItem key={project.id}>
+                        <SidebarMenuButton
+                          asChild
+                          tooltip={project.title ?? project.project_name}
+                        >
+                          <Link
+                            href={`/dashboard/${project.project_name}`}
+                            onClick={handleItemClick}
+                            style={{ display: "flex", alignItems: "center", gap: 10 }}
+                          >
+                            <div
+                              style={{
+                                width: 5, height: 5, borderRadius: "50%",
+                                background: dotColor, flexShrink: 0,
+                              }}
+                            />
+                            <span style={{ flex: 1 }}>{project.title ?? project.project_name}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </div>
               )}
             </SidebarMenu>
           </SidebarGroup>
@@ -707,63 +708,193 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
           <SidebarGroup>
             <SidebarGroupLabel>Apps</SidebarGroupLabel>
             <SidebarMenu>
-              {filteredApps.map((app: AppItem) => (
-                <SidebarMenuItem key={app.id}>
-                  <SidebarMenuButton asChild tooltip={app.name}>
-                    <Link href={app.url} onClick={handleItemClick}>
-                      <app.icon className="mr-2" />
-                      <span>{app.name}</span>
-                    </Link>
-                  </SidebarMenuButton>
+              {/* Apps */}
+              {appsByCategory("app").length > 0 && (
+                <SidebarMenuItem>
+                  <DropdownMenu open={openApps} onOpenChange={(open) => { setOpenApps(open); if (!open) setAppSearch(""); }}>
+                    <DropdownMenuTrigger asChild>
+                      <SidebarMenuButton className="w-full flex justify-between items-center">
+                        <div className="flex items-center gap-2">
+                          <Frame className="w-4 h-4" />
+                          <span>{lang === "es" ? "Apps" : "Apps"}</span>
+                        </div>
+                        <svg
+                          className="w-4 h-4 ml-2"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M6 9l6 6 6-6"
+                          />
+                        </svg>
+                      </SidebarMenuButton>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                      className="w-72 p-0"
+                      side="right"
+                      align="start"
+                      style={{ borderRadius: 14, overflow: "hidden" }}
+                    >
+                      {/* Search */}
+                      <div style={{ padding: "10px 12px", borderBottom: "1px solid var(--ec-hairline)" }}>
+                        <div style={{ position: "relative" }}>
+                          <Search
+                            size={13}
+                            style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "var(--ec-text-dim)", pointerEvents: "none" }}
+                          />
+                          <input
+                            value={appSearch}
+                            onChange={(e) => setAppSearch(e.target.value)}
+                            placeholder={lang === "es" ? "Buscar app…" : "Search app…"}
+                            style={{
+                              width: "100%", padding: "7px 10px 7px 30px", fontSize: 12,
+                              border: "1px solid var(--ec-hairline)", borderRadius: 8,
+                              background: "var(--ec-surface-2)", color: "var(--ec-text)",
+                              outline: "none",
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                        </div>
+                      </div>
+
+                      {/* App list */}
+                      <div style={{ maxHeight: 280, overflowY: "auto" }}>
+                        {appsByCategory("app").length === 0 ? (
+                          <div style={{ padding: "24px 16px", textAlign: "center", color: "var(--ec-text-dim)", fontSize: 12 }}>
+                            {lang === "es" ? "Sin resultados" : "No results"}
+                          </div>
+                        ) : (
+                          <SidebarMenu>
+                            {appsByCategory("app").map((app: AppItem) => (
+                              <SidebarMenuItem key={app.id}>
+                                <SidebarMenuButton asChild tooltip={app.name}>
+                                  <Link
+                                    href={app.url}
+                                    onClick={handleItemClick}
+                                    style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 14px" }}
+                                  >
+                                    <div style={{ width: 28, height: 28, borderRadius: 8, background: "var(--ec-surface-2)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                                      <app.icon size={14} />
+                                    </div>
+                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                      <div style={{ fontSize: 13, color: "var(--ec-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                        {app.name}
+                                      </div>
+                                      <div style={{ fontSize: 10, color: "var(--ec-text-dim)" }}>
+                                        {app.category === "app" ? (lang === "es" ? "Aplicación" : "Application") : (lang === "es" ? "Calendario" : "Calendar")}
+                                      </div>
+                                    </div>
+                                  </Link>
+                                </SidebarMenuButton>
+                              </SidebarMenuItem>
+                            ))}
+                          </SidebarMenu>
+                        )}
+                      </div>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </SidebarMenuItem>
-              ))}
+              )}
+              {/* Calendarios */}
+              {appsByCategory("calendar").length > 0 && (
+                <SidebarMenuItem>
+                  <DropdownMenu open={openCalendars} onOpenChange={(open) => { setOpenCalendars(open); if (!open) setCalendarSearch(""); }}>
+                    <DropdownMenuTrigger asChild>
+                      <SidebarMenuButton className="w-full flex justify-between items-center">
+                        <div className="flex items-center gap-2">
+                          <CalendarDays className="w-4 h-4" />
+                          <span>{lang === "es" ? "Calendarios" : "Calendars"}</span>
+                        </div>
+                        <svg
+                          className="w-4 h-4 ml-2"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M6 9l6 6 6-6"
+                          />
+                        </svg>
+                      </SidebarMenuButton>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                      className="w-72 p-0"
+                      side="right"
+                      align="start"
+                      style={{ borderRadius: 14, overflow: "hidden" }}
+                    >
+                      {/* Search */}
+                      <div style={{ padding: "10px 12px", borderBottom: "1px solid var(--ec-hairline)" }}>
+                        <div style={{ position: "relative" }}>
+                          <Search
+                            size={13}
+                            style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "var(--ec-text-dim)", pointerEvents: "none" }}
+                          />
+                          <input
+                            value={calendarSearch}
+                            onChange={(e) => setCalendarSearch(e.target.value)}
+                            placeholder={lang === "es" ? "Buscar calendario…" : "Search calendar…"}
+                            style={{
+                              width: "100%", padding: "7px 10px 7px 30px", fontSize: 12,
+                              border: "1px solid var(--ec-hairline)", borderRadius: 8,
+                              background: "var(--ec-surface-2)", color: "var(--ec-text)",
+                              outline: "none",
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Calendar list */}
+                      <div style={{ maxHeight: 280, overflowY: "auto" }}>
+                        {appsByCategory("calendar").length === 0 ? (
+                          <div style={{ padding: "24px 16px", textAlign: "center", color: "var(--ec-text-dim)", fontSize: 12 }}>
+                            {lang === "es" ? "Sin resultados" : "No results"}
+                          </div>
+                        ) : (
+                          <SidebarMenu>
+                            {appsByCategory("calendar").map((app: AppItem) => (
+                              <SidebarMenuItem key={app.id}>
+                                <SidebarMenuButton asChild tooltip={app.name}>
+                                  <Link
+                                    href={app.url}
+                                    onClick={handleItemClick}
+                                    style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 14px" }}
+                                  >
+                                    <div style={{ width: 28, height: 28, borderRadius: 8, background: "var(--ec-surface-2)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                                      <app.icon size={14} />
+                                    </div>
+                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                      <div style={{ fontSize: 13, color: "var(--ec-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                        {app.name}
+                                      </div>
+                                      <div style={{ fontSize: 10, color: "var(--ec-text-dim)" }}>
+                                        {lang === "es" ? "Calendario" : "Calendar"}
+                                      </div>
+                                    </div>
+                                  </Link>
+                                </SidebarMenuButton>
+                              </SidebarMenuItem>
+                            ))}
+                          </SidebarMenu>
+                        )}
+                      </div>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </SidebarMenuItem>
+              )}
             </SidebarMenu>
           </SidebarGroup>
         )}
 
-        {/* Sección de Cambio de Idioma */}
-        {lang && (
-          <SidebarGroup className="group-data-[collapsible=icon]:hidden">
-            <SidebarGroupLabel>
-              {lang === "es" ? "Idioma" : "Language"}
-            </SidebarGroupLabel>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  onClick={() => changeLang(lang === "es" ? "en" : "es")}
-                  className="gap-2"
-                >
-                  {lang === "es" ? (
-                    <>
-                      {/* Bandera USA */}
-                      <svg width="20" height="14" viewBox="0 0 20 14" className="rounded-[2px] flex-shrink-0">
-                        <rect width="20" height="14" fill="#B22234" />
-                        <rect y="1.08" width="20" height="1.08" fill="white" />
-                        <rect y="3.23" width="20" height="1.08" fill="white" />
-                        <rect y="5.38" width="20" height="1.08" fill="white" />
-                        <rect y="7.54" width="20" height="1.08" fill="white" />
-                        <rect y="9.69" width="20" height="1.08" fill="white" />
-                        <rect y="11.85" width="20" height="1.08" fill="white" />
-                        <rect width="8" height="7.54" fill="#3C3B6E" />
-                      </svg>
-                      <span className="text-sm">English</span>
-                    </>
-                  ) : (
-                    <>
-                      {/* Bandera México */}
-                      <svg width="20" height="14" viewBox="0 0 20 14" className="rounded-[2px] flex-shrink-0">
-                        <rect width="20" height="14" fill="white" />
-                        <rect width="6.67" height="14" fill="#006847" />
-                        <rect x="13.33" width="6.67" height="14" fill="#CE1126" />
-                      </svg>
-                      <span className="text-sm">Español</span>
-                    </>
-                  )}
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroup>
-        )}
+
       </SidebarContent>
 
       <SidebarFooter>{user && <NavUser user={user} />}</SidebarFooter>

@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
+import { MessageCircle, CheckCircle, Clock, X, Check, Search, Mail, Users } from "lucide-react";
 
 type Comment = {
   id: number;
@@ -16,7 +17,9 @@ type BlogName = {
   name: string;
 };
 
-function Comments() {
+const AVATAR_COLORS = ["#A78BFA","#60A5FA","#34D399","#FBBF24","#F87171","#F472B6","#818CF8","#2DD4BF"];
+
+function BlogManagerPage() {
   const [comments, setComments] = useState<Comment[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [showModal, setShowModal] = useState(false);
@@ -27,529 +30,303 @@ function Comments() {
   const [showCommentModal, setShowCommentModal] = useState(false);
   const [selectedCommentText, setSelectedCommentText] = useState("");
   const [selectedBlogName, setSelectedBlogName] = useState("");
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState("all");
   const [itemsPerPage] = useState(10);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-
         const [blogRes, commentsRes] = await Promise.all([
           fetch("https://mongeortopedia.com/api/blogNames"),
           fetch("https://mongeortopedia.com/api/comments"),
         ]);
-
-        if (!blogRes.ok || !commentsRes.ok) {
-          throw new Error("Error en alguna de las respuestas");
-        }
-
-        const blogData = await blogRes.json();
-        const commentsData = await commentsRes.json();
-
-        setBlogNames(blogData);
-        setComments(commentsData);
+        if (!blogRes.ok || !commentsRes.ok) throw new Error("Error en alguna de las respuestas");
+        setBlogNames(await blogRes.json());
+        setComments(await commentsRes.json());
       } catch (error) {
         console.error("Error fetching data:", error);
       } finally {
         setLoading(false);
       }
     };
-
     fetchData();
   }, []);
 
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = comments.slice(indexOfFirstItem, indexOfLastItem);
+  const getBlogName = (id: number): string => blogNames.find((b) => b.id === id)?.name ?? String(id);
 
-  const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
+  const filtered = comments
+    .filter((c) => filter === "all" || c.estatus === filter)
+    .filter((c) => !search || c.nombre.toLowerCase().includes(search.toLowerCase()) || c.comentario.toLowerCase().includes(search.toLowerCase()));
 
-  const getBlogName = (id: number): string => {
-    const blog = blogNames.find((blog) => blog.id === id);
-    return blog ? blog.name : String(id);
-  };
+  const totalPages = Math.ceil(filtered.length / itemsPerPage);
+  const pageItems = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-  const handleApproveClick = (comment: Comment) => {
-    setSelectedComment(comment);
-    setModalAction("approve");
-    setShowModal(true);
-  };
-
-  const handleRejectClick = (comment: Comment) => {
-    setSelectedComment(comment);
-    setModalAction("reject");
-    setShowModal(true);
-  };
+  const handleApproveClick = (c: Comment) => { setSelectedComment(c); setModalAction("approve"); setShowModal(true); };
+  const handleRejectClick = (c: Comment) => { setSelectedComment(c); setModalAction("reject"); setShowModal(true); };
 
   const handleConfirmAction = async () => {
     if (!selectedComment) return;
-
     try {
       const newStatus = modalAction === "approve" ? "aceptado" : "rechazado";
-      await fetch(
-        `https://mongeortopedia.com/api/comments/${selectedComment.id}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ estatus: newStatus }),
-        }
-      );
-
-      setComments((prevComments) =>
-        prevComments.map((comment) =>
-          comment.id === selectedComment.id
-            ? { ...comment, estatus: newStatus }
-            : comment
-        )
-      );
+      await fetch(`https://mongeortopedia.com/api/comments/${selectedComment.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ estatus: newStatus }),
+      });
+      setComments((prev) => prev.map((c) => c.id === selectedComment.id ? { ...c, estatus: newStatus } : c));
       setShowModal(false);
     } catch (error) {
       console.error("Error updating comment:", error);
     }
   };
 
-  const handleCommentClick = (commentText: string, blogId: number) => {
-    setSelectedCommentText(commentText);
-    setSelectedBlogName(getBlogName(blogId));
-    setShowCommentModal(true);
-  };
+  const total = comments.length;
+  const approved = comments.filter((c) => c.estatus === "aceptado").length;
+  const pending = comments.filter((c) => !["aceptado", "rechazado"].includes(c.estatus)).length;
+  const rejected = comments.filter((c) => c.estatus === "rechazado").length;
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-300 font-medium">
-            Cargando comentarios...
-          </p>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "60vh" }}>
+        <div style={{ textAlign: "center" }}>
+          <div style={{ width: 40, height: 40, borderRadius: "50%", border: "3px solid var(--ec-brand)", borderTopColor: "transparent", animation: "spin 0.8s linear infinite", margin: "0 auto 16px" }} />
+          <p className="h-eyebrow">Cargando comentarios…</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen">
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            Gestión de Comentarios
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            Administra los comentarios de tu blog de manera eficiente
-          </p>
+    <div style={{ padding: "28px 24px" }} className="fade-in-up">
+      {/* Header */}
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 28 }}>
+        <div>
+          <div className="h-eyebrow" style={{ marginBottom: 10 }}>⎯⎯⎯  BLOG MANAGER</div>
+          <h1 className="font-serif" style={{ fontSize: 40, lineHeight: 1, letterSpacing: "-0.025em", marginBottom: 8 }}>Gestión de Comentarios</h1>
+          <p style={{ color: "var(--ec-text-dim)", fontSize: 14 }}>Administra los comentarios del blog: aprueba, rechaza o consulta el contenido completo.</p>
         </div>
+      </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
-            <div className="flex items-center">
-              <div className="p-3 rounded-full bg-blue-100 dark:bg-blue-900">
-                <svg
-                  className="w-6 h-6 text-blue-600 dark:text-blue-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-1l-4 4z"
-                  ></path>
-                </svg>
-              </div>
-              <div className="ml-4">
-                <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                  Total Comentarios
-                </h3>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {comments.length}
-                </p>
-              </div>
+      {/* Stats */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 24 }}>
+        {[
+          { icon: MessageCircle, color: "#60A5FA", label: "Total", value: total },
+          { icon: CheckCircle,   color: "#10B981", label: "Aprobados", value: approved },
+          { icon: Clock,         color: "#FBBF24", label: "Pendientes", value: pending },
+          { icon: X,             color: "#F87171", label: "Rechazados", value: rejected },
+        ].map(({ icon: Icon, color, label, value }) => (
+          <div key={label} className="ec-project-card" style={{ padding: 18, display: "flex", alignItems: "center", gap: 14, borderRadius: 12 }}>
+            <div style={{ width: 44, height: 44, borderRadius: 12, background: `${color}1a`, color, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <Icon size={20} />
+            </div>
+            <div>
+              <div className="h-eyebrow" style={{ marginBottom: 2 }}>{label}</div>
+              <div className="font-serif" style={{ fontSize: 28, lineHeight: 1, color }}>{value}</div>
             </div>
           </div>
+        ))}
+      </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
-            <div className="flex items-center">
-              <div className="p-3 rounded-full bg-green-100 dark:bg-green-900">
-                <svg
-                  className="w-6 h-6 text-green-600 dark:text-green-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M5 13l4 4L19 7"
-                  ></path>
-                </svg>
-              </div>
-              <div className="ml-4">
-                <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                  Aprobados
-                </h3>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {comments.filter((c) => c.estatus === "aceptado").length}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
-            <div className="flex items-center">
-              <div className="p-3 rounded-full bg-red-100 dark:bg-red-900">
-                <svg
-                  className="w-6 h-6 text-red-600 dark:text-red-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M6 18L18 6M6 6l12 12"
-                  ></path>
-                </svg>
-              </div>
-              <div className="ml-4">
-                <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                  Rechazados
-                </h3>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {comments.filter((c) => c.estatus === "rechazado").length}
-                </p>
-              </div>
-            </div>
-          </div>
+      {/* Filter bar */}
+      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 14, gap: 12, flexWrap: "wrap" }}>
+        <div style={{ display: "inline-flex", background: "var(--ec-surface-1)", border: "1px solid var(--ec-border)", borderRadius: 10, padding: 3, gap: 2 }}>
+          {[
+            { id: "all", label: `Todos`, count: total },
+            { id: "pendiente", label: "Pendientes", count: pending },
+            { id: "aceptado", label: "Aprobados", count: approved },
+            { id: "rechazado", label: "Rechazados", count: rejected },
+          ].map((f) => (
+            <button
+              key={f.id}
+              onClick={() => { setFilter(f.id); setCurrentPage(1); }}
+              style={{
+                padding: "6px 12px", borderRadius: 8, border: 0,
+                background: filter === f.id ? "var(--ec-brand)" : "transparent",
+                color: filter === f.id ? "white" : "var(--ec-text-dim)",
+                fontSize: 13, fontWeight: 500, cursor: "pointer", whiteSpace: "nowrap",
+              }}
+            >
+              {f.label} <span style={{ fontFamily: "var(--font-jetbrains-mono), monospace", fontSize: 10, opacity: 0.7, marginLeft: 4 }}>{f.count}</span>
+            </button>
+          ))}
         </div>
+        <div style={{ position: "relative" }}>
+          <Search size={13} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "var(--ec-text-dim)" }} />
+          <input
+            style={{ padding: "8px 12px 8px 30px", background: "var(--ec-surface-1)", border: "1px solid var(--ec-border)", borderRadius: 10, outline: "none", color: "var(--ec-text)", fontSize: 13, width: 260 }}
+            placeholder="Buscar comentario o autor…"
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
+          />
+        </div>
+      </div>
 
-        {/* Table Container */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
+      {/* Table */}
+      <div className="ec-project-card" style={{ overflow: "hidden", borderRadius: 14 }}>
+        <div style={{ overflowX: "auto" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <thead>
+              <tr style={{ borderBottom: "1px solid var(--ec-border)" }}>
+                {["Nombre", "Correo", "Comentario", "Estado", "Blog", "Acciones"].map((h, i) => (
+                  <th key={h} style={{ padding: "12px 16px", textAlign: i === 5 ? "right" : "left", fontFamily: "var(--font-jetbrains-mono), monospace", fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--ec-text-dim)", fontWeight: 400, whiteSpace: "nowrap" }}>
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {pageItems.length === 0 ? (
                 <tr>
-                  {[
-                    { key: "nombre", label: "Nombre", icon: "👤" },
-                    { key: "correo", label: "Correo", icon: "📧" },
-                    { key: "comentario", label: "Comentario", icon: "💬" },
-                    { key: "estatus", label: "Estado", icon: "🏷️" },
-                    { key: "fecha", label: "Fecha", icon: "📅" },
-                    { key: "acciones", label: "Acciones", icon: "⚙️" },
-                  ].map((col) => (
-                    <th
-                      key={col.key}
-                      className="px-6 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider"
-                    >
-                      <div className="flex items-center space-x-2">
-                        <span>{col.icon}</span>
-                        <span>{col.label}</span>
-                      </div>
-                    </th>
-                  ))}
+                  <td colSpan={6} style={{ padding: "48px 16px", textAlign: "center", color: "var(--ec-text-dim)" }}>
+                    <MessageCircle size={32} style={{ margin: "0 auto 12px", opacity: 0.3 }} />
+                    <p className="font-serif" style={{ fontSize: 20 }}>Sin comentarios</p>
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                {currentItems.length > 0 ? (
-                  currentItems.map((comment, index) => (
-                    <tr
-                      key={comment.id}
-                      className={`transition-colors duration-200 hover:bg-gray-50 dark:hover:bg-gray-700 ${
-                        index % 2 === 0 ? "bg-white dark:bg-gray-800" : ""
-                      }`}
-                    >
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="w-10 h-10 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                            {comment.nombre.charAt(0).toUpperCase()}
-                          </div>
-                          <div className="ml-3">
-                            <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                              {comment.nombre}
-                            </div>
-                          </div>
+              ) : pageItems.map((comment, i) => {
+                const avatarColor = AVATAR_COLORS[i % AVATAR_COLORS.length];
+                const isApproved = comment.estatus === "aceptado";
+                const isRejected = comment.estatus === "rechazado";
+                return (
+                  <tr key={comment.id} style={{ borderBottom: "1px solid var(--ec-border)" }}>
+                    <td style={{ padding: "14px 16px", whiteSpace: "nowrap" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <div style={{ width: 32, height: 32, borderRadius: "50%", background: `${avatarColor}22`, color: avatarColor, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 600, flexShrink: 0 }}>
+                          {comment.nombre[0]?.toUpperCase()}
                         </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full">
-                          {comment.correo}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <button
-                          className="text-sm text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 text-left max-w-xs"
-                          onClick={() =>
-                            handleCommentClick(
-                              comment.comentario,
-                              comment.blog_id
-                            )
-                          }
-                        >
-                          <div className="line-clamp-2">
-                            {comment.comentario.length > 50
-                              ? `${comment.comentario.substring(0, 50)}...`
-                              : comment.comentario}
-                          </div>
-                          <span className="text-xs text-blue-500 hover:underline">
-                            Ver completo
-                          </span>
-                        </button>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span
-                          className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
-                            comment.estatus === "aceptado"
-                              ? "bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100"
-                              : "bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100"
-                          }`}
-                        >
-                          <span
-                            className={`w-2 h-2 rounded-full mr-2 ${
-                              comment.estatus === "aceptado"
-                                ? "bg-green-400"
-                                : "bg-red-400"
-                            }`}
-                          ></span>
-                          {comment.estatus}
+                        <span style={{ fontWeight: 500, fontSize: 13 }}>{comment.nombre}</span>
+                      </div>
+                    </td>
+                    <td style={{ padding: "14px 16px" }}>
+                      <span style={{ fontFamily: "var(--font-jetbrains-mono), monospace", fontSize: 11.5, padding: "4px 8px", background: "var(--ec-surface-2)", borderRadius: 6, border: "1px solid var(--ec-border)", color: "var(--ec-text-dim)" }}>
+                        {comment.correo}
+                      </span>
+                    </td>
+                    <td style={{ padding: "14px 16px", maxWidth: 240 }}>
+                      <div style={{ fontSize: 13, color: "var(--ec-text-dim)", lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const, overflow: "hidden" }}>
+                        {comment.comentario}
+                      </div>
+                      <button
+                        onClick={() => { setSelectedCommentText(comment.comentario); setSelectedBlogName(getBlogName(comment.blog_id)); setShowCommentModal(true); }}
+                        style={{ color: "var(--ec-brand)", fontSize: 11.5, marginTop: 2, background: "none", border: 0, padding: 0, cursor: "pointer" }}
+                      >
+                        Ver completo
+                      </button>
+                    </td>
+                    <td style={{ padding: "14px 16px", whiteSpace: "nowrap" }}>
+                      {isApproved ? (
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "3px 10px", borderRadius: 100, background: "rgba(16,185,129,0.12)", color: "#10B981", fontSize: 11.5, fontWeight: 500 }}>
+                          <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#10B981" }} /> aprobado
                         </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-300">
-                        {new Date(comment.fecha_creacion).toLocaleDateString(
-                          "es-ES",
-                          {
-                            year: "numeric",
-                            month: "short",
-                            day: "numeric",
-                          }
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {comment.estatus === "aceptado" ? (
-                          <button
-                            className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 transform hover:scale-105 shadow-md"
-                            onClick={() => handleRejectClick(comment)}
-                          >
-                            Rechazar
-                          </button>
-                        ) : (
-                          <button
-                            className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 transform hover:scale-105 shadow-md"
-                            onClick={() => handleApproveClick(comment)}
-                          >
-                            Aprobar
+                      ) : isRejected ? (
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "3px 10px", borderRadius: 100, background: "rgba(248,113,113,0.12)", color: "#F87171", fontSize: 11.5, fontWeight: 500 }}>
+                          <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#F87171" }} /> rechazado
+                        </span>
+                      ) : (
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "3px 10px", borderRadius: 100, background: "rgba(251,191,36,0.12)", color: "#FBBF24", fontSize: 11.5, fontWeight: 500 }}>
+                          <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#FBBF24" }} /> pendiente
+                        </span>
+                      )}
+                    </td>
+                    <td style={{ padding: "14px 16px", fontFamily: "var(--font-jetbrains-mono), monospace", fontSize: 11, color: "var(--ec-text-dim)", whiteSpace: "nowrap" }}>
+                      {getBlogName(comment.blog_id).slice(0, 20)}
+                    </td>
+                    <td style={{ padding: "14px 16px", textAlign: "right", whiteSpace: "nowrap" }}>
+                      <div style={{ display: "inline-flex", gap: 4 }}>
+                        {!isApproved && (
+                          <button onClick={() => handleApproveClick(comment)} style={{ display: "flex", alignItems: "center", gap: 4, padding: "6px 10px", background: "rgba(16,185,129,0.12)", color: "#10B981", border: "1px solid rgba(16,185,129,0.3)", borderRadius: 8, fontSize: 11.5, cursor: "pointer" }}>
+                            <Check size={12} /> Aceptar
                           </button>
                         )}
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={6} className="px-6 py-12 text-center">
-                      <div className="text-gray-500 dark:text-gray-400">
-                        <svg
-                          className="w-12 h-12 mx-auto mb-4 text-gray-300"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-1l-4 4z"
-                          ></path>
-                        </svg>
-                        <p className="text-lg font-medium">
-                          No hay comentarios disponibles
-                        </p>
-                        <p className="text-sm">
-                          Los comentarios aparecerán aquí cuando estén
-                          disponibles
-                        </p>
+                        {!isRejected && (
+                          <button onClick={() => handleRejectClick(comment)} style={{ display: "flex", alignItems: "center", gap: 4, padding: "6px 10px", background: "rgba(248,113,113,0.12)", color: "#F87171", border: "1px solid rgba(248,113,113,0.3)", borderRadius: 8, fontSize: 11.5, cursor: "pointer" }}>
+                            <X size={12} /> Rechazar
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Pagination */}
-          {comments.length > itemsPerPage && (
-            <div className="bg-gray-50 dark:bg-gray-700 px-6 py-4 border-t border-gray-200 dark:border-gray-600">
-              <div className="flex items-center justify-between">
-                <div className="text-sm text-gray-700 dark:text-gray-300">
-                  Mostrando{" "}
-                  <span className="font-medium">{indexOfFirstItem + 1}</span> a{" "}
-                  <span className="font-medium">
-                    {Math.min(indexOfLastItem, comments.length)}
-                  </span>{" "}
-                  de <span className="font-medium">{comments.length}</span>{" "}
-                  comentarios
-                </div>
-                <div className="flex gap-2">
-                  {Array.from(
-                    { length: Math.ceil(comments.length / itemsPerPage) },
-                    (_, index) => (
-                      <button
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                          currentPage === index + 1
-                            ? "bg-blue-600 text-white shadow-lg transform scale-105"
-                            : "bg-white dark:bg-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-500 shadow-md hover:shadow-lg"
-                        }`}
-                        key={index}
-                        onClick={() => paginate(index + 1)}
-                        disabled={currentPage === index + 1}
-                      >
-                        {index + 1}
-                      </button>
-                    )
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
+                );
+              })}
+            </tbody>
+          </table>
         </div>
 
-        {/* Confirmation Modal */}
-        {showModal && (
-          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm z-50 p-4">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full border border-gray-200 dark:border-gray-700 transform transition-all duration-300 scale-100">
-              <div className="p-6">
-                <div className="flex items-center mb-4">
-                  <div
-                    className={`p-3 rounded-full ${
-                      modalAction === "approve"
-                        ? "bg-green-100 dark:bg-green-900"
-                        : "bg-red-100 dark:bg-red-900"
-                    }`}
-                  >
-                    {modalAction === "approve" ? (
-                      <svg
-                        className="w-6 h-6 text-green-600 dark:text-green-400"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M5 13l4 4L19 7"
-                        ></path>
-                      </svg>
-                    ) : (
-                      <svg
-                        className="w-6 h-6 text-red-600 dark:text-red-400"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M6 18L18 6M6 6l12 12"
-                        ></path>
-                      </svg>
-                    )}
-                  </div>
-                  <h2 className="text-xl font-bold ml-3 text-gray-900 dark:text-white">
-                    Confirmar{" "}
-                    {modalAction === "approve" ? "Aprobación" : "Rechazo"}
-                  </h2>
-                </div>
-                <p className="text-gray-600 dark:text-gray-300 mb-6">
-                  ¿Estás seguro de que deseas{" "}
-                  {modalAction === "approve" ? "aprobar" : "rechazar"} este
-                  comentario? Esta acción se puede revertir más tarde.
-                </p>
-                <div className="flex justify-end space-x-3">
-                  <button
-                    className="px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-800 dark:text-gray-200 rounded-lg font-medium transition-colors duration-200"
-                    onClick={() => setShowModal(false)}
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    className={`px-4 py-2 rounded-lg font-medium text-white transition-all duration-200 transform hover:scale-105 ${
-                      modalAction === "approve"
-                        ? "bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
-                        : "bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700"
-                    }`}
-                    onClick={handleConfirmAction}
-                  >
-                    Confirmar
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Comment Detail Modal */}
-        {showCommentModal && (
-          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm z-50 p-4">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-4xl w-full max-h-[80vh] overflow-hidden border border-gray-200 dark:border-gray-700">
-              <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-                <div className="flex items-center">
-                  <div className="p-3 rounded-full bg-blue-100 dark:bg-blue-900">
-                    <svg
-                      className="w-6 h-6 text-blue-600 dark:text-blue-400"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-1l-4 4z"
-                      ></path>
-                    </svg>
-                  </div>
-                  <h2 className="text-xl font-bold ml-3 text-gray-900 dark:text-white">
-                    Comentario Completo
-                  </h2>
-                </div>
-              </div>
-              <div className="p-6 overflow-y-auto max-h-96">
-                <div className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 rounded-xl p-6 mb-4">
-                  <p className="text-gray-800 dark:text-gray-200 whitespace-pre-line leading-relaxed">
-                    {selectedCommentText}
-                  </p>
-                </div>
-                <div className="bg-blue-50 dark:bg-blue-900 rounded-lg p-4">
-                  <p className="text-gray-700 dark:text-gray-300">
-                    <span className="font-semibold text-blue-600 dark:text-blue-400">
-                      📝 Blog:
-                    </span>{" "}
-                    <span className="font-medium">{selectedBlogName}</span>
-                  </p>
-                </div>
-              </div>
-              <div className="p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
-                <div className="flex justify-end">
-                  <button
-                    className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-all duration-200 transform hover:scale-105"
-                    onClick={() => setShowCommentModal(false)}
-                  >
-                    Cerrar
-                  </button>
-                </div>
-              </div>
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div style={{ padding: "14px 16px", borderTop: "1px solid var(--ec-border)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <span style={{ fontFamily: "var(--font-jetbrains-mono), monospace", fontSize: 11.5, color: "var(--ec-text-dim)" }}>
+              {(currentPage - 1) * itemsPerPage + 1}–{Math.min(currentPage * itemsPerPage, filtered.length)} de {filtered.length}
+            </span>
+            <div style={{ display: "flex", gap: 4 }}>
+              {Array.from({ length: totalPages }, (_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setCurrentPage(i + 1)}
+                  style={{
+                    width: 32, height: 32, borderRadius: 8, border: "1px solid var(--ec-border)",
+                    background: currentPage === i + 1 ? "var(--ec-brand)" : "var(--ec-surface-1)",
+                    color: currentPage === i + 1 ? "white" : "var(--ec-text-dim)",
+                    fontSize: 12, fontWeight: 500, cursor: "pointer",
+                  }}
+                >
+                  {i + 1}
+                </button>
+              ))}
             </div>
           </div>
         )}
       </div>
+
+      {/* Confirmation Modal */}
+      {showModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50, padding: 16 }} onClick={() => setShowModal(false)}>
+          <div className="ec-project-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 400, width: "100%", padding: 28, borderRadius: 18 }}>
+            <h2 className="font-serif" style={{ fontSize: 26, fontWeight: 400, marginBottom: 8 }}>
+              Confirmar {modalAction === "approve" ? "Aprobación" : "Rechazo"}
+            </h2>
+            <p style={{ fontSize: 13.5, color: "var(--ec-text-dim)", lineHeight: 1.6, marginBottom: 24 }}>
+              ¿Deseas {modalAction === "approve" ? "aprobar" : "rechazar"} este comentario? Esta acción se puede revertir más tarde.
+            </p>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
+              <button onClick={() => setShowModal(false)} style={{ padding: "10px 18px", background: "var(--ec-surface-2)", border: "1px solid var(--ec-border)", borderRadius: 10, color: "var(--ec-text)", fontSize: 13, cursor: "pointer" }}>
+                Cancelar
+              </button>
+              <button onClick={handleConfirmAction} style={{ padding: "10px 18px", background: modalAction === "approve" ? "#10B981" : "#F87171", border: 0, borderRadius: 10, color: "white", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+                {modalAction === "approve" ? "Aprobar" : "Rechazar"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Comment Detail Modal */}
+      {showCommentModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50, padding: 16 }} onClick={() => setShowCommentModal(false)}>
+          <div className="ec-project-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 560, width: "100%", padding: 0, borderRadius: 18, overflow: "hidden" }}>
+            <div style={{ padding: "18px 24px", borderBottom: "1px solid var(--ec-border)", display: "flex", alignItems: "center", gap: 12 }}>
+              <MessageCircle size={18} style={{ color: "var(--ec-brand)" }} />
+              <h3 className="font-serif" style={{ fontSize: 22, fontWeight: 400 }}>Comentario Completo</h3>
+              <button onClick={() => setShowCommentModal(false)} style={{ marginLeft: "auto", background: "none", border: 0, color: "var(--ec-text-dim)", cursor: "pointer", padding: 4 }}><X size={16} /></button>
+            </div>
+            <div style={{ padding: 24 }}>
+              <div style={{ padding: 16, background: "var(--ec-surface-2)", border: "1px solid var(--ec-border)", borderRadius: 12, fontSize: 14, lineHeight: 1.6, color: "var(--ec-text)", marginBottom: 14 }}>
+                &ldquo;{selectedCommentText}&rdquo;
+              </div>
+              <div className="h-eyebrow" style={{ marginBottom: 4 }}>BLOG</div>
+              <p style={{ fontSize: 13, color: "var(--ec-text)" }}>{selectedBlogName}</p>
+            </div>
+            <div style={{ padding: "14px 24px", borderTop: "1px solid var(--ec-border)", display: "flex", justifyContent: "flex-end" }}>
+              <button onClick={() => setShowCommentModal(false)} style={{ padding: "10px 24px", background: "var(--ec-brand)", border: 0, borderRadius: 10, color: "white", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-export default Comments;
+export default BlogManagerPage;

@@ -172,31 +172,22 @@ function getOriginText(
 }
 
 // Función para obtener los estilos del badge según el origen
-function getOriginBadgeStyles(origen: string | undefined | null) {
+function getOriginBadgeStyles(origen: string | undefined | null): React.CSSProperties {
+  const base: React.CSSProperties = { fontSize: 11, padding: "2px 8px", borderRadius: 6, border: "1px solid" };
   if (!origen || origen === "null" || origen === "undefined") {
-    return "bg-gradient-to-r from-green-500/20 to-emerald-500/20 text-green-300 border-green-500/30";
+    return { ...base, background: "rgba(34,197,94,0.12)", color: "#22c55e", borderColor: "rgba(34,197,94,0.3)" };
   }
-
   const origenStr = String(origen).trim().toLowerCase();
-
-  const styles: Record<string, string> = {
-    dashboard:
-      "bg-gradient-to-r from-purple-500/20 to-blue-500/20 text-purple-300 border-purple-500/30",
-    web: "bg-gradient-to-r from-green-500/20 to-emerald-500/20 text-green-300 border-green-500/30",
-    paginaweb:
-      "bg-gradient-to-r from-green-500/20 to-emerald-500/20 text-green-300 border-green-500/30",
-    sitio:
-      "bg-gradient-to-r from-green-500/20 to-emerald-500/20 text-green-300 border-green-500/30",
-    telefono:
-      "bg-gradient-to-r from-orange-500/20 to-amber-500/20 text-orange-300 border-orange-500/30",
-    app: "bg-gradient-to-r from-indigo-500/20 to-purple-500/20 text-indigo-300 border-indigo-500/30",
-    otro: "bg-gradient-to-r from-gray-500/20 to-slate-500/20 text-gray-300 border-gray-500/30",
+  const map: Record<string, React.CSSProperties> = {
+    dashboard: { ...base, background: "rgba(168,85,247,0.12)", color: "#a855f7", borderColor: "rgba(168,85,247,0.3)" },
+    web: { ...base, background: "rgba(34,197,94,0.12)", color: "#22c55e", borderColor: "rgba(34,197,94,0.3)" },
+    paginaweb: { ...base, background: "rgba(34,197,94,0.12)", color: "#22c55e", borderColor: "rgba(34,197,94,0.3)" },
+    sitio: { ...base, background: "rgba(34,197,94,0.12)", color: "#22c55e", borderColor: "rgba(34,197,94,0.3)" },
+    telefono: { ...base, background: "rgba(249,115,22,0.12)", color: "#f97316", borderColor: "rgba(249,115,22,0.3)" },
+    app: { ...base, background: "rgba(99,102,241,0.12)", color: "#6366f1", borderColor: "rgba(99,102,241,0.3)" },
+    otro: { ...base, background: "rgba(100,116,139,0.12)", color: "#94a3b8", borderColor: "rgba(100,116,139,0.3)" },
   };
-
-  return (
-    styles[origenStr] ||
-    "bg-gradient-to-r from-gray-500/20 to-slate-500/20 text-gray-300 border-gray-500/30"
-  );
+  return map[origenStr] || { ...base, background: "rgba(100,116,139,0.12)", color: "#94a3b8", borderColor: "rgba(100,116,139,0.3)" };
 }
 
 export default function CalendarMonge() {
@@ -877,95 +868,79 @@ export default function CalendarMonge() {
     : [];
 
   return (
-    <div className="min-h-screen bg-black text-white p-4 md:p-6">
-      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
+    <div style={{ padding: "28px 24px" }} className="fade-in-up">
+      <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) 380px", gap: 18 }}>
         {/* Calendario */}
-        <div className="lg:col-span-2 bg-gradient-to-br from-gray-900/90 to-gray-950/90 backdrop-blur-sm rounded-2xl border border-gray-800 p-4 md:p-6 shadow-2xl">
-          <div className="flex justify-between items-center mb-6">
+        <div className="ec-project-card" style={{ padding: "20px 24px", borderRadius: 14 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
             <button
               onClick={() => navigateMonth("prev")}
-              className="p-2 rounded-xl bg-gray-800/40 hover:bg-gray-800/70 transition-all duration-200 hover:scale-105 active:scale-95"
+              style={{ padding: "8px 10px", borderRadius: 10, background: "var(--ec-surface-2)", border: "1px solid var(--ec-border)", color: "var(--ec-text)", cursor: "pointer", display: "flex", alignItems: "center" }}
             >
-              <FiChevronLeft size={22} className="text-white" />
+              <FiChevronLeft size={20} />
             </button>
 
-            <h2 className="text-xl md:text-2xl font-bold text-white select-none">
+            <h2 className="font-serif" style={{ fontSize: 22, fontWeight: 400, color: "var(--ec-text)", userSelect: "none" }}>
               {monthNames[month]} {year}
             </h2>
 
             <button
               onClick={() => navigateMonth("next")}
-              className="p-2 rounded-xl bg-gray-800/40 hover:bg-gray-800/70 transition-all duration-200 hover:scale-105 active:scale-95"
+              style={{ padding: "8px 10px", borderRadius: 10, background: "var(--ec-surface-2)", border: "1px solid var(--ec-border)", color: "var(--ec-text)", cursor: "pointer", display: "flex", alignItems: "center" }}
             >
-              <FiChevronRight size={22} className="text-white" />
+              <FiChevronRight size={20} />
             </button>
           </div>
 
-          <div className="grid grid-cols-7 gap-1 md:gap-2 text-center font-semibold text-gray-400 mb-2">
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4, textAlign: "center", marginBottom: 8 }}>
             {DAYS_OF_WEEK.map((d) => (
-              <div key={d} className="py-2">
+              <div key={d} style={{ padding: "8px 0", fontSize: 12, fontWeight: 600, color: "var(--ec-text-dim)", fontFamily: "JetBrains Mono, monospace", letterSpacing: "0.06em" }}>
                 {d}
               </div>
             ))}
           </div>
 
-          <div className="grid grid-cols-7 gap-1 md:gap-2">
-            {calendarDays.map((day, idx) => (
-              <div
-                key={idx}
-                onClick={() => handleDayClick(day.dateStr)}
-                className={`
-                  h-16 md:h-20 flex flex-col items-center justify-center rounded-xl border-2 cursor-pointer
-                  transition-all duration-200 hover:scale-[1.02]
-                  ${
-                    day.isCurrentMonth
-                      ? "border-gray-800"
-                      : "border-gray-900 text-gray-600"
-                  }
-                  ${
-                    day.isToday
-                      ? "bg-gradient-to-br from-blue-500/30 to-blue-600/30 border-blue-500 text-white"
-                      : ""
-                  }
-                  ${
-                    day.isSelected
-                      ? "bg-gradient-to-br from-purple-500/30 to-purple-600/30 border-purple-500 text-white"
-                      : ""
-                  }
-                  ${
-                    day.isBlocked
-                      ? "bg-gradient-to-br from-red-500/30 to-red-600/30 border-red-500 text-red-200"
-                      : ""
-                  }
-                  ${
-                    day.isBooked
-                      ? "bg-gradient-to-br from-green-500/20 to-green-600/20 border-green-500 text-green-200"
-                      : ""
-                  }
-                `}
-              >
-                <span className="text-sm md:text-base font-semibold">
-                  {day.day}
-                </span>
-                {day.appointmentCount > 0 && (
-                  <span className="text-xs bg-gradient-to-r from-green-500/40 to-emerald-500/40 text-green-200 rounded-full px-2 py-0.5 mt-1">
-                    {day.appointmentCount}
-                  </span>
-                )}
-              </div>
-            ))}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4 }}>
+            {calendarDays.map((day, idx) => {
+              let bg = "transparent";
+              let borderColor = "var(--ec-border)";
+              let textColor = day.isCurrentMonth ? "var(--ec-text)" : "var(--ec-text-dim)";
+              if (day.isSelected) { bg = "rgba(189,21,92,0.12)"; borderColor = "var(--ec-brand)"; textColor = "var(--ec-brand)"; }
+              else if (day.isToday) { bg = "rgba(99,102,241,0.12)"; borderColor = "#6366f1"; textColor = "#6366f1"; }
+              else if (day.isBlocked) { bg = "rgba(239,68,68,0.1)"; borderColor = "rgba(239,68,68,0.5)"; textColor = "#ef4444"; }
+              else if (day.isBooked) { bg = "rgba(34,197,94,0.1)"; borderColor = "rgba(34,197,94,0.4)"; textColor = "#22c55e"; }
+              return (
+                <div
+                  key={idx}
+                  onClick={() => handleDayClick(day.dateStr)}
+                  style={{
+                    height: 64, display: "flex", flexDirection: "column", alignItems: "center",
+                    justifyContent: "center", borderRadius: 10, border: `2px solid ${borderColor}`,
+                    cursor: "pointer", background: bg, color: textColor,
+                    transition: "all 180ms", userSelect: "none",
+                  }}
+                >
+                  <span style={{ fontSize: 14, fontWeight: 600 }}>{day.day}</span>
+                  {day.appointmentCount > 0 && (
+                    <span style={{ fontSize: 11, background: "rgba(34,197,94,0.2)", color: "#22c55e", borderRadius: 99, padding: "1px 6px", marginTop: 2 }}>
+                      {day.appointmentCount}
+                    </span>
+                  )}
+                </div>
+              );
+            })}
           </div>
 
-          <div className="flex justify-between mt-6">
+          <div style={{ display: "flex", justifyContent: "space-between", marginTop: 20 }}>
             <button
               onClick={goToToday}
-              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 px-4 py-2 rounded-xl font-semibold transition-all duration-200"
+              style={{ padding: "9px 18px", borderRadius: 10, background: "var(--ec-surface-2)", border: "1px solid var(--ec-border)", color: "var(--ec-text)", fontSize: 14, fontWeight: 600, cursor: "pointer" }}
             >
               {lang === "es" ? "Hoy" : "Today"}
             </button>
             <button
               onClick={() => setShowBlockModal(true)}
-              className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 px-4 md:px-6 py-2 md:py-3 rounded-xl text-white font-bold text-sm md:text-base transition-all duration-200 shadow-lg shadow-red-500/20"
+              style={{ padding: "9px 18px", borderRadius: 10, background: "#DC2626", color: "white", fontSize: 14, fontWeight: 700, cursor: "pointer", border: 0 }}
             >
               🔒 {lang === "es" ? "Bloquear Horarios" : "Block Time Slots"}
             </button>
@@ -973,16 +948,16 @@ export default function CalendarMonge() {
         </div>
 
         {/* Próximas citas */}
-        <div className="bg-gradient-to-br from-gray-900/90 to-gray-950/90 backdrop-blur-sm rounded-2xl border border-gray-800 p-4 md:p-6 shadow-2xl">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg md:text-xl font-bold text-white">
+        <div className="ec-project-card" style={{ padding: "20px 24px", borderRadius: 14, display: "flex", flexDirection: "column" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+            <h3 className="font-serif" style={{ fontSize: 20, fontWeight: 400, color: "var(--ec-text)" }}>
               {selectedCalendarDay
                 ? formatDateForDisplay(selectedCalendarDay, lang)
                 : lang === "es"
                 ? "Próximas Citas"
                 : "Upcoming Appointments"}
             </h3>
-            <span className="bg-gradient-to-r from-blue-500/20 to-blue-600/20 text-blue-300 px-3 py-1 rounded-full text-sm font-semibold">
+            <span style={{ background: "rgba(189,21,92,0.12)", color: "var(--ec-brand)", padding: "3px 12px", borderRadius: 99, fontSize: 13, fontWeight: 600 }}>
               {selectedCalendarDay
                 ? completeDaySchedule.length
                 : upcomingAppointments.length}
@@ -990,168 +965,58 @@ export default function CalendarMonge() {
           </div>
 
           {loading ? (
-            <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
-              <p className="text-gray-400 mt-2">
-                {lang === "es"
-                  ? "Cargando citas..."
-                  : "Loading appointments..."}
+            <div style={{ textAlign: "center", padding: "28px 0" }}>
+              <div style={{ width: 28, height: 28, borderRadius: "50%", border: "2px solid var(--ec-brand)", borderTopColor: "transparent", animation: "spin 0.8s linear infinite", margin: "0 auto 10px" }} />
+              <p style={{ color: "var(--ec-text-dim)", fontSize: 13 }}>
+                {lang === "es" ? "Cargando citas..." : "Loading appointments..."}
               </p>
             </div>
           ) : error ? (
-            <p className="text-red-400 text-center py-4">{error}</p>
+            <p style={{ color: "#F87171", textAlign: "center", padding: "14px 0" }}>{error}</p>
           ) : (
-            <div className="space-y-3 max-h-[calc(100vh-300px)] overflow-y-auto">
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, maxHeight: "calc(100vh - 300px)", overflowY: "auto" }}>
               {selectedCalendarDay ? (
                 completeDaySchedule.length > 0 ? (
                   completeDaySchedule.map((item, idx) => {
                     if (item.type === "appointment" && item.data) {
                       const a = item.data as Appointment;
                       const appointmentType = getAppointmentType(a);
+                      const cardBg = appointmentType === "blocked" ? "rgba(239,68,68,0.06)" : "rgba(99,102,241,0.04)";
+                      const cardBorder = appointmentType === "blocked" ? "rgba(239,68,68,0.25)" : "var(--ec-border)";
                       return (
-                        <div
-                          key={idx}
-                          className={`
-                            border p-4 rounded-xl space-y-3 relative group
-                            ${
-                              appointmentType === "blocked"
-                                ? "bg-gradient-to-br from-red-900/20 to-red-950/20 border-red-800/30"
-                                : "bg-gradient-to-br from-blue-900/10 to-blue-950/10 border-blue-800/30"
-                            }
-                          `}
-                        >
-                          <div className="flex justify-between items-start">
-                            <span className="font-bold text-white">
-                              {appointmentType === "blocked"
-                                ? "⛔ " +
-                                  (lang === "es" ? "Bloqueado" : "Blocked")
-                                : "👤 " + a.nombre}
+                        <div key={idx} style={{ padding: 14, borderRadius: 12, border: `1px solid ${cardBorder}`, background: cardBg, position: "relative" }} className="group">
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
+                            <span style={{ fontWeight: 600, fontSize: 14, color: "var(--ec-text)" }}>
+                              {appointmentType === "blocked" ? "⛔ " + (lang === "es" ? "Bloqueado" : "Blocked") : "👤 " + a.nombre}
                             </span>
-                            <div className="flex flex-col items-end gap-1">
+                            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
                               {appointmentType === "normal" && (
-                                <span
-                                  className={`text-xs px-2 py-1 rounded border ${getOriginBadgeStyles(
-                                    a.origen
-                                  )}`}
-                                >
-                                  {getOriginText(a.origen, lang)}
-                                </span>
+                                <span style={getOriginBadgeStyles(a.origen)}>{getOriginText(a.origen, lang)}</span>
                               )}
-                              <span className="text-sm px-2 py-1 rounded bg-gradient-to-r from-blue-500/20 to-blue-600/20 text-blue-300 font-semibold">
-                                {item.time}
-                              </span>
+                              <span style={{ fontSize: 12, padding: "2px 8px", borderRadius: 6, background: "rgba(99,102,241,0.12)", color: "#6366f1", fontWeight: 600 }}>{item.time}</span>
                             </div>
                           </div>
-
                           {appointmentType === "normal" && (
-                            <div className="space-y-1">
-                              <div className="text-sm text-gray-300">
-                                {a.primera_visita
-                                  ? "⭐ " +
-                                    (lang === "es"
-                                      ? "Primera visita"
-                                      : "First visit")
-                                  : "🔄 " +
-                                    (lang === "es"
-                                      ? "Visita sucesiva"
-                                      : "Follow-up")}
-                                {" • "}
-                                <span className="font-medium">
-                                  {a.servicio}
-                                </span>
+                            <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                              <div style={{ fontSize: 13, color: "var(--ec-text-muted)" }}>
+                                {a.primera_visita ? "⭐ " + (lang === "es" ? "Primera visita" : "First visit") : "🔄 " + (lang === "es" ? "Visita sucesiva" : "Follow-up")}
+                                {" • "}<span style={{ fontWeight: 500 }}>{a.servicio}</span>
                               </div>
-
-                              {a.telefono && (
-                                <div className="text-sm text-gray-400 flex items-center gap-2">
-                                  <span className="text-blue-400">📞</span>{" "}
-                                  {a.telefono}
-                                </div>
-                              )}
-                              {a.correo && (
-                                <div className="text-sm text-gray-400 flex items-center gap-2">
-                                  <span className="text-green-400">✉️</span>{" "}
-                                  {a.correo}
-                                </div>
-                              )}
-                              <div className="text-sm text-gray-400 flex items-center gap-2">
-                                <span className="text-yellow-400">🏥</span>
-                                {a.seguro === "Sin seguro"
-                                  ? lang === "es"
-                                    ? "Sin seguro"
-                                    : "No insurance"
-                                  : a.seguro}
+                              {a.telefono && <div style={{ fontSize: 13, color: "var(--ec-text-dim)" }}>📞 {a.telefono}</div>}
+                              {a.correo && <div style={{ fontSize: 13, color: "var(--ec-text-dim)" }}>✉️ {a.correo}</div>}
+                              <div style={{ fontSize: 13, color: "var(--ec-text-dim)" }}>🏥 {a.seguro === "Sin seguro" ? (lang === "es" ? "Sin seguro" : "No insurance") : a.seguro}</div>
+                              <div style={{ fontSize: 11, marginTop: 4, paddingTop: 4, borderTop: "1px solid var(--ec-hairline)", color: a.origen === "dashboard" ? "#a855f7" : "#22c55e" }}>
+                                {a.origen === "dashboard" ? (lang === "es" ? "⬆ Creada desde este panel" : "⬆ Created from this admin panel") : (lang === "es" ? "🌐 Creada desde la página de Monge" : "🌐 Created from Monge Webpage")}
                               </div>
-
-                              {a.origen === "dashboard" ? (
-                                <div className="text-xs text-purple-400 mt-1 pt-1 border-t border-purple-500/20">
-                                  <span className="flex items-center gap-1">
-                                    <svg
-                                      className="w-3 h-3"
-                                      fill="currentColor"
-                                      viewBox="0 0 20 20"
-                                    >
-                                      <path
-                                        fillRule="evenodd"
-                                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v3.586L7.707 9.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 10.586V7z"
-                                        clipRule="evenodd"
-                                      />
-                                    </svg>
-                                    {lang === "es"
-                                      ? "Creada desde este panel de administración"
-                                      : "Created from this admin panel"}
-                                  </span>
-                                </div>
-                              ) : (
-                                <div className="text-xs text-green-400 mt-1 pt-1 border-t border-green-500/20">
-                                  <span className="flex items-center gap-1">
-                                    <svg
-                                      className="w-3 h-3"
-                                      fill="currentColor"
-                                      viewBox="0 0 20 20"
-                                    >
-                                      <path
-                                        fillRule="evenodd"
-                                        d="M4.083 9h1.946c.089-1.546.383-2.97.837-4.118A6.004 6.004 0 004.083 9zM10 2a8 8 0 100 16 8 8 0 000-16zm0 2c-.076 0-.232.032-.465.262-.238.234-.497.623-.737 1.182-.389.907-.673 2.142-.766 3.556h3.936c-.093-1.414-.377-2.649-.766-3.556-.24-.56-.5-.948-.737-1.182C10.232 4.032 10.076 4 10 4zm3.971 5c-.089-1.546-.383-2.97-.837-4.118A6.004 6.004 0 0115.917 9h-1.946zm-2.003 2H8.032c.093 1.414.377 2.649.766 3.556.24.56.5.948.737 1.182.233.23.389.262.465.262.076 0 .232-.032.465-.262.238-.234.498-.623.737-1.182.389-.907.673-2.142.766-3.556zm1.166 4.118c.454-1.147.748-2.572.837-4.118h1.946a6.004 6.004 0 01-2.783 4.118zm-6.268 0C6.412 13.97 6.118 12.546 6.03 11H4.083a6.004 6.004 0 002.783 4.118z"
-                                        clipRule="evenodd"
-                                      />
-                                    </svg>
-                                    {lang === "es"
-                                      ? "Creada desde la pagina de Monge"
-                                      : "Created from Monge Webpage"}
-                                  </span>
-                                </div>
-                              )}
                             </div>
                           )}
-
-                          <div className="flex gap-2 mt-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div style={{ display: "flex", gap: 8, marginTop: 10 }} className="opacity-0 group-hover:opacity-100 transition-opacity">
                             {appointmentType === "blocked" ? (
-                              <button
-                                onClick={() =>
-                                  openAppointmentModal(a, "delete")
-                                }
-                                className="flex-1 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 px-3 py-2 rounded-lg text-white text-sm font-semibold transition-all duration-200"
-                              >
-                                {lang === "es" ? "Eliminar" : "Delete"}
-                              </button>
+                              <button onClick={() => openAppointmentModal(a, "delete")} className="ec-btn-danger" style={{ flex: 1, justifyContent: "center", padding: "7px 12px", fontSize: 13 }}>{lang === "es" ? "Eliminar" : "Delete"}</button>
                             ) : (
                               <>
-                                <button
-                                  onClick={() =>
-                                    openAppointmentModal(a, "edit")
-                                  }
-                                  className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 px-3 py-2 rounded-lg text-white text-sm font-semibold transition-all duration-200"
-                                >
-                                  {lang === "es" ? "Editar" : "Edit"}
-                                </button>
-                                <button
-                                  onClick={() =>
-                                    openAppointmentModal(a, "delete")
-                                  }
-                                  className="flex-1 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 px-3 py-2 rounded-lg text-white text-sm font-semibold transition-all duration-200"
-                                >
-                                  {lang === "es" ? "Eliminar" : "Delete"}
-                                </button>
+                                <button onClick={() => openAppointmentModal(a, "edit")} className="ec-btn-secondary" style={{ flex: 1, justifyContent: "center", padding: "7px 12px", fontSize: 13 }}>{lang === "es" ? "Editar" : "Edit"}</button>
+                                <button onClick={() => openAppointmentModal(a, "delete")} className="ec-btn-danger" style={{ flex: 1, justifyContent: "center", padding: "7px 12px", fontSize: 13 }}>{lang === "es" ? "Eliminar" : "Delete"}</button>
                               </>
                             )}
                           </div>
@@ -1159,248 +1024,82 @@ export default function CalendarMonge() {
                       );
                     } else if (item.type === "blocked") {
                       return (
-                        <div
-                          key={idx}
-                          className="border p-4 rounded-xl space-y-3 bg-gradient-to-br from-red-900/20 to-red-950/20 border-red-800/30 relative group"
-                        >
-                          <div className="flex justify-between items-start">
-                            <span className="font-bold text-white">
-                              ⛔{" "}
-                              {lang === "es"
-                                ? "Horario Bloqueado"
-                                : "Blocked Time Slot"}
-                            </span>
-                            <span className="text-sm px-2 py-1 rounded bg-gradient-to-r from-red-500/20 to-red-600/20 text-red-300 font-semibold">
-                              {item.time}
-                            </span>
+                        <div key={idx} style={{ padding: 14, borderRadius: 12, border: "1px solid rgba(239,68,68,0.25)", background: "rgba(239,68,68,0.06)", position: "relative" }} className="group">
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
+                            <span style={{ fontWeight: 600, fontSize: 14, color: "var(--ec-text)" }}>⛔ {lang === "es" ? "Horario Bloqueado" : "Blocked Time Slot"}</span>
+                            <span style={{ fontSize: 12, padding: "2px 8px", borderRadius: 6, background: "rgba(239,68,68,0.12)", color: "#ef4444", fontWeight: 600 }}>{item.time}</span>
                           </div>
-                          <div className="text-sm text-gray-300">
-                            {lang === "es"
-                              ? "Este horario no está disponible para reservaciones"
-                              : "This time slot is not available for booking"}
-                          </div>
-                          <div className="flex gap-2 mt-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div style={{ fontSize: 13, color: "var(--ec-text-muted)" }}>{lang === "es" ? "Este horario no está disponible para reservaciones" : "This time slot is not available for booking"}</div>
+                          <div style={{ display: "flex", marginTop: 10 }} className="opacity-0 group-hover:opacity-100 transition-opacity">
                             <button
                               onClick={() => {
-                                const fakeAppointment: Appointment = {
-                                  id: (item.data as BlockedDate).id,
-                                  nombre: "BLOQUEADO",
-                                  telefono: "",
-                                  correo: "",
-                                  primera_visita: 0,
-                                  servicio: "",
-                                  seguro: "",
-                                  fecha: selectedCalendarDay,
-                                  hora: item.hourStr,
-                                  fecha_creacion: new Date().toISOString(),
-                                  origen: "dashboard",
-                                };
+                                const fakeAppointment: Appointment = { id: (item.data as BlockedDate).id, nombre: "BLOQUEADO", telefono: "", correo: "", primera_visita: 0, servicio: "", seguro: "", fecha: selectedCalendarDay, hora: item.hourStr, fecha_creacion: new Date().toISOString(), origen: "dashboard" };
                                 openAppointmentModal(fakeAppointment, "delete");
                               }}
-                              className="flex-1 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 px-3 py-2 rounded-lg text-white text-sm font-semibold transition-all duration-200"
-                            >
-                              {lang === "es"
-                                ? "Eliminar Bloqueo"
-                                : "Remove Block"}
-                            </button>
+                              className="ec-btn-danger" style={{ flex: 1, justifyContent: "center", padding: "7px 12px", fontSize: 13 }}
+                            >{lang === "es" ? "Eliminar Bloqueo" : "Remove Block"}</button>
                           </div>
                         </div>
                       );
                     } else if (item.type === "available") {
                       return (
-                        <div
-                          key={idx}
-                          className="border p-4 rounded-xl space-y-3 bg-gradient-to-br from-green-900/20 to-emerald-950/20 border-green-800/30"
-                        >
-                          <div className="flex justify-between items-start">
-                            <div className="flex items-center gap-2">
-                              <span className="text-green-400 text-lg">✓</span>
-                              <span className="font-bold text-green-300">
-                                {lang === "es"
-                                  ? "Horario Disponible"
-                                  : "Available Time Slot"}
-                              </span>
-                            </div>
-                            <span className="text-sm px-2 py-1 rounded bg-gradient-to-r from-green-500/20 to-emerald-500/20 text-green-300 font-semibold">
-                              {item.time}
-                            </span>
+                        <div key={idx} style={{ padding: 14, borderRadius: 12, border: "1px solid rgba(34,197,94,0.25)", background: "rgba(34,197,94,0.05)" }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
+                            <span style={{ fontWeight: 600, fontSize: 14, color: "#22c55e" }}>✓ {lang === "es" ? "Horario Disponible" : "Available Time Slot"}</span>
+                            <span style={{ fontSize: 12, padding: "2px 8px", borderRadius: 6, background: "rgba(34,197,94,0.12)", color: "#22c55e", fontWeight: 600 }}>{item.time}</span>
                           </div>
-                          <div className="text-sm text-gray-300">
-                            {lang === "es"
-                              ? "Este horario está libre para agendar una cita"
-                              : "This time slot is free to schedule an appointment"}
-                          </div>
+                          <div style={{ fontSize: 13, color: "var(--ec-text-muted)", marginBottom: 10 }}>{lang === "es" ? "Este horario está libre para agendar una cita" : "This time slot is free to schedule an appointment"}</div>
                           <button
-                            onClick={() => {
-                              setAppointmentForm((prev) => ({
-                                ...prev,
-                                date: selectedCalendarDay,
-                                time: item.hourStr,
-                              }));
-                              document
-                                .querySelector(".lg\\:col-span-3:last-child")
-                                ?.scrollIntoView({
-                                  behavior: "smooth",
-                                });
-                            }}
-                            className="w-full mt-2 bg-gradient-to-r from-green-600 to-emerald-700 hover:from-green-700 hover:to-emerald-800 text-white font-bold px-3 py-2 rounded-lg text-sm transition-all duration-200"
-                          >
-                            {lang === "es"
-                              ? "Agendar en este horario"
-                              : "Schedule at this time"}
-                          </button>
+                            onClick={() => { setAppointmentForm((prev) => ({ ...prev, date: selectedCalendarDay, time: item.hourStr })); document.querySelector(".lg\\:col-span-3:last-child")?.scrollIntoView({ behavior: "smooth" }); }}
+                            style={{ width: "100%", padding: "8px 12px", background: "#22c55e", color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}
+                          >{lang === "es" ? "Agendar en este horario" : "Schedule at this time"}</button>
                         </div>
                       );
                     }
                     return null;
                   })
                 ) : (
-                  <div className="text-center py-8">
-                    <p className="text-gray-500">
-                      {lang === "es"
-                        ? "No hay horarios disponibles para este día"
-                        : "No time slots available for this day"}
-                    </p>
+                  <div style={{ textAlign: "center", padding: "28px 0" }}>
+                    <p style={{ color: "var(--ec-text-dim)", fontSize: 14 }}>{lang === "es" ? "No hay horarios disponibles para este día" : "No time slots available for this day"}</p>
                   </div>
                 )
               ) : upcomingAppointments.length > 0 ? (
                 upcomingAppointments.map((a, idx) => {
                   const appointmentType = getAppointmentType(a);
+                  const cardBg = appointmentType === "blocked" ? "rgba(239,68,68,0.06)" : "rgba(99,102,241,0.04)";
+                  const cardBorder = appointmentType === "blocked" ? "rgba(239,68,68,0.25)" : "var(--ec-border)";
                   return (
-                    <div
-                      key={idx}
-                      className={`
-                          border p-4 rounded-xl space-y-3 relative group
-                          ${
-                            appointmentType === "blocked"
-                              ? "bg-gradient-to-br from-red-900/20 to-red-950/20 border-red-800/30"
-                              : "bg-gradient-to-br from-blue-900/10 to-blue-950/10 border-blue-800/30"
-                          }
-                        `}
-                    >
-                      <div className="flex justify-between items-start">
-                        <span className="font-bold text-white">
-                          {appointmentType === "blocked"
-                            ? "⛔ " + (lang === "es" ? "Bloqueado" : "Blocked")
-                            : "👤 " + a.nombre}
+                    <div key={idx} style={{ padding: 14, borderRadius: 12, border: `1px solid ${cardBorder}`, background: cardBg, position: "relative" }} className="group">
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
+                        <span style={{ fontWeight: 600, fontSize: 14, color: "var(--ec-text)" }}>
+                          {appointmentType === "blocked" ? "⛔ " + (lang === "es" ? "Bloqueado" : "Blocked") : "👤 " + a.nombre}
                         </span>
-                        <div className="flex flex-col items-end gap-1">
-                          {appointmentType === "normal" && (
-                            <span
-                              className={`text-xs px-2 py-1 rounded border ${getOriginBadgeStyles(
-                                a.origen
-                              )}`}
-                            >
-                              {getOriginText(a.origen, lang)}
-                            </span>
-                          )}
-                          <span className="text-sm px-2 py-1 rounded bg-gradient-to-r from-blue-500/20 to-blue-600/20 text-blue-300 font-semibold">
-                            {a.hora.substring(0, 5)}
-                          </span>
+                        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
+                          {appointmentType === "normal" && <span style={getOriginBadgeStyles(a.origen)}>{getOriginText(a.origen, lang)}</span>}
+                          <span style={{ fontSize: 12, padding: "2px 8px", borderRadius: 6, background: "rgba(99,102,241,0.12)", color: "#6366f1", fontWeight: 600 }}>{a.hora.substring(0, 5)}</span>
                         </div>
                       </div>
-
                       {appointmentType === "normal" && (
-                        <div className="space-y-1">
-                          <div className="text-sm text-gray-300">
-                            {a.primera_visita
-                              ? "⭐ " +
-                                (lang === "es"
-                                  ? "Primera visita"
-                                  : "First visit")
-                              : "🔄 " +
-                                (lang === "es"
-                                  ? "Visita sucesiva"
-                                  : "Follow-up")}
-                            {" • "}
-                            <span className="font-medium">{a.servicio}</span>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                          <div style={{ fontSize: 13, color: "var(--ec-text-muted)" }}>
+                            {a.primera_visita ? "⭐ " + (lang === "es" ? "Primera visita" : "First visit") : "🔄 " + (lang === "es" ? "Visita sucesiva" : "Follow-up")}
+                            {" • "}<span style={{ fontWeight: 500 }}>{a.servicio}</span>
                           </div>
-
-                          {a.telefono && (
-                            <div className="text-sm text-gray-400 flex items-center gap-2">
-                              <span className="text-blue-400">📞</span>{" "}
-                              {a.telefono}
-                            </div>
-                          )}
-                          {a.correo && (
-                            <div className="text-sm text-gray-400 flex items-center gap-2">
-                              <span className="text-green-400">✉️</span>{" "}
-                              {a.correo}
-                            </div>
-                          )}
-                          <div className="text-sm text-gray-400 flex items-center gap-2">
-                            <span className="text-yellow-400">🏥</span>
-                            {a.seguro === "Sin seguro"
-                              ? lang === "es"
-                                ? "Sin seguro"
-                                : "No insurance"
-                              : a.seguro}
+                          {a.telefono && <div style={{ fontSize: 13, color: "var(--ec-text-dim)" }}>📞 {a.telefono}</div>}
+                          {a.correo && <div style={{ fontSize: 13, color: "var(--ec-text-dim)" }}>✉️ {a.correo}</div>}
+                          <div style={{ fontSize: 13, color: "var(--ec-text-dim)" }}>🏥 {a.seguro === "Sin seguro" ? (lang === "es" ? "Sin seguro" : "No insurance") : a.seguro}</div>
+                          <div style={{ fontSize: 11, marginTop: 4, paddingTop: 4, borderTop: "1px solid var(--ec-hairline)", color: a.origen === "dashboard" ? "#a855f7" : "#22c55e" }}>
+                            {a.origen === "dashboard" ? (lang === "es" ? "⬆ Creada desde este panel" : "⬆ Created from this admin panel") : (lang === "es" ? "🌐 Creada desde la página de Monge" : "🌐 Created from Monge Webpage")}
                           </div>
-
-                          {a.origen === "dashboard" ? (
-                            <div className="text-xs text-purple-400 mt-1 pt-1 border-t border-purple-500/20">
-                              <span className="flex items-center gap-1">
-                                <svg
-                                  className="w-3 h-3"
-                                  fill="currentColor"
-                                  viewBox="0 0 20 20"
-                                >
-                                  <path
-                                    fillRule="evenodd"
-                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v3.586L7.707 9.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 10.586V7z"
-                                    clipRule="evenodd"
-                                  />
-                                </svg>
-                                {lang === "es"
-                                  ? "Creada desde este panel de administración"
-                                  : "Created from this admin panel"}
-                              </span>
-                            </div>
-                          ) : (
-                            <div className="text-xs text-green-400 mt-1 pt-1 border-t border-green-500/20">
-                              <span className="flex items-center gap-1">
-                                <svg
-                                  className="w-3 h-3"
-                                  fill="currentColor"
-                                  viewBox="0 0 20 20"
-                                >
-                                  <path
-                                    fillRule="evenodd"
-                                    d="M4.083 9h1.946c.089-1.546.383-2.97.837-4.118A6.004 6.004 0 004.083 9zM10 2a8 8 0 100 16 8 8 0 000-16zm0 2c-.076 0-.232.032-.465.262-.238.234-.497.623-.737 1.182-.389.907-.673 2.142-.766 3.556h3.936c-.093-1.414-.377-2.649-.766-3.556-.24-.56-.5-.948-.737-1.182C10.232 4.032 10.076 4 10 4zm3.971 5c-.089-1.546-.383-2.97-.837-4.118A6.004 6.004 0 0115.917 9h-1.946zm-2.003 2H8.032c.093 1.414.377 2.649.766 3.556.24.56.5.948.737 1.182.233.23.389.262.465.262.076 0 .232-.032.465-.262.238-.234.498-.623.737-1.182.389-.907.673-2.142.766-3.556zm1.166 4.118c.454-1.147.748-2.572.837-4.118h1.946a6.004 6.004 0 01-2.783 4.118zm-6.268 0C6.412 13.97 6.118 12.546 6.03 11H4.083a6.004 6.004 0 002.783 4.118z"
-                                    clipRule="evenodd"
-                                  />
-                                </svg>
-                                {lang === "es"
-                                  ? "Creada desde la pagina de Monge"
-                                  : "Created from Monge Webpage"}
-                              </span>
-                            </div>
-                          )}
                         </div>
                       )}
-
-                      <div className="flex gap-2 mt-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div style={{ display: "flex", gap: 8, marginTop: 10 }} className="opacity-0 group-hover:opacity-100 transition-opacity">
                         {appointmentType === "blocked" ? (
-                          <button
-                            onClick={() => openAppointmentModal(a, "delete")}
-                            className="flex-1 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 px-3 py-2 rounded-lg text-white text-sm font-semibold transition-all duration-200"
-                          >
-                            {lang === "es" ? "Eliminar" : "Delete"}
-                          </button>
+                          <button onClick={() => openAppointmentModal(a, "delete")} className="ec-btn-danger" style={{ flex: 1, justifyContent: "center", padding: "7px 12px", fontSize: 13 }}>{lang === "es" ? "Eliminar" : "Delete"}</button>
                         ) : (
                           <>
-                            <button
-                              onClick={() => openAppointmentModal(a, "edit")}
-                              className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 px-3 py-2 rounded-lg text-white text-sm font-semibold transition-all duration-200"
-                            >
-                              {lang === "es" ? "Editar" : "Edit"}
-                            </button>
-                            <button
-                              onClick={() => openAppointmentModal(a, "delete")}
-                              className="flex-1 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 px-3 py-2 rounded-lg text-white text-sm font-semibold transition-all duration-200"
-                            >
-                              {lang === "es" ? "Eliminar" : "Delete"}
-                            </button>
+                            <button onClick={() => openAppointmentModal(a, "edit")} className="ec-btn-secondary" style={{ flex: 1, justifyContent: "center", padding: "7px 12px", fontSize: 13 }}>{lang === "es" ? "Editar" : "Edit"}</button>
+                            <button onClick={() => openAppointmentModal(a, "delete")} className="ec-btn-danger" style={{ flex: 1, justifyContent: "center", padding: "7px 12px", fontSize: 13 }}>{lang === "es" ? "Eliminar" : "Delete"}</button>
                           </>
                         )}
                       </div>
@@ -1408,12 +1107,8 @@ export default function CalendarMonge() {
                   );
                 })
               ) : (
-                <div className="text-center py-8">
-                  <p className="text-gray-500">
-                    {lang === "es"
-                      ? "No hay citas próximas"
-                      : "No upcoming appointments"}
-                  </p>
+                <div style={{ textAlign: "center", padding: "28px 0" }}>
+                  <p style={{ color: "var(--ec-text-dim)", fontSize: 14 }}>{lang === "es" ? "No hay citas próximas" : "No upcoming appointments"}</p>
                 </div>
               )}
             </div>
@@ -1506,261 +1201,86 @@ export default function CalendarMonge() {
           </div> */}
 
         {/* Formulario Agendar cita */}
-        <div className="lg:col-span-3 bg-gradient-to-br from-gray-900/90 to-gray-950/90 backdrop-blur-sm rounded-2xl border border-gray-800 p-4 md:p-6 shadow-2xl">
-          <h3 className="text-2xl font-bold mb-6 text-white">
+        <div className="ec-project-card" style={{ padding: "20px 24px", borderRadius: 14, gridColumn: "1 / -1" }}>
+          <h3 className="font-serif" style={{ fontSize: 22, fontWeight: 400, color: "var(--ec-text)", marginBottom: 20 }}>
             🗓️{" "}
             {lang === "es" ? "Agendar Nueva Cita" : "Schedule New Appointment"}
           </h3>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-4">
+            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
               <div>
-                <label className="block text-sm font-bold text-gray-300 mb-2">
-                  👤 {lang === "es" ? "Nombre del Paciente" : "Patient Name"}
-                </label>
-                <input
-                  type="text"
-                  value={appointmentForm.name}
-                  onChange={(e) =>
-                    setAppointmentForm((prev) => ({
-                      ...prev,
-                      name: e.target.value,
-                    }))
-                  }
-                  className="w-full bg-gray-800/50 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  placeholder={lang === "es" ? "Nombre completo" : "Full name"}
-                />
+                <label className="ec-field-label" style={{ marginBottom: 6, display: "block" }}>👤 {lang === "es" ? "Nombre del Paciente" : "Patient Name"}</label>
+                <input type="text" value={appointmentForm.name} onChange={(e) => setAppointmentForm((prev) => ({ ...prev, name: e.target.value }))} className="ec-field-input" placeholder={lang === "es" ? "Nombre completo" : "Full name"} />
               </div>
-
               <div>
-                <label className="block text-sm font-bold text-gray-300 mb-2">
-                  📞 {lang === "es" ? "Teléfono" : "Phone"}
-                </label>
-                <input
-                  type="tel"
-                  value={appointmentForm.phone}
-                  onChange={(e) =>
-                    setAppointmentForm((prev) => ({
-                      ...prev,
-                      phone: e.target.value,
-                    }))
-                  }
-                  className="w-full bg-gray-800/50 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  placeholder={
-                    lang === "es" ? "Número de teléfono" : "Phone number"
-                  }
-                />
+                <label className="ec-field-label" style={{ marginBottom: 6, display: "block" }}>📞 {lang === "es" ? "Teléfono" : "Phone"}</label>
+                <input type="tel" value={appointmentForm.phone} onChange={(e) => setAppointmentForm((prev) => ({ ...prev, phone: e.target.value }))} className="ec-field-input" placeholder={lang === "es" ? "Número de teléfono" : "Phone number"} />
               </div>
-
               <div>
-                <label className="block text-sm font-bold text-gray-300 mb-2">
-                  ✉️ Email
-                </label>
-                <input
-                  type="email"
-                  value={appointmentForm.email}
-                  onChange={(e) =>
-                    setAppointmentForm((prev) => ({
-                      ...prev,
-                      email: e.target.value,
-                    }))
-                  }
-                  className="w-full bg-gray-800/50 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  placeholder="email@example.com"
-                />
+                <label className="ec-field-label" style={{ marginBottom: 6, display: "block" }}>✉️ Email</label>
+                <input type="email" value={appointmentForm.email} onChange={(e) => setAppointmentForm((prev) => ({ ...prev, email: e.target.value }))} className="ec-field-input" placeholder="email@example.com" />
               </div>
             </div>
 
-            <div className="space-y-4">
+            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
               <div>
-                <label className="block text-sm font-bold text-gray-300 mb-2">
-                  🏥 {lang === "es" ? "Tipo de Visita" : "Visit Type"}
-                </label>
-                <div className="flex items-center space-x-3 p-3 bg-gray-800/50 rounded-xl border border-gray-700 hover:bg-gray-800/70 transition-colors">
-                  <input
-                    type="checkbox"
-                    checked={appointmentForm.isFirstVisit}
-                    onChange={(e) =>
-                      setAppointmentForm((prev) => ({
-                        ...prev,
-                        isFirstVisit: e.target.checked,
-                        service: e.target.checked ? "" : "Visita sucesiva",
-                      }))
-                    }
-                    className="w-5 h-5 bg-gray-800 border-gray-600 rounded focus:ring-2 focus:ring-blue-500"
-                  />
-                  <label className="text-sm font-bold text-white">
-                    {lang === "es" ? "Primera visita" : "First visit"}
-                  </label>
+                <label className="ec-field-label" style={{ marginBottom: 6, display: "block" }}>🏥 {lang === "es" ? "Tipo de Visita" : "Visit Type"}</label>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: "var(--ec-surface-2)", border: "1px solid var(--ec-border)", borderRadius: 10 }}>
+                  <input type="checkbox" checked={appointmentForm.isFirstVisit} onChange={(e) => setAppointmentForm((prev) => ({ ...prev, isFirstVisit: e.target.checked, service: e.target.checked ? "" : "Visita sucesiva" }))} style={{ width: 18, height: 18, accentColor: "var(--ec-brand)", cursor: "pointer" }} />
+                  <label style={{ fontSize: 14, fontWeight: 500, color: "var(--ec-text)", cursor: "pointer" }}>{lang === "es" ? "Primera visita" : "First visit"}</label>
                 </div>
               </div>
 
               {appointmentForm.isFirstVisit && (
                 <div>
-                  <label className="block text-sm font-bold text-gray-300 mb-2">
-                    ⚕️ {lang === "es" ? "Servicio" : "Service"}
-                  </label>
-                  <input
-                    type="text"
-                    value={appointmentForm.service}
-                    onChange={(e) =>
-                      setAppointmentForm((prev) => ({
-                        ...prev,
-                        service: e.target.value,
-                      }))
-                    }
-                    className="w-full bg-gray-800/50 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                    placeholder={
-                      lang === "es"
-                        ? "Especifique el servicio"
-                        : "Specify service"
-                    }
-                  />
+                  <label className="ec-field-label" style={{ marginBottom: 6, display: "block" }}>⚕️ {lang === "es" ? "Servicio" : "Service"}</label>
+                  <input type="text" value={appointmentForm.service} onChange={(e) => setAppointmentForm((prev) => ({ ...prev, service: e.target.value }))} className="ec-field-input" placeholder={lang === "es" ? "Especifique el servicio" : "Specify service"} />
                 </div>
               )}
 
               <div>
-                <label className="block text-sm font-bold text-gray-300 mb-2">
-                  🛡️ {lang === "es" ? "Seguro Médico" : "Medical Insurance"}
-                </label>
-                <div className="flex items-center space-x-3 p-3 bg-gray-800/50 rounded-xl border border-gray-700 hover:bg-gray-800/70 transition-colors">
-                  <input
-                    type="checkbox"
-                    checked={appointmentForm.insurance !== "Sin seguro"}
-                    onChange={(e) =>
-                      setAppointmentForm((prev) => ({
-                        ...prev,
-                        insurance: e.target.checked ? "" : "Sin seguro",
-                      }))
-                    }
-                    className="w-5 h-5 bg-gray-800 border-gray-600 rounded focus:ring-2 focus:ring-blue-500"
-                  />
-                  <label className="text-sm font-bold text-white">
-                    {lang === "es"
-                      ? "Cuenta con seguro médico"
-                      : "Has medical insurance"}
-                  </label>
+                <label className="ec-field-label" style={{ marginBottom: 6, display: "block" }}>🛡️ {lang === "es" ? "Seguro Médico" : "Medical Insurance"}</label>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: "var(--ec-surface-2)", border: "1px solid var(--ec-border)", borderRadius: 10 }}>
+                  <input type="checkbox" checked={appointmentForm.insurance !== "Sin seguro"} onChange={(e) => setAppointmentForm((prev) => ({ ...prev, insurance: e.target.checked ? "" : "Sin seguro" }))} style={{ width: 18, height: 18, accentColor: "var(--ec-brand)", cursor: "pointer" }} />
+                  <label style={{ fontSize: 14, fontWeight: 500, color: "var(--ec-text)", cursor: "pointer" }}>{lang === "es" ? "Cuenta con seguro médico" : "Has medical insurance"}</label>
                 </div>
               </div>
 
               {appointmentForm.insurance !== "Sin seguro" && (
                 <div>
-                  <label className="block text-sm font-bold text-gray-300 mb-2">
-                    📝 {lang === "es" ? "Nombre del Seguro" : "Insurance Name"}
-                  </label>
-                  <input
-                    type="text"
-                    value={appointmentForm.insurance}
-                    onChange={(e) =>
-                      setAppointmentForm((prev) => ({
-                        ...prev,
-                        insurance: e.target.value,
-                      }))
-                    }
-                    className="w-full bg-gray-800/50 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                    placeholder={
-                      lang === "es" ? "Nombre del seguro" : "Insurance name"
-                    }
-                  />
+                  <label className="ec-field-label" style={{ marginBottom: 6, display: "block" }}>📝 {lang === "es" ? "Nombre del Seguro" : "Insurance Name"}</label>
+                  <input type="text" value={appointmentForm.insurance} onChange={(e) => setAppointmentForm((prev) => ({ ...prev, insurance: e.target.value }))} className="ec-field-input" placeholder={lang === "es" ? "Nombre del seguro" : "Insurance name"} />
                 </div>
               )}
             </div>
 
             <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-bold text-gray-300 mb-2">
-                  📅 {lang === "es" ? "Fecha" : "Date"}
-                </label>
-                <div className="flex gap-3">
-                  <input
-                    type="date"
-                    value={appointmentForm.date}
-                    onChange={(e) =>
-                      setAppointmentForm((prev) => ({
-                        ...prev,
-                        date: e.target.value,
-                        time: "",
-                      }))
-                    }
-                    className="flex-1 bg-gray-800/50 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  />
-                  {selectedCalendarDay &&
-                    appointmentForm.date !== selectedCalendarDay && (
-                      <button
-                        onClick={() =>
-                          setAppointmentForm((prev) => ({
-                            ...prev,
-                            date: selectedCalendarDay,
-                            time: "",
-                          }))
-                        }
-                        className="px-4 py-3 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 rounded-xl text-white font-bold text-sm transition-all duration-200"
-                      >
-                        {lang === "es"
-                          ? "Usar día seleccionado"
-                          : "Use selected day"}
-                      </button>
-                    )}
+                <label className="ec-field-label" style={{ marginBottom: 6, display: "block" }}>📅 {lang === "es" ? "Fecha" : "Date"}</label>
+                <div style={{ display: "flex", gap: 10 }}>
+                  <input type="date" value={appointmentForm.date} onChange={(e) => setAppointmentForm((prev) => ({ ...prev, date: e.target.value, time: "" }))} className="ec-field-input" style={{ flex: 1 }} />
+                  {selectedCalendarDay && appointmentForm.date !== selectedCalendarDay && (
+                    <button onClick={() => setAppointmentForm((prev) => ({ ...prev, date: selectedCalendarDay, time: "" }))} className="ec-btn-secondary" style={{ padding: "10px 14px", fontSize: 13, whiteSpace: "nowrap" }}>
+                      {lang === "es" ? "Usar día seleccionado" : "Use selected day"}
+                    </button>
+                  )}
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-gray-300 mb-2">
-                  ⏰ {lang === "es" ? "Hora" : "Time"}
-                </label>
-                <select
-                  value={appointmentForm.time}
-                  onChange={(e) =>
-                    setAppointmentForm((prev) => ({
-                      ...prev,
-                      time: e.target.value,
-                    }))
-                  }
-                  className="w-full bg-gray-800/50 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  disabled={!appointmentForm.date}
-                >
-                  <option value="">
-                    -- {lang === "es" ? "Seleccionar hora" : "Select time"} --
-                  </option>
-                  {appointmentForm.date &&
-                    getAvailableHours(appointmentForm.date).map((hour) => {
-                      const hourStr = `${hour}:00`;
-                      const isBlocked = blockedDates.some(
-                        (b) =>
-                          b.date === appointmentForm.date && b.hour === hourStr
-                      );
-                      const isBooked = selectedDates.some(
-                        (s) =>
-                          s.fecha === appointmentForm.date && s.hora === hourStr
-                      );
-                      const [year, month, day] = appointmentForm.date
-                        .split("-")
-                        .map(Number);
-                      const hourNumber = parseInt(hour.split(":")[0]);
-                      const currentDate = new Date(
-                        year,
-                        month - 1,
-                        day,
-                        hourNumber,
-                        0,
-                        0,
-                        0
-                      );
-                      const isPastHour = currentDate < new Date();
-
-                      if (!isBlocked && !isBooked) {
-                        return (
-                          <option
-                            key={hourStr}
-                            value={hourStr}
-                            disabled={isPastHour}
-                          >
-                            {hour}
-                          </option>
-                        );
-                      }
-                      return null;
-                    })}
+                <label className="ec-field-label" style={{ marginBottom: 6, display: "block" }}>⏰ {lang === "es" ? "Hora" : "Time"}</label>
+                <select value={appointmentForm.time} onChange={(e) => setAppointmentForm((prev) => ({ ...prev, time: e.target.value }))} className="ec-field-input" disabled={!appointmentForm.date}>
+                  <option value="">-- {lang === "es" ? "Seleccionar hora" : "Select time"} --</option>
+                  {appointmentForm.date && getAvailableHours(appointmentForm.date).map((hour) => {
+                    const hourStr = `${hour}:00`;
+                    const isBlocked = blockedDates.some((b) => b.date === appointmentForm.date && b.hour === hourStr);
+                    const isBooked = selectedDates.some((s) => s.fecha === appointmentForm.date && s.hora === hourStr);
+                    const [year, month, day] = appointmentForm.date.split("-").map(Number);
+                    const isPastHour = new Date(year, month - 1, day, parseInt(hour.split(":")[0]), 0, 0, 0) < new Date();
+                    if (!isBlocked && !isBooked) return <option key={hourStr} value={hourStr} disabled={isPastHour}>{hour}</option>;
+                    return null;
+                  })}
                 </select>
               </div>
             </div>
@@ -1768,14 +1288,9 @@ export default function CalendarMonge() {
             <div className="md:col-span-2">
               <button
                 onClick={handleShowConfirmation}
-                disabled={
-                  !appointmentForm.name ||
-                  !appointmentForm.phone ||
-                  !appointmentForm.date ||
-                  !appointmentForm.time ||
-                  (appointmentForm.isFirstVisit && !appointmentForm.service)
-                }
-                className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold px-6 py-4 rounded-xl text-lg transition-all duration-200 shadow-lg shadow-blue-500/30 disabled:opacity-50 disabled:cursor-not-allowed disabled:from-gray-600 disabled:to-gray-700"
+                disabled={!appointmentForm.name || !appointmentForm.phone || !appointmentForm.date || !appointmentForm.time || (appointmentForm.isFirstVisit && !appointmentForm.service)}
+                className="ec-btn-primary"
+                style={{ width: "100%", justifyContent: "center", padding: "14px 24px", fontSize: 16 }}
               >
                 🚀 {lang === "es" ? "Crear Cita" : "Create Appointment"}
               </button>
@@ -1786,289 +1301,97 @@ export default function CalendarMonge() {
 
       {/* Modal para bloquear dias */}
       {showBlockModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-gradient-to-br from-gray-900 to-gray-950 rounded-2xl border border-gray-800 p-6 md:p-8 shadow-2xl max-w-lg w-full">
-            <h3 className="text-2xl font-bold mb-6 text-white">
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50, padding: 16 }}>
+          <div className="ec-project-card" style={{ padding: "28px 32px", borderRadius: 16, maxWidth: 520, width: "100%" }}>
+            <h3 className="font-serif" style={{ fontSize: 22, fontWeight: 400, color: "var(--ec-text)", marginBottom: 20 }}>
               🔒 {lang === "es" ? "Bloquear Horarios" : "Block Time Slots"}
             </h3>
 
             {/* Selector de tipo de bloqueo */}
-            <div className="grid grid-cols-2 gap-3 mb-6">
+            <div className="grid grid-cols-2 gap-3" style={{ marginBottom: 20 }}>
               <button
-                onClick={() => {
-                  setBlockType("single");
-                  // Resetear formulario al cambiar tipo
-                  setBlockForm({
-                    date: "",
-                    startDate: "",
-                    endDate: "",
-                    startTime: "",
-                    endTime: "",
-                    blockAllDay: false,
-                  });
+                onClick={() => { setBlockType("single"); setBlockForm({ date: "", startDate: "", endDate: "", startTime: "", endTime: "", blockAllDay: false }); }}
+                style={{
+                  padding: 14, borderRadius: 12, border: `2px solid ${blockType === "single" ? "#ef4444" : "var(--ec-border)"}`,
+                  background: blockType === "single" ? "rgba(239,68,68,0.08)" : "var(--ec-surface-1)",
+                  color: blockType === "single" ? "#ef4444" : "var(--ec-text-muted)", cursor: "pointer", transition: "all 160ms",
                 }}
-                className={`p-4 rounded-xl border-2 transition-all duration-200 ${
-                  blockType === "single"
-                    ? "bg-gradient-to-br from-red-500/20 to-red-600/20 border-red-500 text-white"
-                    : "bg-gray-800/50 border-gray-700 text-gray-400 hover:border-gray-600"
-                }`}
               >
-                <div className="text-center">
-                  <div className="text-lg font-bold mb-1">
-                    1 {lang === "es" ? "Día" : "Day"}
-                  </div>
-                  <div className="text-sm">
-                    {lang === "es" ? "Bloqueo simple" : "Single day block"}
-                  </div>
+                <div style={{ textAlign: "center" }}>
+                  <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 2 }}>1 {lang === "es" ? "Día" : "Day"}</div>
+                  <div style={{ fontSize: 12 }}>{lang === "es" ? "Bloqueo simple" : "Single day block"}</div>
                 </div>
               </button>
-
               <button
-                onClick={() => {
-                  setBlockType("multiple");
-                  // Resetear formulario al cambiar tipo
-                  setBlockForm({
-                    date: "",
-                    startDate: "",
-                    endDate: "",
-                    startTime: "",
-                    endTime: "",
-                    blockAllDay: false,
-                  });
+                onClick={() => { setBlockType("multiple"); setBlockForm({ date: "", startDate: "", endDate: "", startTime: "", endTime: "", blockAllDay: false }); }}
+                style={{
+                  padding: 14, borderRadius: 12, border: `2px solid ${blockType === "multiple" ? "#f97316" : "var(--ec-border)"}`,
+                  background: blockType === "multiple" ? "rgba(249,115,22,0.08)" : "var(--ec-surface-1)",
+                  color: blockType === "multiple" ? "#f97316" : "var(--ec-text-muted)", cursor: "pointer", transition: "all 160ms",
                 }}
-                className={`p-4 rounded-xl border-2 transition-all duration-200 ${
-                  blockType === "multiple"
-                    ? "bg-gradient-to-br from-orange-500/20 to-orange-600/20 border-orange-500 text-white"
-                    : "bg-gray-800/50 border-gray-700 text-gray-400 hover:border-gray-600"
-                }`}
               >
-                <div className="text-center">
-                  <div className="text-lg font-bold mb-1">
-                    {lang === "es" ? "Varios Días" : "Multiple Days"}
-                  </div>
-                  <div className="text-sm">
-                    {lang === "es" ? "Rango de fechas" : "Date range"}
-                  </div>
+                <div style={{ textAlign: "center" }}>
+                  <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 2 }}>{lang === "es" ? "Varios Días" : "Multiple Days"}</div>
+                  <div style={{ fontSize: 12 }}>{lang === "es" ? "Rango de fechas" : "Date range"}</div>
                 </div>
               </button>
             </div>
 
-            <div className="space-y-4">
+            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
               {blockType === "single" ? (
                 <div>
-                  <label className="block text-sm font-bold text-gray-300 mb-2">
-                    📅 {lang === "es" ? "Fecha" : "Date"}
-                  </label>
-                  <input
-                    type="date"
-                    value={blockForm.date}
-                    onChange={(e) =>
-                      setBlockForm((prev) => ({
-                        ...prev,
-                        date: e.target.value,
-                      }))
-                    }
-                    className="w-full bg-gray-800/50 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
-                  />
+                  <label className="ec-field-label" style={{ marginBottom: 6, display: "block" }}>📅 {lang === "es" ? "Fecha" : "Date"}</label>
+                  <input type="date" value={blockForm.date} onChange={(e) => setBlockForm((prev) => ({ ...prev, date: e.target.value }))} className="ec-field-input" />
                 </div>
               ) : (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-bold text-gray-300 mb-2">
-                        📅 {lang === "es" ? "Fecha Inicio" : "Start Date"}
-                      </label>
-                      <input
-                        type="date"
-                        value={blockForm.startDate}
-                        onChange={(e) => {
-                          const newStartDate = e.target.value;
-                          setBlockForm((prev) => ({
-                            ...prev,
-                            startDate: newStartDate,
-                            // Si la fecha final está vacía o es anterior a la nueva fecha inicial,
-                            // establecer la fecha final igual a la fecha inicial
-                            endDate:
-                              !prev.endDate ||
-                              new Date(prev.endDate) < new Date(newStartDate)
-                                ? newStartDate
-                                : prev.endDate,
-                          }));
-                        }}
-                        className="w-full bg-gray-800/50 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-bold text-gray-300 mb-2">
-                        📅 {lang === "es" ? "Fecha Fin" : "End Date"}
-                      </label>
-                      <input
-                        type="date"
-                        value={blockForm.endDate}
-                        onChange={(e) => {
-                          const newEndDate = e.target.value;
-                          setBlockForm((prev) => ({
-                            ...prev,
-                            endDate: newEndDate,
-                          }));
-                        }}
-                        min={blockForm.startDate} // Establece el mínimo como la fecha de inicio
-                        className="w-full bg-gray-800/50 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
-                      />
-                    </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="ec-field-label" style={{ marginBottom: 6, display: "block" }}>📅 {lang === "es" ? "Fecha Inicio" : "Start Date"}</label>
+                    <input type="date" value={blockForm.startDate} onChange={(e) => { const d = e.target.value; setBlockForm((prev) => ({ ...prev, startDate: d, endDate: !prev.endDate || new Date(prev.endDate) < new Date(d) ? d : prev.endDate })); }} className="ec-field-input" />
+                  </div>
+                  <div>
+                    <label className="ec-field-label" style={{ marginBottom: 6, display: "block" }}>📅 {lang === "es" ? "Fecha Fin" : "End Date"}</label>
+                    <input type="date" value={blockForm.endDate} onChange={(e) => setBlockForm((prev) => ({ ...prev, endDate: e.target.value }))} min={blockForm.startDate} className="ec-field-input" />
                   </div>
                 </div>
               )}
 
-              <div className="flex items-center space-x-3 p-4 bg-gray-800/50 rounded-xl border border-gray-700 hover:bg-gray-800/70 transition-colors">
-                <input
-                  type="checkbox"
-                  checked={blockForm.blockAllDay}
-                  onChange={(e) =>
-                    setBlockForm((prev) => ({
-                      ...prev,
-                      blockAllDay: e.target.checked,
-                      startTime: "",
-                      endTime: "",
-                    }))
-                  }
-                  className="w-5 h-5 bg-gray-800 border-gray-600 rounded focus:ring-2 focus:ring-red-500"
-                />
-                <label className="text-sm font-bold text-white">
-                  {lang === "es" ? "Bloquear día completo" : "Block all day"}
-                </label>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: "var(--ec-surface-2)", border: "1px solid var(--ec-border)", borderRadius: 10 }}>
+                <input type="checkbox" checked={blockForm.blockAllDay} onChange={(e) => setBlockForm((prev) => ({ ...prev, blockAllDay: e.target.checked, startTime: "", endTime: "" }))} style={{ width: 18, height: 18, accentColor: "#ef4444", cursor: "pointer" }} />
+                <label style={{ fontSize: 14, fontWeight: 500, color: "var(--ec-text)", cursor: "pointer" }}>{lang === "es" ? "Bloquear día completo" : "Block all day"}</label>
               </div>
 
               {!blockForm.blockAllDay && (
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-bold text-gray-300 mb-2">
-                      ⏰ {lang === "es" ? "Hora Inicio" : "Start Time"}
-                    </label>
-                    <select
-                      value={blockForm.startTime}
-                      onChange={(e) =>
-                        setBlockForm((prev) => ({
-                          ...prev,
-                          startTime: e.target.value,
-                          // Resetear hora final si la hora inicial es mayor
-                          endTime:
-                            prev.endTime &&
-                            parseInt(e.target.value.split(":")[0]) >=
-                              parseInt(prev.endTime.split(":")[0])
-                              ? ""
-                              : prev.endTime,
-                        }))
-                      }
-                      className="w-full bg-gray-800/50 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
-                    >
-                      <option value="">
-                        -- {lang === "es" ? "Seleccionar" : "Select"} --
-                      </option>
-                      {[
-                        "10:00",
-                        "11:00",
-                        "12:00",
-                        "13:00",
-                        "16:00",
-                        "17:00",
-                        "18:00",
-                      ].map((hour) => (
-                        <option key={hour} value={`${hour}:00`}>
-                          {hour}
-                        </option>
-                      ))}
+                    <label className="ec-field-label" style={{ marginBottom: 6, display: "block" }}>⏰ {lang === "es" ? "Hora Inicio" : "Start Time"}</label>
+                    <select value={blockForm.startTime} onChange={(e) => setBlockForm((prev) => ({ ...prev, startTime: e.target.value, endTime: prev.endTime && parseInt(e.target.value.split(":")[0]) >= parseInt(prev.endTime.split(":")[0]) ? "" : prev.endTime }))} className="ec-field-input">
+                      <option value="">-- {lang === "es" ? "Seleccionar" : "Select"} --</option>
+                      {["10:00","11:00","12:00","13:00","16:00","17:00","18:00"].map((hour) => <option key={hour} value={`${hour}:00`}>{hour}</option>)}
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-bold text-gray-300 mb-2">
-                      ⏰ {lang === "es" ? "Hora Fin" : "End Time"}
-                    </label>
-                    <select
-                      value={blockForm.endTime}
-                      onChange={(e) =>
-                        setBlockForm((prev) => ({
-                          ...prev,
-                          endTime: e.target.value,
-                        }))
-                      }
-                      className="w-full bg-gray-800/50 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
-                      disabled={!blockForm.startTime}
-                    >
-                      <option value="">
-                        -- {lang === "es" ? "Seleccionar" : "Select"} --
-                      </option>
-                      {blockForm.startTime &&
-                        [
-                          "10:00",
-                          "11:00",
-                          "12:00",
-                          "13:00",
-                          "16:00",
-                          "17:00",
-                          "18:00",
-                          "19:00",
-                        ]
-                          .filter((hour) => {
-                            const startHour = parseInt(
-                              blockForm.startTime.split(":")[0]
-                            );
-                            const hourNumber = parseInt(hour.split(":")[0]);
-                            return hourNumber > startHour;
-                          })
-                          .map((hour) => (
-                            <option key={hour} value={`${hour}:00`}>
-                              {hour}
-                            </option>
-                          ))}
+                    <label className="ec-field-label" style={{ marginBottom: 6, display: "block" }}>⏰ {lang === "es" ? "Hora Fin" : "End Time"}</label>
+                    <select value={blockForm.endTime} onChange={(e) => setBlockForm((prev) => ({ ...prev, endTime: e.target.value }))} className="ec-field-input" disabled={!blockForm.startTime}>
+                      <option value="">-- {lang === "es" ? "Seleccionar" : "Select"} --</option>
+                      {blockForm.startTime && ["10:00","11:00","12:00","13:00","16:00","17:00","18:00","19:00"].filter((hour) => parseInt(hour.split(":")[0]) > parseInt(blockForm.startTime.split(":")[0])).map((hour) => <option key={hour} value={`${hour}:00`}>{hour}</option>)}
                     </select>
                   </div>
                 </div>
               )}
             </div>
 
-            <div className="flex justify-end gap-3 mt-8">
-              <button
-                onClick={() => {
-                  setShowBlockModal(false);
-                  setBlockForm({
-                    date: "",
-                    startDate: "",
-                    endDate: "",
-                    startTime: "",
-                    endTime: "",
-                    blockAllDay: false,
-                  });
-                }}
-                className="px-6 py-3 rounded-xl bg-gray-800 hover:bg-gray-700 text-white font-bold transition-all duration-200 border border-gray-700"
-              >
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 24 }}>
+              <button onClick={() => { setShowBlockModal(false); setBlockForm({ date: "", startDate: "", endDate: "", startTime: "", endTime: "", blockAllDay: false }); }} className="ec-btn-secondary" style={{ padding: "10px 20px" }}>
                 {lang === "es" ? "Cancelar" : "Cancel"}
               </button>
               <button
                 onClick={handleBlockSubmit}
-                disabled={
-                  blockingDate ||
-                  (blockType === "single"
-                    ? !blockForm.date
-                    : !blockForm.startDate || !blockForm.endDate)
-                }
-                className={`px-6 py-3 rounded-xl text-white font-bold transition-all duration-200 shadow-lg ${
-                  blockType === "single"
-                    ? "bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 shadow-red-500/30"
-                    : "bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 shadow-orange-500/30"
-                } disabled:opacity-50`}
+                disabled={blockingDate || (blockType === "single" ? !blockForm.date : !blockForm.startDate || !blockForm.endDate)}
+                className="ec-btn-danger"
+                style={{ padding: "10px 20px", opacity: blockingDate ? 0.6 : 1 }}
               >
-                {blockingDate
-                  ? lang === "es"
-                    ? "Bloqueando..."
-                    : "Blocking..."
-                  : blockType === "single"
-                  ? lang === "es"
-                    ? "Bloquear Horario(s)"
-                    : "Block Time Slot(s)"
-                  : lang === "es"
-                  ? "Bloquear Rango"
-                  : "Block Range"}
+                {blockingDate ? (lang === "es" ? "Bloqueando..." : "Blocking...") : blockType === "single" ? (lang === "es" ? "Bloquear Horario(s)" : "Block Time Slot(s)") : (lang === "es" ? "Bloquear Rango" : "Block Range")}
               </button>
             </div>
           </div>
@@ -2077,65 +1400,29 @@ export default function CalendarMonge() {
 
       {/* Modal de Confirmación de Cita */}
       {showConfirmModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-gradient-to-br from-gray-900 to-gray-950 rounded-2xl border border-gray-800 p-6 md:p-8 shadow-2xl max-w-lg w-full">
-            <h3 className="text-2xl font-bold mb-6 text-white">
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50, padding: 16 }}>
+          <div className="ec-project-card" style={{ padding: "28px 32px", borderRadius: 16, maxWidth: 520, width: "100%" }}>
+            <h3 className="font-serif" style={{ fontSize: 22, fontWeight: 400, color: "var(--ec-text)", marginBottom: 20 }}>
               ✅ {lang === "es" ? "Confirmar Cita" : "Confirm Appointment"}
             </h3>
 
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div className="text-gray-400 font-bold">
-                  {lang === "es" ? "Paciente" : "Patient"}:
-                </div>
-                <div className="text-white font-bold">
-                  {appointmentForm.name}
-                </div>
-
-                <div className="text-gray-400 font-bold">
-                  {lang === "es" ? "Teléfono" : "Phone"}:
-                </div>
-                <div className="text-white font-bold">
-                  {appointmentForm.phone}
-                </div>
-
-                {appointmentForm.email && (
-                  <>
-                    <div className="text-gray-400 font-bold">Email:</div>
-                    <div className="text-white font-bold break-all">
-                      {appointmentForm.email}
-                    </div>
-                  </>
-                )}
-
-                <div className="text-gray-400 font-bold">
-                  {lang === "es" ? "Fecha" : "Date"}:
-                </div>
-                <div className="text-white font-bold">
-                  {formatDateForDisplay(appointmentForm.date, lang)}
-                </div>
-
-                <div className="text-gray-400 font-bold">
-                  {lang === "es" ? "Hora" : "Time"}:
-                </div>
-                <div className="text-white font-bold">
-                  {appointmentForm.time.split(":")[0]}:
-                  {appointmentForm.time.split(":")[1]}
-                </div>
-              </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px 16px", fontSize: 14, marginBottom: 8 }}>
+              <span style={{ color: "var(--ec-text-muted)", fontWeight: 500 }}>{lang === "es" ? "Paciente" : "Patient"}:</span>
+              <span style={{ color: "var(--ec-text)", fontWeight: 600 }}>{appointmentForm.name}</span>
+              <span style={{ color: "var(--ec-text-muted)", fontWeight: 500 }}>{lang === "es" ? "Teléfono" : "Phone"}:</span>
+              <span style={{ color: "var(--ec-text)", fontWeight: 600 }}>{appointmentForm.phone}</span>
+              {appointmentForm.email && (<><span style={{ color: "var(--ec-text-muted)", fontWeight: 500 }}>Email:</span><span style={{ color: "var(--ec-text)", fontWeight: 600, wordBreak: "break-all" }}>{appointmentForm.email}</span></>)}
+              <span style={{ color: "var(--ec-text-muted)", fontWeight: 500 }}>{lang === "es" ? "Fecha" : "Date"}:</span>
+              <span style={{ color: "var(--ec-text)", fontWeight: 600 }}>{formatDateForDisplay(appointmentForm.date, lang)}</span>
+              <span style={{ color: "var(--ec-text-muted)", fontWeight: 500 }}>{lang === "es" ? "Hora" : "Time"}:</span>
+              <span style={{ color: "var(--ec-text)", fontWeight: 600 }}>{appointmentForm.time.split(":")[0]}:{appointmentForm.time.split(":")[1]}</span>
             </div>
 
-            <div className="flex justify-end gap-3 mt-8">
-              <button
-                onClick={() => setShowConfirmModal(false)}
-                className="px-6 py-3 rounded-xl bg-gray-800 hover:bg-gray-700 text-white font-bold transition-all duration-200 border border-gray-700"
-              >
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 24 }}>
+              <button onClick={() => setShowConfirmModal(false)} className="ec-btn-secondary" style={{ padding: "10px 20px" }}>
                 {lang === "es" ? "Cancelar" : "Cancel"}
               </button>
-              <button
-                onClick={handleCreateAppointment}
-                className="px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold transition-all duration-200 shadow-lg shadow-blue-500/30"
-              >
+              <button onClick={handleCreateAppointment} className="ec-btn-primary" style={{ padding: "10px 20px" }}>
                 {lang === "es" ? "Confirmar" : "Confirm"}
               </button>
             </div>
@@ -2145,9 +1432,9 @@ export default function CalendarMonge() {
 
       {/* Modal de Gestión de Citas */}
       {showAppointmentModal && selectedAppointment && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-gradient-to-br from-gray-900 to-gray-950 rounded-2xl border border-gray-800 p-6 md:p-8 shadow-2xl max-w-lg w-full">
-            <h3 className="text-2xl font-bold mb-6 text-white">
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50, padding: 16 }}>
+          <div className="ec-project-card" style={{ padding: "28px 32px", borderRadius: 16, maxWidth: 520, width: "100%" }}>
+            <h3 className="font-serif" style={{ fontSize: 22, fontWeight: 400, color: "var(--ec-text)", marginBottom: 20 }}>
               {modalType === "delete" ? "🗑️ " : "✏️ "}
               {modalType === "delete"
                 ? lang === "es"
@@ -2159,157 +1446,45 @@ export default function CalendarMonge() {
             </h3>
 
             {modalType === "delete" ? (
-              <div className="space-y-4">
-                <p className="text-gray-300">
-                  {lang === "es"
-                    ? "¿Estás seguro de que deseas eliminar esta cita?"
-                    : "Are you sure you want to delete this appointment?"}
-                </p>
-                <div className="bg-gray-800/50 p-4 rounded-xl">
-                  <div className="text-sm text-gray-400">
-                    <strong>{lang === "es" ? "Paciente" : "Patient"}:</strong>{" "}
-                    {selectedAppointment.nombre}
-                  </div>
-                  <div className="text-sm text-gray-400">
-                    <strong>{lang === "es" ? "Fecha" : "Date"}:</strong>{" "}
-                    {formatDateForDisplay(selectedAppointment.fecha, lang)}
-                  </div>
-                  <div className="text-sm text-gray-400">
-                    <strong>{lang === "es" ? "Hora" : "Time"}:</strong>{" "}
-                    {selectedAppointment.hora}
-                  </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                <p style={{ color: "var(--ec-text-muted)", fontSize: 14 }}>{lang === "es" ? "¿Estás seguro de que deseas eliminar esta cita?" : "Are you sure you want to delete this appointment?"}</p>
+                <div style={{ padding: "12px 16px", background: "var(--ec-surface-2)", border: "1px solid var(--ec-border)", borderRadius: 10 }}>
+                  <div style={{ fontSize: 13, color: "var(--ec-text-muted)" }}><strong style={{ color: "var(--ec-text)" }}>{lang === "es" ? "Paciente" : "Patient"}:</strong> {selectedAppointment.nombre}</div>
+                  <div style={{ fontSize: 13, color: "var(--ec-text-muted)" }}><strong style={{ color: "var(--ec-text)" }}>{lang === "es" ? "Fecha" : "Date"}:</strong> {formatDateForDisplay(selectedAppointment.fecha, lang)}</div>
+                  <div style={{ fontSize: 13, color: "var(--ec-text-muted)" }}><strong style={{ color: "var(--ec-text)" }}>{lang === "es" ? "Hora" : "Time"}:</strong> {selectedAppointment.hora}</div>
                 </div>
               </div>
             ) : (
-              <div className="space-y-4">
-                <input
-                  type="text"
-                  value={appointmentForm.name}
-                  onChange={(e) =>
-                    setAppointmentForm((prev) => ({
-                      ...prev,
-                      name: e.target.value,
-                    }))
-                  }
-                  className="w-full bg-gray-800/50 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  placeholder={
-                    lang === "es" ? "Nombre del paciente" : "Patient name"
-                  }
-                />
-
-                <input
-                  type="tel"
-                  value={appointmentForm.phone}
-                  onChange={(e) =>
-                    setAppointmentForm((prev) => ({
-                      ...prev,
-                      phone: e.target.value,
-                    }))
-                  }
-                  className="w-full bg-gray-800/50 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  placeholder={lang === "es" ? "Teléfono" : "Phone"}
-                />
-
-                <input
-                  type="email"
-                  value={appointmentForm.email}
-                  onChange={(e) =>
-                    setAppointmentForm((prev) => ({
-                      ...prev,
-                      email: e.target.value,
-                    }))
-                  }
-                  className="w-full bg-gray-800/50 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  placeholder="Email"
-                />
-
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                <input type="text" value={appointmentForm.name} onChange={(e) => setAppointmentForm((prev) => ({ ...prev, name: e.target.value }))} className="ec-field-input" placeholder={lang === "es" ? "Nombre del paciente" : "Patient name"} />
+                <input type="tel" value={appointmentForm.phone} onChange={(e) => setAppointmentForm((prev) => ({ ...prev, phone: e.target.value }))} className="ec-field-input" placeholder={lang === "es" ? "Teléfono" : "Phone"} />
+                <input type="email" value={appointmentForm.email} onChange={(e) => setAppointmentForm((prev) => ({ ...prev, email: e.target.value }))} className="ec-field-input" placeholder="Email" />
                 <div className="grid grid-cols-2 gap-4">
-                  <input
-                    type="date"
-                    value={appointmentForm.date}
-                    onChange={(e) =>
-                      setAppointmentForm((prev) => ({
-                        ...prev,
-                        date: e.target.value,
-                      }))
-                    }
-                    className="w-full bg-gray-800/50 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  />
-
-                  <select
-                    value={appointmentForm.time}
-                    onChange={(e) =>
-                      setAppointmentForm((prev) => ({
-                        ...prev,
-                        time: e.target.value,
-                      }))
-                    }
-                    className="w-full bg-gray-800/50 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                    disabled={!appointmentForm.date}
-                  >
-                    <option value="">
-                      -- {lang === "es" ? "Seleccionar" : "Select"} --
-                    </option>
-                    {appointmentForm.date &&
-                      getAvailableHours(appointmentForm.date).map((hour) => {
-                        const hourStr = `${hour}:00`;
-                        const isBlocked = blockedDates.some(
-                          (b) =>
-                            b.date === appointmentForm.date &&
-                            b.hour === hourStr
-                        );
-                        const isBooked = selectedDates.some(
-                          (s) =>
-                            s.fecha === appointmentForm.date &&
-                            s.hora === hourStr &&
-                            s.id !== selectedAppointment?.id
-                        );
-                        return !isBlocked && !isBooked ? (
-                          <option key={hourStr} value={hourStr}>
-                            {hour}
-                          </option>
-                        ) : null;
-                      })}
+                  <input type="date" value={appointmentForm.date} onChange={(e) => setAppointmentForm((prev) => ({ ...prev, date: e.target.value }))} className="ec-field-input" />
+                  <select value={appointmentForm.time} onChange={(e) => setAppointmentForm((prev) => ({ ...prev, time: e.target.value }))} className="ec-field-input" disabled={!appointmentForm.date}>
+                    <option value="">-- {lang === "es" ? "Seleccionar" : "Select"} --</option>
+                    {appointmentForm.date && getAvailableHours(appointmentForm.date).map((hour) => {
+                      const hourStr = `${hour}:00`;
+                      const isBlocked = blockedDates.some((b) => b.date === appointmentForm.date && b.hour === hourStr);
+                      const isBooked = selectedDates.some((s) => s.fecha === appointmentForm.date && s.hora === hourStr && s.id !== selectedAppointment?.id);
+                      return !isBlocked && !isBooked ? <option key={hourStr} value={hourStr}>{hour}</option> : null;
+                    })}
                   </select>
                 </div>
               </div>
             )}
 
-            <div className="flex justify-end gap-3 mt-8">
-              <button
-                onClick={() => {
-                  setShowAppointmentModal(false);
-                  setSelectedAppointment(null);
-                  setModalType(null);
-                }}
-                className="px-6 py-3 rounded-xl bg-gray-800 hover:bg-gray-700 text-white font-bold transition-all duration-200 border border-gray-700"
-              >
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 24 }}>
+              <button onClick={() => { setShowAppointmentModal(false); setSelectedAppointment(null); setModalType(null); }} className="ec-btn-secondary" style={{ padding: "10px 20px" }}>
                 {lang === "es" ? "Cancelar" : "Cancel"}
               </button>
               <button
-                onClick={() =>
-                  modalType === "delete"
-                    ? handleDeleteAppointment(selectedAppointment.id)
-                    : handleEditAppointment()
-                }
+                onClick={() => modalType === "delete" ? handleDeleteAppointment(selectedAppointment.id) : handleEditAppointment()}
                 disabled={appointmentActionLoading}
-                className={`px-6 py-3 rounded-xl text-white font-bold transition-all duration-200 shadow-lg ${
-                  modalType === "delete"
-                    ? "bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 shadow-red-500/30"
-                    : "bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-blue-500/30"
-                } disabled:opacity-50`}
+                className={modalType === "delete" ? "ec-btn-danger" : "ec-btn-primary"}
+                style={{ padding: "10px 20px", opacity: appointmentActionLoading ? 0.6 : 1 }}
               >
-                {appointmentActionLoading
-                  ? lang === "es"
-                    ? "Procesando..."
-                    : "Processing..."
-                  : modalType === "delete"
-                  ? lang === "es"
-                    ? "Eliminar"
-                    : "Delete"
-                  : lang === "es"
-                  ? "Actualizar"
-                  : "Update"}
+                {appointmentActionLoading ? (lang === "es" ? "Procesando..." : "Processing...") : modalType === "delete" ? (lang === "es" ? "Eliminar" : "Delete") : (lang === "es" ? "Actualizar" : "Update")}
               </button>
             </div>
           </div>

@@ -437,10 +437,10 @@ export default function QRCodeGenerator() {
 
     if (preset.fields) {
       return (
-        <div className="space-y-3">
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {preset.fields.map((field) => (
-            <div key={field} className="space-y-1">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 capitalize">
+            <div key={field}>
+              <label className="ec-field-label" style={{ marginBottom: 6, display: "block" }}>
                 {field === "ssid" ? "Nombre WiFi"
                   : field === "password" ? "Contraseña"
                   : field === "security" ? "Seguridad"
@@ -459,7 +459,7 @@ export default function QRCodeGenerator() {
                       [field]: e.target.value,
                     })
                   }
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="ec-field-input"
                 >
                   <option value="WPA">WPA/WPA2</option>
                   <option value="WEP">WEP</option>
@@ -474,7 +474,7 @@ export default function QRCodeGenerator() {
                       [field]: e.target.value,
                     })
                   }
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="ec-field-input"
                   rows={3}
                 />
               ) : (
@@ -487,7 +487,7 @@ export default function QRCodeGenerator() {
                       [field]: e.target.value,
                     })
                   }
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="ec-field-input"
                   placeholder={field === "ssid" ? "Mi WiFi" : field === "email" ? "ejemplo@email.com" : ""}
                 />
               )}
@@ -498,16 +498,14 @@ export default function QRCodeGenerator() {
     }
 
     return (
-      <div className="space-y-2">
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-          {preset.label}
-        </label>
+      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        <label className="ec-field-label">{preset.label}</label>
         <input
           type="text"
           placeholder={(preset as PresetSimple).placeholder}
           value={(qrData[qrType] as string) || ""}
           onChange={(e) => updateQrData(qrType, e.target.value)}
-          className="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-blue-500 focus:outline-none transition-colors"
+          className="ec-field-input"
         />
       </div>
     );
@@ -517,14 +515,15 @@ export default function QRCodeGenerator() {
   void logo;
 
   return (
-    <div className="min-h-screen py-8 px-4">
-      <div className="max-w-7xl mx-auto">
+    <div className="fade-in-up" style={{ padding: "28px 24px" }}>
+      <div style={{ maxWidth: 1200, margin: "0 auto" }}>
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
+        <div style={{ textAlign: "center", marginBottom: 28 }}>
+          <div className="h-eyebrow" style={{ marginBottom: 8 }}>⎯⎯⎯  QR GENERATOR</div>
+          <h1 className="font-serif" style={{ fontSize: 40, fontWeight: 400, lineHeight: 1, letterSpacing: "-0.025em", marginBottom: 8, color: "var(--ec-text)" }}>
             Generador QR Avanzado
           </h1>
-          <p className="text-gray-600 dark:text-gray-400 text-lg">
+          <p style={{ color: "var(--ec-text-dim)", fontSize: 14 }}>
             Crea códigos QR personalizados con control total sobre el diseño
           </p>
         </div>
@@ -533,8 +532,8 @@ export default function QRCodeGenerator() {
           {/* Panel de Controles */}
           <div className="space-y-6">
             {/* Tipo de QR */}
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
+            <div className="ec-project-card" style={{ padding: 24, borderRadius: 14 }}>
+              <h2 className="font-serif" style={{ fontSize: 20, fontWeight: 400, color: "var(--ec-text)", marginBottom: 14 }}>
                 Tipo de Código QR
               </h2>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -542,15 +541,19 @@ export default function QRCodeGenerator() {
                   <button
                     key={key}
                     onClick={() => setQrType(key)}
-                    className={`p-3 rounded-xl border-2 transition-all duration-200 ${
-                      qrType === key
-                        ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300"
-                        : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 text-gray-700 dark:text-gray-300"
-                    }`}
+                    style={{
+                      padding: 12,
+                      borderRadius: 12,
+                      border: qrType === key ? "2px solid var(--ec-brand)" : "2px solid var(--ec-border)",
+                      background: qrType === key ? "rgba(189,21,92,0.08)" : "transparent",
+                      color: qrType === key ? "var(--ec-brand)" : "var(--ec-text-muted)",
+                      cursor: "pointer",
+                      transition: "all 160ms",
+                    }}
                   >
-                    <div className="flex flex-col items-center space-y-2">
-                      <div className="text-xl">{preset.icon}</div>
-                      <span className="text-sm font-medium">{preset.label}</span>
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+                      <div style={{ fontSize: 20 }}>{preset.icon}</div>
+                      <span style={{ fontSize: 13, fontWeight: 500 }}>{preset.label}</span>
                     </div>
                   </button>
                 ))}
@@ -558,23 +561,29 @@ export default function QRCodeGenerator() {
             </div>
 
             {/* Datos del QR */}
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
+            <div className="ec-project-card" style={{ padding: 24, borderRadius: 14 }}>
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white">Contenido</h2>
+                <h2 className="font-serif" style={{ fontSize: 20, fontWeight: 400, color: "var(--ec-text)" }}>Contenido</h2>
                 <button
                   onClick={copyQRValue}
-                  className="flex items-center space-x-2 px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                  style={{
+                    display: "flex", alignItems: "center", gap: 6,
+                    padding: "6px 12px", fontSize: 13,
+                    background: "var(--ec-surface-2)", border: "1px solid var(--ec-border)",
+                    borderRadius: 8, cursor: "pointer", color: "var(--ec-text-muted)",
+                    transition: "all 140ms",
+                  }}
                 >
-                  {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                  {copied ? <Check size={14} /> : <Copy size={14} />}
                   <span>{copied ? "Copiado" : "Copiar"}</span>
                 </button>
               </div>
               {renderTypeFields()}
 
               {qrValue && (
-                <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                  <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Valor generado:</p>
-                  <p className="text-sm font-mono text-gray-800 dark:text-gray-200 break-all">
+                <div style={{ marginTop: 14, padding: "10px 14px", background: "var(--ec-surface-2)", border: "1px solid var(--ec-border)", borderRadius: 10 }}>
+                  <p style={{ fontSize: 11, color: "var(--ec-text-dim)", marginBottom: 4, fontFamily: "JetBrains Mono, monospace", letterSpacing: "0.08em", textTransform: "uppercase" }}>Valor generado</p>
+                  <p style={{ fontSize: 13, fontFamily: "JetBrains Mono, monospace", color: "var(--ec-text-muted)", wordBreak: "break-all" }}>
                     {qrValue.length > 100 ? qrValue.slice(0, 100) + "..." : qrValue}
                   </p>
                 </div>
@@ -582,104 +591,118 @@ export default function QRCodeGenerator() {
             </div>
 
             {/* Configuración de diseño */}
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
+            <div className="ec-project-card" style={{ padding: 24, borderRadius: 14 }}>
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white">Diseño</h2>
+                <h2 className="font-serif" style={{ fontSize: 20, fontWeight: 400, color: "var(--ec-text)" }}>Diseño</h2>
                 <button
                   onClick={resetDefaults}
-                  className="flex items-center space-x-2 px-4 py-2 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                  style={{
+                    display: "flex", alignItems: "center", gap: 6,
+                    padding: "7px 14px", fontSize: 13,
+                    background: "var(--ec-surface-2)", border: "1px solid var(--ec-border)",
+                    borderRadius: 8, cursor: "pointer", color: "var(--ec-text-muted)",
+                    transition: "all 140ms",
+                  }}
                 >
-                  <RotateCcw className="w-4 h-4" />
+                  <RotateCcw size={14} />
                   Restablecer
                 </button>
               </div>
 
               {/* Presets de colores */}
-              <div className="mb-6">
-                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Paletas de colores</h3>
+              <div style={{ marginBottom: 20 }}>
+                <p className="ec-field-label" style={{ marginBottom: 10 }}>Paletas de colores</p>
                 <div className="grid grid-cols-3 gap-2">
                   {COLOR_PRESETS.map((preset) => (
                     <button
                       key={preset.name}
                       onClick={() => applyColorPreset(preset)}
-                      className="p-2 rounded-lg border border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 transition-colors"
+                      style={{
+                        padding: "7px 10px", borderRadius: 8,
+                        border: "1px solid var(--ec-border)", background: "var(--ec-surface-1)",
+                        cursor: "pointer", transition: "border-color 140ms",
+                      }}
                     >
-                      <div className="flex items-center space-x-2">
-                        <div className="flex">
-                          <div className="w-4 h-4 rounded-l" style={{ backgroundColor: preset.bg }} />
-                          <div className="w-4 h-4 rounded-r" style={{ backgroundColor: preset.fg }} />
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <div style={{ display: "flex" }}>
+                          <div style={{ width: 16, height: 16, borderRadius: "4px 0 0 4px", backgroundColor: preset.bg }} />
+                          <div style={{ width: 16, height: 16, borderRadius: "0 4px 4px 0", backgroundColor: preset.fg }} />
                         </div>
-                        <span className="text-xs text-gray-600 dark:text-gray-400">{preset.name}</span>
+                        <span style={{ fontSize: 12, color: "var(--ec-text-dim)" }}>{preset.name}</span>
                       </div>
                     </button>
                   ))}
                 </div>
               </div>
 
-              <div className="space-y-4 mb-6">
+              <div style={{ display: "flex", flexDirection: "column", gap: 14, marginBottom: 20 }}>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tamaño: {config.qrSize}px</label>
-                  <input type="range" min="128" max="512" step="32" value={config.qrSize} onChange={(e) => updateConfig({ qrSize: Number(e.target.value) })} className="w-full" />
+                  <label className="ec-field-label" style={{ marginBottom: 6, display: "block" }}>Tamaño: {config.qrSize}px</label>
+                  <input type="range" min="128" max="512" step="32" value={config.qrSize} onChange={(e) => updateConfig({ qrSize: Number(e.target.value) })} style={{ width: "100%", accentColor: "var(--ec-brand)" }} />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Fondo</label>
-                    <input type="color" value={config.qrBgColor} onChange={(e) => updateConfig({ qrBgColor: e.target.value })} className="w-full h-10 rounded-lg cursor-pointer" />
+                    <label className="ec-field-label" style={{ marginBottom: 6, display: "block" }}>Fondo</label>
+                    <input type="color" value={config.qrBgColor} onChange={(e) => updateConfig({ qrBgColor: e.target.value })} style={{ width: "100%", height: 40, borderRadius: 8, cursor: "pointer", border: "1px solid var(--ec-border)" }} />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Código</label>
-                    <input type="color" value={config.qrFgColor} onChange={(e) => updateConfig({ qrFgColor: e.target.value })} className="w-full h-10 rounded-lg cursor-pointer" />
+                    <label className="ec-field-label" style={{ marginBottom: 6, display: "block" }}>Código</label>
+                    <input type="color" value={config.qrFgColor} onChange={(e) => updateConfig({ qrFgColor: e.target.value })} style={{ width: "100%", height: 40, borderRadius: 8, cursor: "pointer", border: "1px solid var(--ec-border)" }} />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Borde: {config.borderWidth}px</label>
-                    <input type="range" min="0" max="20" value={config.borderWidth} onChange={(e) => updateConfig({ borderWidth: Number(e.target.value) })} className="w-full" />
+                    <label className="ec-field-label" style={{ marginBottom: 6, display: "block" }}>Borde: {config.borderWidth}px</label>
+                    <input type="range" min="0" max="20" value={config.borderWidth} onChange={(e) => updateConfig({ borderWidth: Number(e.target.value) })} style={{ width: "100%", accentColor: "var(--ec-brand)" }} />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Esquinas: {config.cornerRadius}px</label>
-                    <input type="range" min="0" max="50" value={config.cornerRadius} onChange={(e) => updateConfig({ cornerRadius: Number(e.target.value) })} className="w-full" />
+                    <label className="ec-field-label" style={{ marginBottom: 6, display: "block" }}>Esquinas: {config.cornerRadius}px</label>
+                    <input type="range" min="0" max="50" value={config.cornerRadius} onChange={(e) => updateConfig({ cornerRadius: Number(e.target.value) })} style={{ width: "100%", accentColor: "var(--ec-brand)" }} />
                   </div>
                 </div>
               </div>
 
               {/* Logo */}
-              <div className="space-y-4 border-t border-gray-200 dark:border-gray-700 pt-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Logo</h3>
+              <div style={{ borderTop: "1px solid var(--ec-hairline)", paddingTop: 20 }}>
+                <h3 className="font-serif" style={{ fontSize: 18, fontWeight: 400, color: "var(--ec-text)", marginBottom: 14 }}>Logo</h3>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Subir logo</label>
-                  <input type="file" accept="image/*" onChange={handleLogoUpload} className="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-blue-600 file:text-white hover:file:bg-blue-700 cursor-pointer text-gray-700 dark:text-gray-300" />
+                  <label className="ec-field-label" style={{ marginBottom: 6, display: "block" }}>Subir logo</label>
+                  <input type="file" accept="image/*" onChange={handleLogoUpload} style={{ width: "100%", fontSize: 13, cursor: "pointer", color: "var(--ec-text-muted)" }} />
                 </div>
 
                 {logoPreview && (
-                  <div className="space-y-4">
-                    <div className="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                  <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 12 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 14px", background: "var(--ec-surface-2)", border: "1px solid var(--ec-border)", borderRadius: 10 }}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={logoPreview} alt="Logo preview" className="w-12 h-12 object-cover rounded-lg" />
+                      <img src={logoPreview} alt="Logo preview" style={{ width: 48, height: 48, objectFit: "cover", borderRadius: 8 }} />
                       <div>
-                        <p className="text-sm font-medium text-gray-800 dark:text-gray-200">Logo cargado</p>
-                        <p className="text-xs text-gray-600 dark:text-gray-400">{config.logoSize}px ({logoStats.percentage.toFixed(1)}% del QR)</p>
+                        <p style={{ fontSize: 13, fontWeight: 500, color: "var(--ec-text)" }}>Logo cargado</p>
+                        <p style={{ fontSize: 12, color: "var(--ec-text-dim)" }}>{config.logoSize}px ({logoStats.percentage.toFixed(1)}% del QR)</p>
                       </div>
                       <button
                         onClick={() => { setLogo(null); setLogoPreview(null); if (logoPreview) URL.revokeObjectURL(logoPreview); }}
-                        className="ml-auto text-red-500 hover:text-red-700"
+                        style={{ marginLeft: "auto", background: "none", border: "none", cursor: "pointer", color: "#ef4444", fontSize: 18, lineHeight: 1 }}
                       >
                         ×
                       </button>
                     </div>
 
                     {logoStats.status !== "good" && (
-                      <div className={`flex items-start space-x-3 p-3 rounded-lg ${logoStats.status === "critical" ? "bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800" : "bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800"}`}>
-                        <AlertTriangle className={`w-5 h-5 mt-0.5 ${logoStats.status === "critical" ? "text-red-500" : "text-yellow-500"}`} />
+                      <div style={{
+                        display: "flex", alignItems: "flex-start", gap: 10, padding: "10px 14px", borderRadius: 10,
+                        background: logoStats.status === "critical" ? "rgba(239,68,68,0.08)" : "rgba(245,158,11,0.08)",
+                        border: `1px solid ${logoStats.status === "critical" ? "rgba(239,68,68,0.3)" : "rgba(245,158,11,0.3)"}`,
+                      }}>
+                        <AlertTriangle size={16} style={{ marginTop: 1, color: logoStats.status === "critical" ? "#ef4444" : "#f59e0b", flexShrink: 0 }} />
                         <div>
-                          <p className={`text-sm font-medium ${logoStats.status === "critical" ? "text-red-800 dark:text-red-200" : "text-yellow-800 dark:text-yellow-200"}`}>
+                          <p style={{ fontSize: 13, fontWeight: 500, color: logoStats.status === "critical" ? "#ef4444" : "#f59e0b" }}>
                             {logoStats.status === "critical" ? "Logo muy grande" : "Logo grande detectado"}
                           </p>
-                          <p className={`text-xs ${logoStats.status === "critical" ? "text-red-700 dark:text-red-300" : "text-yellow-700 dark:text-yellow-300"}`}>
+                          <p style={{ fontSize: 12, color: "var(--ec-text-dim)", marginTop: 2 }}>
                             {logoStats.status === "critical" ? "Puede afectar la lectura del QR. Recomendado: máximo 30%" : "Verifica que el QR se escanee correctamente"}
                           </p>
                           {logoStats.status === "critical" && (
-                            <button onClick={() => updateConfig({ logoSize: Math.round(config.qrSize * 0.25) })} className="mt-2 px-3 py-1 bg-red-600 text-white text-xs rounded-md hover:bg-red-700 transition-colors">
+                            <button onClick={() => updateConfig({ logoSize: Math.round(config.qrSize * 0.25) })} style={{ marginTop: 8, padding: "4px 10px", background: "#ef4444", color: "white", fontSize: 12, borderRadius: 6, border: "none", cursor: "pointer" }}>
                               Ajustar automáticamente
                             </button>
                           )}
@@ -687,37 +710,37 @@ export default function QRCodeGenerator() {
                       </div>
                     )}
 
-                    <div className="space-y-3">
+                    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tamaño: {config.logoSize}px</label>
-                        <input type="range" min="24" max="96" step="4" value={config.logoSize} onChange={(e) => updateConfig({ logoSize: Number(e.target.value) })} className={`w-full ${logoStats.status === "critical" ? "accent-red-500" : logoStats.status === "warning" ? "accent-yellow-500" : "accent-blue-500"}`} />
+                        <label className="ec-field-label" style={{ marginBottom: 6, display: "block" }}>Tamaño: {config.logoSize}px</label>
+                        <input type="range" min="24" max="96" step="4" value={config.logoSize} onChange={(e) => updateConfig({ logoSize: Number(e.target.value) })} style={{ width: "100%", accentColor: logoStats.status === "critical" ? "#ef4444" : logoStats.status === "warning" ? "#f59e0b" : "var(--ec-brand)" }} />
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Padding: {config.logoPadding}px</label>
-                          <input type="range" min="0" max="20" value={config.logoPadding} onChange={(e) => updateConfig({ logoPadding: Number(e.target.value) })} className="w-full" />
+                          <label className="ec-field-label" style={{ marginBottom: 6, display: "block" }}>Padding: {config.logoPadding}px</label>
+                          <input type="range" min="0" max="20" value={config.logoPadding} onChange={(e) => updateConfig({ logoPadding: Number(e.target.value) })} style={{ width: "100%", accentColor: "var(--ec-brand)" }} />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Redondez: {config.logoBorderRadius}%</label>
-                          <input type="range" min="0" max="50" value={config.logoBorderRadius} onChange={(e) => updateConfig({ logoBorderRadius: Number(e.target.value) })} className="w-full" />
+                          <label className="ec-field-label" style={{ marginBottom: 6, display: "block" }}>Redondez: {config.logoBorderRadius}%</label>
+                          <input type="range" min="0" max="50" value={config.logoBorderRadius} onChange={(e) => updateConfig({ logoBorderRadius: Number(e.target.value) })} style={{ width: "100%", accentColor: "var(--ec-brand)" }} />
                         </div>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Color de fondo</label>
-                        <input type="color" value={config.logoBgColor} onChange={(e) => updateConfig({ logoBgColor: e.target.value })} className="w-full h-10 rounded-lg cursor-pointer" />
+                        <label className="ec-field-label" style={{ marginBottom: 6, display: "block" }}>Color de fondo</label>
+                        <input type="color" value={config.logoBgColor} onChange={(e) => updateConfig({ logoBgColor: e.target.value })} style={{ width: "100%", height: 40, borderRadius: 8, cursor: "pointer", border: "1px solid var(--ec-border)" }} />
                       </div>
                       <div className="grid grid-cols-3 gap-4">
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Sombra: {config.shadowBlur}px</label>
-                          <input type="range" min="0" max="20" value={config.shadowBlur} onChange={(e) => updateConfig({ shadowBlur: Number(e.target.value) })} className="w-full" />
+                          <label className="ec-field-label" style={{ marginBottom: 6, display: "block" }}>Sombra: {config.shadowBlur}px</label>
+                          <input type="range" min="0" max="20" value={config.shadowBlur} onChange={(e) => updateConfig({ shadowBlur: Number(e.target.value) })} style={{ width: "100%", accentColor: "var(--ec-brand)" }} />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Opacidad: {Math.round(config.shadowOpacity * 100)}%</label>
-                          <input type="range" min="0" max="1" step="0.1" value={config.shadowOpacity} onChange={(e) => updateConfig({ shadowOpacity: Number(e.target.value) })} className="w-full" />
+                          <label className="ec-field-label" style={{ marginBottom: 6, display: "block" }}>Opacidad: {Math.round(config.shadowOpacity * 100)}%</label>
+                          <input type="range" min="0" max="1" step="0.1" value={config.shadowOpacity} onChange={(e) => updateConfig({ shadowOpacity: Number(e.target.value) })} style={{ width: "100%", accentColor: "var(--ec-brand)" }} />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Color</label>
-                          <input type="color" value={config.shadowColor} onChange={(e) => updateConfig({ shadowColor: e.target.value })} className="w-full h-8 rounded cursor-pointer" />
+                          <label className="ec-field-label" style={{ marginBottom: 6, display: "block" }}>Color</label>
+                          <input type="color" value={config.shadowColor} onChange={(e) => updateConfig({ shadowColor: e.target.value })} style={{ width: "100%", height: 32, borderRadius: 6, cursor: "pointer", border: "1px solid var(--ec-border)" }} />
                         </div>
                       </div>
                     </div>
@@ -728,11 +751,11 @@ export default function QRCodeGenerator() {
           </div>
 
           {/* Vista Previa */}
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 h-fit sticky top-8">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Vista Previa</h2>
-              <div className="flex items-center space-x-3 text-sm text-gray-500 dark:text-gray-400">
-                <Info className="w-4 h-4" />
+          <div className="ec-project-card" style={{ padding: 24, borderRadius: 14, height: "fit-content", position: "sticky", top: 8 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+              <h2 className="font-serif" style={{ fontSize: 20, fontWeight: 400, color: "var(--ec-text)" }}>Vista Previa</h2>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "var(--ec-text-dim)" }}>
+                <Info size={14} />
                 <span>{config.qrSize + config.borderWidth * 2}×{config.qrSize + config.borderWidth * 2}px</span>
               </div>
             </div>
@@ -782,46 +805,61 @@ export default function QRCodeGenerator() {
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-4 mb-6">
-              <div className="text-center p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                <div className="text-sm font-medium text-gray-600 dark:text-gray-400">Tamaño Final</div>
-                <div className="text-lg font-bold text-gray-900 dark:text-white">{config.qrSize + config.borderWidth * 2}px</div>
+            <div className="grid grid-cols-3 gap-4" style={{ marginBottom: 20 }}>
+              <div style={{ textAlign: "center", padding: "10px 8px", background: "var(--ec-surface-2)", borderRadius: 10, border: "1px solid var(--ec-border)" }}>
+                <div style={{ fontSize: 12, color: "var(--ec-text-dim)", marginBottom: 4 }}>Tamaño Final</div>
+                <div style={{ fontSize: 16, fontWeight: 600, color: "var(--ec-text)" }}>{config.qrSize + config.borderWidth * 2}px</div>
               </div>
-              <div className={`text-center p-3 rounded-lg ${logoPreview ? logoStats.status === "critical" ? "bg-red-50 dark:bg-red-900/20" : logoStats.status === "warning" ? "bg-yellow-50 dark:bg-yellow-900/20" : "bg-green-50 dark:bg-green-900/20" : "bg-gray-50 dark:bg-gray-700/50"}`}>
-                <div className="text-sm font-medium text-gray-600 dark:text-gray-400">Logo</div>
-                <div className={`text-lg font-bold ${logoPreview ? logoStats.status === "critical" ? "text-red-600 dark:text-red-400" : logoStats.status === "warning" ? "text-yellow-600 dark:text-yellow-400" : "text-green-600 dark:text-green-400" : "text-gray-900 dark:text-white"}`}>
+              <div style={{
+                textAlign: "center", padding: "10px 8px", borderRadius: 10, border: "1px solid var(--ec-border)",
+                background: logoPreview
+                  ? logoStats.status === "critical" ? "rgba(239,68,68,0.08)"
+                  : logoStats.status === "warning" ? "rgba(245,158,11,0.08)"
+                  : "rgba(34,197,94,0.08)"
+                  : "var(--ec-surface-2)",
+              }}>
+                <div style={{ fontSize: 12, color: "var(--ec-text-dim)", marginBottom: 4 }}>Logo</div>
+                <div style={{
+                  fontSize: 16, fontWeight: 600,
+                  color: logoPreview
+                    ? logoStats.status === "critical" ? "#ef4444"
+                    : logoStats.status === "warning" ? "#f59e0b"
+                    : "#22c55e"
+                    : "var(--ec-text)",
+                }}>
                   {logoPreview ? `${logoStats.percentage.toFixed(1)}%` : "Sin logo"}
                 </div>
               </div>
-              <div className="text-center p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                <div className="text-sm font-medium text-gray-600 dark:text-gray-400">Tipo</div>
-                <div className="text-lg font-bold text-gray-900 dark:text-white">{QR_PRESETS[qrType].label}</div>
+              <div style={{ textAlign: "center", padding: "10px 8px", background: "var(--ec-surface-2)", borderRadius: 10, border: "1px solid var(--ec-border)" }}>
+                <div style={{ fontSize: 12, color: "var(--ec-text-dim)", marginBottom: 4 }}>Tipo</div>
+                <div style={{ fontSize: 16, fontWeight: 600, color: "var(--ec-text)" }}>{QR_PRESETS[qrType].label}</div>
               </div>
             </div>
 
-            <div className="space-y-3">
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               <button
                 onClick={downloadPNG}
                 disabled={!qrValue}
-                className="w-full flex items-center justify-center space-x-3 py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-bold rounded-xl hover:from-blue-700 hover:to-blue-800 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed transform hover:scale-[1.02] transition-all duration-200 shadow-lg hover:shadow-xl"
+                className="ec-btn-primary"
+                style={{ width: "100%", justifyContent: "center", gap: 10, padding: "14px 20px", fontSize: 14, opacity: !qrValue ? 0.5 : 1, cursor: !qrValue ? "not-allowed" : "pointer" }}
               >
-                <Download className="w-5 h-5" />
+                <Download size={18} />
                 <span>Descargar PNG ({config.qrSize + config.borderWidth * 2}×{config.qrSize + config.borderWidth * 2}px)</span>
               </button>
 
               {qrValue && (
-                <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                  <div className="flex items-start space-x-3">
-                    <Info className="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" />
+                <div style={{ padding: "12px 16px", background: "rgba(189,21,92,0.06)", border: "1px solid rgba(189,21,92,0.2)", borderRadius: 10 }}>
+                  <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+                    <Info size={15} style={{ color: "var(--ec-brand)", marginTop: 1, flexShrink: 0 }} />
                     <div>
-                      <h4 className="font-medium text-blue-800 dark:text-blue-200 mb-2">Consejos para mejor rendimiento:</h4>
-                      <ul className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
+                      <p style={{ fontSize: 13, fontWeight: 500, color: "var(--ec-text)", marginBottom: 6 }}>Consejos para mejor rendimiento:</p>
+                      <ul style={{ fontSize: 12, color: "var(--ec-text-muted)", display: "flex", flexDirection: "column", gap: 3 }}>
                         <li>• Usa colores con alto contraste para mejor legibilidad</li>
                         <li>• Mantén el logo bajo 30% del tamaño total</li>
                         <li>• Prueba escanear con diferentes aplicaciones</li>
                         <li>• Para impresión, usa tamaños de al menos 256px</li>
                         {logoPreview && logoStats.status === "good" && (
-                          <li className="text-green-600 dark:text-green-400">✓ Tu configuración es óptima</li>
+                          <li style={{ color: "#22c55e" }}>✓ Tu configuración es óptima</li>
                         )}
                       </ul>
                     </div>
@@ -830,10 +868,10 @@ export default function QRCodeGenerator() {
               )}
 
               {!qrValue && (
-                <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    <AlertTriangle className="w-5 h-5 text-red-500" />
-                    <p className="text-sm text-red-700 dark:text-red-300">Por favor ingresa el contenido para generar el código QR</p>
+                <div style={{ padding: "12px 16px", background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 10 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <AlertTriangle size={15} style={{ color: "#ef4444", flexShrink: 0 }} />
+                    <p style={{ fontSize: 13, color: "var(--ec-text-muted)" }}>Por favor ingresa el contenido para generar el código QR</p>
                   </div>
                 </div>
               )}
@@ -841,9 +879,9 @@ export default function QRCodeGenerator() {
           </div>
         </div>
 
-        <div className="mt-16 text-center">
-          <div className="inline-flex items-center space-x-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-full text-sm text-gray-600 dark:text-gray-400">
-            <Info className="w-4 h-4" />
+        <div style={{ marginTop: 48, textAlign: "center" }}>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "8px 16px", background: "var(--ec-surface-2)", border: "1px solid var(--ec-border)", borderRadius: 999, fontSize: 12, color: "var(--ec-text-dim)" }}>
+            <Info size={13} />
             <span>Los códigos QR se generan localmente en tu navegador</span>
           </div>
         </div>

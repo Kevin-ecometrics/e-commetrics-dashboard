@@ -3,11 +3,22 @@
 import { useAuth } from "@/app/context/AuthContext";
 import React, { useState, useEffect } from "react";
 import { toast, Toaster } from "react-hot-toast";
+import { Briefcase, Users, FileText, Hash, TrendingUp, Plus } from "lucide-react";
+import { motion } from "motion/react";
 
 type User = {
   id: number;
   userName: string;
 };
+
+function slugify(s: string) {
+  return s
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+}
 
 export default function CreateProject() {
   const { fetchProjects } = useAuth();
@@ -16,14 +27,13 @@ export default function CreateProject() {
     id: "",
     id_user: "",
     title: "",
-    percentage: "",
+    percentage: 0,
     content: "",
     project_name: "",
+    nameManual: false,
   });
-
   const [loading, setLoading] = useState(false);
 
-  // Cargar usuarios al montar el componente
   useEffect(() => {
     fetch(`${process.env.NEXT_PUBLIC_URL}/api/users`)
       .then((res) => res.json())
@@ -32,19 +42,24 @@ export default function CreateProject() {
   }, []);
 
   const handleChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
-
-    if (name === "project_name") {
-      // Reemplaza espacios por guiones bajos en project_name
-      const sanitizedValue = value.replace(/\s+/g, "_");
-      setForm({ ...form, [name]: sanitizedValue });
+    if (name === "title") {
+      setForm((f) => ({
+        ...f,
+        title: value,
+        project_name: f.nameManual ? f.project_name : slugify(value),
+      }));
+    } else if (name === "project_name") {
+      setForm((f) => ({ ...f, project_name: value.replace(/\s+/g, "-"), nameManual: true }));
     } else {
-      setForm({ ...form, [name]: value });
+      setForm((f) => ({ ...f, [name]: value }));
     }
+  };
+
+  const handleProgress = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setForm((f) => ({ ...f, percentage: Number(e.target.value) }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -57,7 +72,6 @@ export default function CreateProject() {
 
     try {
       setLoading(true);
-
       const res = await fetch(`${process.env.NEXT_PUBLIC_URL}/api/projects`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -65,7 +79,7 @@ export default function CreateProject() {
           id: form.id ? Number(form.id) : null,
           id_user: Number(form.id_user),
           title: form.title,
-          percentage: form.percentage !== "" ? Number(form.percentage) : null,
+          percentage: form.percentage,
           content: form.content,
           project_name: form.project_name,
         }),
@@ -77,442 +91,217 @@ export default function CreateProject() {
       }
 
       toast.success("Proyecto creado correctamente");
-
-      setForm({
-        id: "",
-        id_user: "",
-        title: "",
-        percentage: "",
-        content: "",
-        project_name: "",
-      });
-
+      setForm({ id: "", id_user: "", title: "", percentage: 0, content: "", project_name: "", nameManual: false });
       await fetchProjects();
     } catch (error) {
-      if (error instanceof Error) {
-        toast.error(error.message);
-      } else {
-        toast.error("Error al crear el proyecto");
-      }
+      toast.error(error instanceof Error ? error.message : "Error al crear el proyecto");
     } finally {
       setLoading(false);
     }
   };
 
-  return (
-    <div className="min-h-screen bg-white dark:bg-black transition-colors duration-200">
-      <div className="container mx-auto px-4 py-8">
-        <Toaster
-          position="top-center"
-          toastOptions={{
-            className: "dark:bg-gray-800 dark:text-white",
-            duration: 4000,
-          }}
-        />
+  const pct = form.percentage;
+  const pctColor = pct >= 80 ? "var(--ec-success)" : pct >= 50 ? "var(--ec-warning)" : pct > 0 ? "var(--ec-danger)" : "var(--ec-text-dim)";
+  const pctBarClass = pct >= 80 ? "success" : pct >= 50 ? "warning" : "danger";
+  const isValid = !!form.id_user && !!form.title && !!form.project_name;
 
-        {/* Header */}
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl mb-6 shadow-lg">
-            <svg
-              className="w-8 h-8 text-white"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-              />
-            </svg>
+  return (
+    <div className="circuit-bg fade-in-up" style={{ padding: "32px 24px", minHeight: "100%" }}>
+      <Toaster position="top-center" toastOptions={{ duration: 4000 }} />
+
+      <div style={{ maxWidth: 680, margin: "0 auto" }}>
+        {/* Centered icon header */}
+        <div style={{ textAlign: "center", marginBottom: 32 }}>
+          <div style={{
+            width: 64, height: 64, borderRadius: 18,
+            background: "linear-gradient(135deg, var(--ec-brand), #7A0E3B)",
+            display: "inline-flex", alignItems: "center", justifyContent: "center",
+            margin: "0 auto 18px",
+            color: "white",
+            boxShadow: "0 12px 32px -8px rgba(189,21,92,0.5), 0 0 0 1px rgba(189,21,92,0.3)",
+          }}>
+            <Briefcase size={26} />
           </div>
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
+          <div className="h-eyebrow" style={{ marginBottom: 10 }}>⎯⎯⎯  NUEVO PROYECTO</div>
+          <h1 className="font-serif" style={{ fontSize: 38, fontWeight: 400, lineHeight: 1, letterSpacing: "-0.025em", color: "var(--ec-text)", marginBottom: 10 }}>
             Crear Proyecto
           </h1>
-          <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-            Configura un nuevo proyecto con todos los detalles necesarios para
-            comenzar
+          <p style={{ fontSize: 14, color: "var(--ec-text-muted)", maxWidth: 440, margin: "0 auto" }}>
+            Configura un nuevo proyecto con todos los detalles necesarios para comenzar.
           </p>
         </div>
 
-        {/* Form Container */}
-        <div className="max-w-3xl mx-auto">
-          <div className="bg-white dark:bg-gray-900 shadow-2xl dark:shadow-gray-900/50 rounded-3xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-            {/* Form Header */}
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-900 px-8 py-6 border-b border-gray-200 dark:border-gray-700">
-              <h2 className="text-2xl font-semibold text-gray-800 dark:text-white flex items-center gap-3">
-                <svg
-                  className="w-6 h-6 text-blue-600 dark:text-blue-400"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4"
-                  />
-                </svg>
+        {/* Form card */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, ease: [0.2, 0.7, 0.2, 1] }}
+          className="ec-project-card"
+          style={{ padding: "28px 32px", borderRadius: 16 }}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 22 }}>
+            <div>
+              <h2 className="font-serif" style={{ fontSize: 22, fontWeight: 400, color: "var(--ec-text)", display: "flex", alignItems: "center", gap: 8 }}>
                 Configuración del Proyecto
               </h2>
-              <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
-                Complete la información básica del proyecto
+              <p style={{ color: "var(--ec-text-muted)", fontSize: 13, marginTop: 4 }}>
+                Completa la información básica del proyecto.
+              </p>
+            </div>
+            <span className="ec-badge ec-badge-neutral ec-badge-mono">DRAFT</span>
+          </div>
+
+          <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+            {/* User select */}
+            <div>
+              <label className="ec-field-label" style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 6 }}>
+                <Users size={11} /> Usuario Asignado <span style={{ color: "var(--ec-danger)" }}>*</span>
+              </label>
+              <div style={{ position: "relative" }}>
+                <select
+                  className="ec-field-input"
+                  name="id_user"
+                  value={form.id_user}
+                  onChange={handleChange}
+                  style={{ appearance: "none", paddingRight: 36 }}
+                  required
+                >
+                  <option value="">Selecciona un usuario</option>
+                  {users.map((user) => (
+                    <option key={user.id} value={user.id}>{user.userName}</option>
+                  ))}
+                </select>
+                <svg style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", color: "var(--ec-text-dim)", pointerEvents: "none" }} width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </div>
+
+            {/* Title */}
+            <div>
+              <label className="ec-field-label" style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 6 }}>
+                <FileText size={11} /> Título del Proyecto <span style={{ color: "var(--ec-danger)" }}>*</span>
+              </label>
+              <input
+                className="ec-field-input"
+                type="text"
+                name="title"
+                placeholder="Ej. Desarrollo de aplicación web"
+                value={form.title}
+                onChange={handleChange}
+                required
+              />
+            </div>
+
+            {/* Slug with /dashboard/ prefix */}
+            <div>
+              <label className="ec-field-label" style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 6 }}>
+                <Hash size={11} /> Nombre del Proyecto <span style={{ color: "var(--ec-danger)" }}>*</span>
+              </label>
+              <div style={{ position: "relative" }}>
+                <span style={{
+                  position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)",
+                  fontFamily: "JetBrains Mono, monospace", fontSize: 12, color: "var(--ec-text-dim)",
+                  pointerEvents: "none", whiteSpace: "nowrap",
+                }}>
+                  /dashboard/
+                </span>
+                <input
+                  className="ec-field-input"
+                  type="text"
+                  name="project_name"
+                  placeholder="proyecto-web-2026"
+                  value={form.project_name}
+                  onChange={handleChange}
+                  style={{ paddingLeft: 100, fontFamily: "JetBrains Mono, monospace", fontSize: 13 }}
+                  required
+                />
+              </div>
+              <p className="font-mono-ec" style={{ fontSize: 11, color: "var(--ec-text-muted)", marginTop: 5 }}>
+                Identificador único sin espacios (se generan guiones automáticamente).
               </p>
             </div>
 
-            {/* Form Content */}
-            <form onSubmit={handleSubmit} className="p-8 space-y-8">
-              {/* User Selection */}
-              <div className="space-y-3">
-                <label className="text-sm font-semibold text-gray-700 dark:text-gray-200 flex items-center gap-2">
-                  <svg
-                    className="w-4 h-4 text-gray-500"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                    />
-                  </svg>
-                  Usuario Asignado *
-                </label>
-                <div className="relative">
-                  <select
-                    name="id_user"
-                    value={form.id_user}
-                    onChange={handleChange}
-                    required
-                    className="w-full pl-4 pr-10 py-4 text-base border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-white transition-all duration-200 appearance-none bg-white dark:bg-gray-800"
-                  >
-                    <option value="">Selecciona un usuario</option>
-                    {users.map((user) => (
-                      <option key={user.id} value={user.id}>
-                        {user.userName}
-                      </option>
-                    ))}
-                  </select>
-                  <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                    <svg
-                      className="w-5 h-5 text-gray-400"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 9l-7 7-7-7"
-                      />
-                    </svg>
-                  </div>
-                </div>
-                {form.id_user && (
-                  <div className="flex items-center gap-2 text-xs text-green-600 dark:text-green-400">
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M5 13l4 4L19 7"
-                      />
-                    </svg>
-                    Usuario seleccionado correctamente
-                  </div>
-                )}
-              </div>
-
-              {/* Project Title */}
-              <div className="space-y-3">
-                <label className="text-sm font-semibold text-gray-700 dark:text-gray-200 flex items-center gap-2">
-                  <svg
-                    className="w-4 h-4 text-gray-500"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2m-9 0h10m-10 0a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V6a2 2 0 00-2-2M9 10h6M9 14h6"
-                    />
-                  </svg>
-                  Título del Proyecto *
-                </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    name="title"
-                    placeholder="Ej: Desarrollo de aplicación web"
-                    value={form.title}
-                    onChange={handleChange}
-                    required
-                    className="w-full pl-4 pr-4 py-4 text-base border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-white transition-all duration-200"
-                  />
-                  {form.title && (
-                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                      <svg
-                        className="w-5 h-5 text-green-500"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M5 13l4 4L19 7"
-                        />
-                      </svg>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Project Name */}
-              <div className="space-y-3">
-                <label className="text-sm font-semibold text-gray-700 dark:text-gray-200 flex items-center gap-2">
-                  <svg
-                    className="w-4 h-4 text-gray-500"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-                    />
-                  </svg>
-                  Nombre del Proyecto *
-                </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    name="project_name"
-                    placeholder="Ej: proyecto-web-2024"
-                    value={form.project_name}
-                    onChange={handleChange}
-                    required
-                    className="w-full pl-4 pr-4 py-4 text-base border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-white transition-all duration-200"
-                  />
-                  {form.project_name && (
-                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                      <svg
-                        className="w-5 h-5 text-green-500"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M5 13l4 4L19 7"
-                        />
-                      </svg>
-                    </div>
-                  )}
-                </div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Este será el identificador único del proyecto (sin espacios,
-                  usar guiones)
-                </p>
-              </div>
-
-              {/* Percentage */}
-              <div className="space-y-3">
-                <label className="text-sm font-semibold text-gray-700 dark:text-gray-200 flex items-center gap-2">
-                  <svg
-                    className="w-4 h-4 text-gray-500"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                    />
-                  </svg>
-                  Progreso Inicial (%)
-                </label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    name="percentage"
-                    placeholder="0"
-                    value={form.percentage}
-                    onChange={handleChange}
-                    min="0"
-                    max="100"
-                    className="w-full pl-4 pr-12 py-4 text-base border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-white transition-all duration-200"
-                  />
-                  <div className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400">
-                    %
-                  </div>
-                </div>
-                {form.percentage && (
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center text-xs">
-                      <span className="text-gray-600 dark:text-gray-400">
-                        Progreso:
-                      </span>
-                      <span className="font-medium text-gray-900 dark:text-white">
-                        {form.percentage}%
-                      </span>
-                    </div>
-                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                      <div
-                        className={`h-2 rounded-full transition-all duration-300 ${
-                          Number(form.percentage) >= 80
-                            ? "bg-green-500"
-                            : Number(form.percentage) >= 50
-                            ? "bg-yellow-500"
-                            : "bg-blue-500"
-                        }`}
-                        style={{
-                          width: `${Math.min(
-                            Number(form.percentage) || 0,
-                            100
-                          )}%`,
-                        }}
-                      ></div>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Content */}
-              <div className="space-y-3">
-                <label className="text-sm font-semibold text-gray-700 dark:text-gray-200 flex items-center gap-2">
-                  <svg
-                    className="w-4 h-4 text-gray-500"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                    />
-                  </svg>
-                  Descripción del Proyecto
-                </label>
-                <div className="relative">
-                  <textarea
-                    name="content"
-                    placeholder="Describe los objetivos, alcance y detalles importantes del proyecto..."
-                    value={form.content}
-                    onChange={handleChange}
-                    rows={5}
-                    className="w-full pl-4 pr-4 py-4 text-base border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-white transition-all duration-200 resize-none"
-                  />
-                  <div className="absolute bottom-3 right-3 text-xs text-gray-400">
-                    {form.content.length}/500
-                  </div>
-                </div>
-              </div>
-
-              {/* Submit Button */}
-              <div className="pt-6 border-t border-gray-200 dark:border-gray-700">
-                <button
-                  type="submit"
-                  disabled={
-                    loading ||
-                    !form.title ||
-                    !form.project_name ||
-                    !form.id_user
-                  }
-                  className="w-full h-14 text-lg font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed dark:from-blue-500 dark:to-indigo-500 dark:hover:from-blue-600 dark:hover:to-indigo-600"
-                >
-                  {loading ? (
-                    <div className="flex items-center justify-center gap-3">
-                      <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
-                      <span>Creando Proyecto...</span>
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-center gap-3">
-                      <svg
-                        className="w-5 h-5"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                        />
-                      </svg>
-                      <span>Crear Proyecto</span>
-                    </div>
-                  )}
-                </button>
-              </div>
-
-              {/* Required Fields Info */}
-              <div className="text-center">
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Los campos marcados con * son obligatorios
-                </p>
-              </div>
-            </form>
-          </div>
-
-          {/* Help Section */}
-          <div className="mt-8 bg-blue-50 dark:bg-blue-900/20 rounded-2xl p-6 border border-blue-200 dark:border-blue-800">
-            <div className="flex items-center gap-3 mb-3">
-              <svg
-                className="w-5 h-5 text-blue-600 dark:text-blue-400"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            {/* Progress range slider */}
+            <div>
+              <label className="ec-field-label" style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 8 }}>
+                <TrendingUp size={11} /> Progreso Inicial
+              </label>
+              <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={pct}
+                  onChange={handleProgress}
+                  style={{ flex: 1, accentColor: "var(--ec-brand)", cursor: "pointer" }}
                 />
-              </svg>
-              <h3 className="font-semibold text-blue-900 dark:text-blue-100">
-                Consejos para crear un proyecto
-              </h3>
+                <div style={{
+                  width: 72, padding: "7px 12px",
+                  background: "var(--ec-surface-1)", border: "1px solid var(--ec-hairline)", borderRadius: 10,
+                  fontFamily: "JetBrains Mono, monospace", fontSize: 13, textAlign: "center",
+                  color: pctColor, fontWeight: 600,
+                }}>
+                  {pct}<span style={{ fontSize: 10 }}>%</span>
+                </div>
+              </div>
+              <div className="ec-progress" style={{ marginTop: 8 }}>
+                <div className={`ec-progress-bar ${pctBarClass}`} style={{ width: `${pct}%` }} />
+              </div>
             </div>
-            <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
-              <li>
-                • Usa un título descriptivo que identifique claramente el
-                proyecto
-              </li>
-              <li>
-                • El nombre del proyecto debe ser único y sin espacios (usa
-                guiones)
-              </li>
-              <li>• Asigna el proyecto al usuario correcto desde el inicio</li>
-              <li>
-                • Una descripción detallada ayuda a todos los involucrados
-              </li>
-            </ul>
-          </div>
-        </div>
+
+            {/* Description */}
+            <div>
+              <label className="ec-field-label" style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                  <FileText size={11} /> Descripción del Proyecto
+                </span>
+                <span className="font-mono-ec" style={{ fontSize: 10, color: "var(--ec-text-dim)" }}>
+                  {form.content.length}/500
+                </span>
+              </label>
+              <textarea
+                className="ec-field-input"
+                name="content"
+                placeholder="Describe los objetivos, alcance y detalles importantes…"
+                value={form.content}
+                onChange={handleChange}
+                rows={4}
+                maxLength={500}
+                style={{ resize: "vertical" }}
+              />
+            </div>
+
+            {/* Actions */}
+            <div style={{ display: "flex", gap: 10, marginTop: 4 }}>
+              <button
+                type="button"
+                className="ec-btn-secondary"
+                onClick={() => setForm({ id: "", id_user: "", title: "", percentage: 0, content: "", project_name: "", nameManual: false })}
+              >
+                Limpiar
+              </button>
+              <button
+                type="submit"
+                disabled={loading || !isValid}
+                className="ec-btn-primary"
+                style={{ flex: 1, height: 44, fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
+              >
+                {loading ? (
+                  <>
+                    <div style={{ width: 15, height: 15, borderRadius: "50%", border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", animation: "spin 0.7s linear infinite" }} />
+                    Creando proyecto…
+                  </>
+                ) : (
+                  <><Plus size={15} /> Crear Proyecto</>
+                )}
+              </button>
+            </div>
+            <p style={{ textAlign: "center", fontSize: 12, color: "var(--ec-text-dim)" }}>
+              Los campos marcados con <span style={{ color: "var(--ec-danger)" }}>*</span> son obligatorios.
+            </p>
+          </form>
+        </motion.div>
       </div>
     </div>
   );

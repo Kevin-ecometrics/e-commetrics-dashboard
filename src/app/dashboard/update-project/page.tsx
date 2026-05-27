@@ -1,8 +1,11 @@
 "use client";
 
 import { useAuth } from "@/app/context/AuthContext";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { toast, Toaster } from "react-hot-toast";
+import { Plus, AlertCircle, Trash2, Edit, Search } from "lucide-react";
+import Link from "next/link";
+import { motion } from "motion/react";
 
 type Project = {
   id: number;
@@ -25,9 +28,18 @@ export default function UpdateProject() {
   const [loading, setLoading] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [saving, setSaving] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState<Project | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [search, setSearch] = useState("");
+  const formRef = useRef<HTMLDivElement>(null);
 
-  // Fetch projects and users
+  const filteredProjects = search
+    ? projects.filter((p) => {
+        const q = search.toLowerCase();
+        return (p.title?.toLowerCase() || "").includes(q) || (p.project_name?.toLowerCase() || "").includes(q);
+      })
+    : projects;
+
   useEffect(() => {
     fetchProjectsList();
     fetchUsers();
@@ -40,7 +52,7 @@ export default function UpdateProject() {
       if (!res.ok) throw new Error("Error cargando proyectos");
       const data = await res.json();
       setProjects(data);
-    } catch (error) {
+    } catch {
       toast.error("Error cargando proyectos");
     } finally {
       setLoading(false);
@@ -53,22 +65,19 @@ export default function UpdateProject() {
       if (!res.ok) throw new Error("Error cargando usuarios");
       const data = await res.json();
       setUsers(data);
-    } catch (error) {
+    } catch {
       toast.error("Error cargando usuarios");
     }
   };
 
   const handleChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     if (!selectedProject) return;
     const { name, value } = e.target;
     setSelectedProject({
       ...selectedProject,
-      [name]:
-        name === "percentage" || name === "id_user" ? Number(value) : value,
+      [name]: name === "percentage" || name === "id_user" ? Number(value) : value,
     });
   };
 
@@ -81,14 +90,11 @@ export default function UpdateProject() {
 
     setSaving(true);
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_URL}/api/projects/${selectedProject.id}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(selectedProject),
-        }
-      );
+      const res = await fetch(`${process.env.NEXT_PUBLIC_URL}/api/projects/${selectedProject.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(selectedProject),
+      });
       if (!res.ok) {
         const err = await res.json();
         throw new Error(err.message || "Error al actualizar");
@@ -106,16 +112,9 @@ export default function UpdateProject() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm("¿Estás seguro de eliminar este proyecto?")) return;
-
     setDeleting(true);
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_URL}/api/projects/${id}`,
-        {
-          method: "DELETE",
-        }
-      );
+      const res = await fetch(`${process.env.NEXT_PUBLIC_URL}/api/projects/${id}`, { method: "DELETE" });
       if (!res.ok) {
         const err = await res.json();
         throw new Error(err.message || "Error al eliminar");
@@ -124,6 +123,7 @@ export default function UpdateProject() {
       await fetchProjectsList();
       await fetchProjects();
       if (selectedProject?.id === id) setSelectedProject(null);
+      setDeleteConfirm(null);
     } catch (error) {
       if (error instanceof Error) toast.error(error.message);
       else toast.error("Error al eliminar proyecto");
@@ -133,531 +133,238 @@ export default function UpdateProject() {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-black text-black dark:text-white transition-colors duration-200">
-      <div className="max-w-6xl mx-auto">
-        <Toaster position="top-center" />
+    <div className="fade-in-up" style={{ padding: "28px 24px" }}>
+      <Toaster position="top-center" toastOptions={{ duration: 4000 }} />
 
-        {/* Header */}
-        <div className="mb-8 text-center">
-          <div className="inline-flex items-center gap-3 mb-4">
-            <div className="p-3 bg-gradient-to-r text-white  from-purple-500 to-pink-500 rounded-2xl shadow-lg">
-              <svg
-                className="w-8 h-8 "
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-                />
-              </svg>
-            </div>
-            <h2 className="text-4xl font-bold  bg-clip-text ">
-              Actualizar Proyectos
-            </h2>
-          </div>
-          <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-            🚀 Gestiona y actualiza tus proyectos de manera eficiente con estilo
+      {/* Page header */}
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 28, flexWrap: "wrap", gap: 16 }}>
+        <div>
+          <div className="h-eyebrow" style={{ marginBottom: 8 }}>⎯⎯⎯  GESTIÓN DE PROYECTOS</div>
+          <h1 className="font-serif" style={{ fontSize: 38, fontWeight: 400, lineHeight: 1, letterSpacing: "-0.025em", color: "var(--ec-text)" }}>
+            Proyectos
+          </h1>
+          <p style={{ fontSize: 14, color: "var(--ec-text-muted)", marginTop: 6 }}>
+            Edita los datos de un proyecto o elimínalo del sistema.
           </p>
         </div>
+        <Link href="/dashboard/create-project" className="ec-btn-primary" style={{ display: "inline-flex", alignItems: "center", gap: 8, textDecoration: "none", padding: "10px 18px", fontSize: 13 }}>
+          <Plus size={15} /> Crear Proyecto
+        </Link>
+      </div>
 
-        {/* Tabla proyectos */}
-        {loading ? (
-          <div className="flex items-center justify-center py-16 bg-white/70 dark:bg-gray-800/70 backdrop-blur-lg rounded-3xl border border-purple-200 dark:border-purple-700 shadow-2xl">
-            <div className="flex flex-col items-center gap-4">
-              <div className="relative">
-                <div className="animate-spin rounded-full h-12 w-12 border-4 border-purple-200 dark:border-purple-700"></div>
-                <div className="animate-spin rounded-full h-12 w-12 border-4 border-t-purple-600 absolute top-0"></div>
-              </div>
-              <span className="text-lg font-medium text-purple-600 dark:text-purple-400">
-                Cargando proyectos ...
-              </span>
-            </div>
+      {/* Projects table */}
+      <div className="ec-project-card" style={{ borderRadius: 14, overflow: "hidden", marginBottom: 24 }}>
+        <div style={{ padding: "14px 18px", borderBottom: "1px solid var(--ec-hairline)", display: "flex", alignItems: "center", gap: 12 }}>
+          <h2 className="font-serif" style={{ fontSize: 20, fontWeight: 400, color: "var(--ec-text)" }}>
+            Proyectos{" "}
+            <span className="font-mono-ec" style={{ fontSize: 12, color: "var(--ec-text-dim)", marginLeft: 6 }}>
+              {filteredProjects.length}
+            </span>
+          </h2>
+          <div style={{ flex: 1 }} />
+          <div style={{ position: "relative" }}>
+            <Search size={13} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "var(--ec-text-dim)", pointerEvents: "none" }} />
+            <input
+              className="ec-field-input"
+              style={{ padding: "7px 12px 7px 30px", fontSize: 12.5, width: 200 }}
+              placeholder="Buscar…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          {loading && (
+            <div style={{ width: 14, height: 14, borderRadius: "50%", border: "2px solid var(--ec-hairline)", borderTopColor: "var(--ec-brand)", animation: "spin 0.7s linear infinite", flexShrink: 0 }} />
+          )}
+        </div>
+
+        {!loading && filteredProjects.length === 0 ? (
+          <div style={{ padding: "48px 20px", textAlign: "center", color: "var(--ec-text-muted)" }}>
+            <div style={{ fontSize: 32, marginBottom: 12 }}>📁</div>
+            <p style={{ fontSize: 14 }}>{search ? "Sin resultados para esa búsqueda" : "No hay proyectos registrados"}</p>
           </div>
         ) : (
-          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-3xl shadow-2xl overflow-hidden mb-8">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="">
-                  <tr>
-                    {/* <th className="px-6 py-5 text-left text-sm font-bold  uppercase tracking-wider">
-                      <div className="flex items-center gap-2">
-                        <svg
-                          className="w-4 h-4"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
+          <table className="ec-table">
+            <thead>
+              <tr>
+                <th>Título</th>
+                <th>Slug</th>
+                <th>Progreso</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredProjects.map((project) => {
+                const pct = project.percentage ?? 0;
+                const pctColor = pct >= 80 ? "#22c55e" : pct >= 50 ? "#f59e0b" : "var(--ec-brand)";
+                return (
+                  <tr
+                    key={project.id}
+                    className={selectedProject?.id === project.id ? "ec-table-selected" : ""}
+                  >
+                    <td style={{ fontWeight: 500 }}>{project.title}</td>
+                    <td>
+                      <span className="font-mono-ec" style={{ fontSize: 12, color: "var(--ec-text-muted)", background: "var(--ec-surface-2)", padding: "3px 8px", borderRadius: 6 }}>
+                        {project.project_name}
+                      </span>
+                    </td>
+                    <td>
+                      {project.percentage !== null && project.percentage !== undefined ? (
+                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                          <div style={{ width: 80, height: 3, borderRadius: 99, background: "var(--ec-hairline)", overflow: "hidden" }}>
+                            <div style={{ height: "100%", width: `${pct}%`, background: pctColor, borderRadius: 99 }} />
+                          </div>
+                          <span className="font-mono-ec" style={{ fontSize: 12, color: pctColor, fontWeight: 700 }}>{pct}%</span>
+                        </div>
+                      ) : (
+                        <span style={{ fontSize: 12, color: "var(--ec-text-muted)" }}>—</span>
+                      )}
+                    </td>
+                    <td>
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <button
+                          style={{ width: 30, height: 30, borderRadius: 7, display: "inline-flex", alignItems: "center", justifyContent: "center", border: "none", background: "var(--ec-brand)", color: "#fff", cursor: "pointer", transition: "opacity 150ms" }}
+                          onClick={() => { setSelectedProject(project); setTimeout(() => formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100); }}
+                          title="Editar"
                         >
-                          <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        ID
-                      </div>
-                    </th> */}
-                    <th className="px-6 py-5 text-left text-sm font-bold  uppercase tracking-wider">
-                      <div className="flex items-center gap-2">
-                        <svg
-                          className="w-4 h-4"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
+                          <Edit size={13} />
+                        </button>
+                        <button
+                          style={{ width: 30, height: 30, borderRadius: 7, display: "inline-flex", alignItems: "center", justifyContent: "center", border: "1px solid var(--ec-hairline-strong)", background: "transparent", color: "var(--ec-text-muted)", cursor: "pointer", transition: "color 150ms" }}
+                          onClick={() => setDeleteConfirm(project)}
+                          title="Eliminar"
+                          onMouseEnter={(e) => e.currentTarget.style.color = "var(--ec-danger)"}
+                          onMouseLeave={(e) => e.currentTarget.style.color = "var(--ec-text-muted)"}
                         >
-                          <path d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1z" />
-                        </svg>
-                        Título
+                          <Trash2 size={13} />
+                        </button>
                       </div>
-                    </th>
-                    <th className="px-6 py-5 text-left text-sm font-bold  uppercase tracking-wider">
-                      <div className="flex items-center gap-2">
-                        <svg
-                          className="w-4 h-4"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                        >
-                          <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
-                        </svg>
-                        Proyecto
-                      </div>
-                    </th>
-                    <th className="px-6 py-5 text-left text-sm font-bold  uppercase tracking-wider">
-                      <div className="flex items-center gap-2">
-                        <svg
-                          className="w-4 h-4"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M3 3a1 1 0 000 2v8a2 2 0 002 2h2.586l-1.293 1.293a1 1 0 101.414 1.414L10 15.414l2.293 2.293a1 1 0 001.414-1.414L12.414 15H15a2 2 0 002-2V5a1 1 0 100-2H3zm11.707 4.707a1 1 0 00-1.414-1.414L10 9.586 8.707 8.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                        Progreso
-                      </div>
-                    </th>
-                    <th className="px-6 py-5 text-center text-sm font-bold  uppercase tracking-wider">
-                      <div className="flex items-center justify-center gap-2">
-                        <svg
-                          className="w-4 h-4"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                        >
-                          <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                        </svg>
-                        Acciones
-                      </div>
-                    </th>
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="divide-y">
-                  {projects.map((project, index) => (
-                    <tr
-                      key={project.id}
-                      className=" transition-all duration-300 cursor-pointer group"
-                    >
-                      {/* <td className="px-6 py-5 whitespace-nowrap">
-                        <div className="flex items-center gap-3">
-                          <div
-                            className={`w-10 h-10 rounded-xl flex items-center justify-center  font-bold text-sm shadow-lg `}
-                          >
-                            #{project.id}
-                          </div>
-                        </div>
-                      </td> */}
-                      <td className="px-6 py-5">
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 rounded-lg">
-                            <svg
-                              className="w-5 h-5 text-blue-600 dark:text-blue-400"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                              />
-                            </svg>
-                          </div>
-                          <div>
-                            <p className="text-sm font-semibold  group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
-                              {project.title}
-                            </p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-5 whitespace-nowrap">
-                        <span
-                          className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold shadow-lg $`}
-                        >
-                          <svg
-                            className="w-4 h-4"
-                            fill="currentColor"
-                            viewBox="0 0 20 20"
-                          >
-                            <path
-                              fillRule="evenodd"
-                              d="M2 5a2 2 0 012-2h8a2 2 0 012 2v10a2 2 0 002 2H4a2 2 0 01-2-2V5zm3 1h6v4H5V6zm6 6H5v2h6v-2z"
-                              clipRule="evenodd"
-                            />
-                          </svg>
-                          {project.project_name}
-                        </span>
-                      </td>
-                      <td className="px-6 py-5 whitespace-nowrap">
-                        {project.percentage !== null &&
-                        project.percentage !== undefined ? (
-                          <div className="flex items-center gap-4">
-                            <div className="w-24 bg-gray-200 dark:bg-gray-700 rounded-full h-3 shadow-inner">
-                              <div
-                                className={`h-3 rounded-full transition-all duration-500 shadow-lg ${
-                                  project.percentage >= 80
-                                    ? "bg-gradient-to-r from-green-400 to-emerald-500"
-                                    : project.percentage >= 50
-                                    ? "bg-gradient-to-r from-yellow-400 to-orange-500"
-                                    : "bg-gradient-to-r from-red-400 to-pink-500"
-                                }`}
-                                style={{ width: `${project.percentage}%` }}
-                              ></div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm font-bold text-gray-700 dark:text-gray-300 min-w-fit">
-                                {project.percentage}%
-                              </span>
-                              {project.percentage >= 80 ? (
-                                <span className="text-green-500">🎉</span>
-                              ) : project.percentage >= 50 ? (
-                                <span className="text-yellow-500">⚡</span>
-                              ) : (
-                                <span className="text-red-500">🔥</span>
-                              )}
-                            </div>
-                          </div>
-                        ) : (
-                          <span className="text-gray-400 dark:text-gray-500 flex items-center gap-2">
-                            <svg
-                              className="w-4 h-4"
-                              fill="currentColor"
-                              viewBox="0 0 20 20"
-                            >
-                              <path
-                                fillRule="evenodd"
-                                d="M3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"
-                                clipRule="evenodd"
-                              />
-                            </svg>
-                            Sin definir
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-6 py-5 whitespace-nowrap text-center">
-                        <div className="flex justify-center gap-3">
-                          <button
-                            onClick={() => setSelectedProject(project)}
-                            className="group relative text-white bg-blue-600  px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-                          >
-                            <div className="flex items-center gap-2">
-                              <svg
-                                className="w-4 h-4"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                                />
-                              </svg>
-                              Editar
-                            </div>
-                          </button>
-                          <button
-                            onClick={() => handleDelete(project.id)}
-                            className="group relative text-white bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 disabled:from-red-300 disabled:to-pink-300  px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:transform-none"
-                            disabled={deleting}
-                          >
-                            <div className="flex items-center gap-2">
-                              <svg
-                                className="w-4 h-4"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                />
-                              </svg>
-                              Eliminar
-                            </div>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                  {projects.length === 0 && (
-                    <tr>
-                      <td colSpan={5} className="px-6 py-16 text-center">
-                        <div className="flex flex-col items-center gap-6">
-                          <div className="w-24 h-24 bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-900 dark:to-pink-900 rounded-full flex items-center justify-center shadow-lg">
-                            <svg
-                              className="w-12 h-12 text-purple-500 dark:text-purple-400"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-                              />
-                            </svg>
-                          </div>
-                          <div>
-                            <p className="text-2xl font-bold text-gray-900 dark: mb-2">
-                              🎨 ¡Espacio creativo!
-                            </p>
-                            <p className="text-lg text-gray-500 dark:text-gray-400">
-                              Comienza creando tu primer proyecto increíble
-                            </p>
-                          </div>
-                        </div>
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {/* Formulario de edición */}
-        {selectedProject && (
-          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-3xl shadow-2xl  overflow-hidden">
-            <div className="px-8 py-6 ">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-sm">
-                  <svg
-                    className="w-8 h-8 "
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                    />
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="text-2xl font-bold ">Editar Proyecto</h3>
-                  <p className="text-purple-100">
-                    {/* ID: {selectedProject.id} • Dale vida a tu proyecto */}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="p-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="space-y-2">
-                  <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
-                    <svg
-                      className="w-4 h-4 text-purple-500"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1z" />
-                    </svg>
-                    Título del Proyecto
-                  </label>
-                  <input
-                    type="text"
-                    name="title"
-                    value={selectedProject.title}
-                    onChange={handleChange}
-                    className="w-full px-4 py-4 border-2  rounded-2xl focus:outline-none  bg-white/70 dark:bg-gray-800/70 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition-all duration-300 backdrop-blur-sm"
-                    placeholder="🎯 Ingresa un título impactante..."
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
-                    <svg
-                      className="w-4 h-4 text-blue-500"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
-                    </svg>
-                    Nombre del Proyecto
-                  </label>
-                  <input
-                    type="text"
-                    name="project_name"
-                    value={selectedProject.project_name}
-                    onChange={handleChange}
-                    className="w-full px-4 py-4 border-2  rounded-2xl focus:outline-none  bg-white/70 dark:bg-gray-800/70 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition-all duration-300 backdrop-blur-sm"
-                    placeholder="💼 Nombre corto y memorable..."
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
-                    <svg
-                      className="w-4 h-4 text-green-500"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M3 3a1 1 0 000 2v8a2 2 0 002 2h2.586l-1.293 1.293a1 1 0 101.414 1.414L10 15.414l2.293 2.293a1 1 0 001.414-1.414L12.414 15H15a2 2 0 002-2V5a1 1 0 100-2H3zm11.707 4.707a1 1 0 00-1.414-1.414L10 9.586 8.707 8.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                    Porcentaje de Progreso
-                  </label>
-                  <input
-                    type="number"
-                    name="percentage"
-                    value={selectedProject.percentage ?? ""}
-                    onChange={handleChange}
-                    className="w-full px-4 py-4 border-2  rounded-2xl focus:outline-none  bg-white/70 dark:bg-gray-800/70 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition-all duration-300 backdrop-blur-sm"
-                    min={0}
-                    max={100}
-                    placeholder="📊 0-100%"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
-                    <svg
-                      className="w-4 h-4 text-orange-500"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                    Dueño del Proyecto
-                  </label>
-                  <select
-                    name="id_user"
-                    value={selectedProject.id_user}
-                    onChange={handleChange}
-                    className="w-full px-4 py-4 border-2  rounded-2xl focus:outline-none  bg-white/70 dark:bg-gray-800/70 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition-all duration-300 backdrop-blur-sm"
-                  >
-                    <option value="">👤 Selecciona un usuario...</option>
-                    {users.map((user) => (
-                      <option
-                        key={user.id}
-                        value={user.id}
-                        className="dark:bg-gray-800 text-black dark:text-white"
-                      >
-                        👨‍💼 {user.userName}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className="mt-8 space-y-2">
-                <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
-                  <svg
-                    className="w-4 h-4 text-pink-500"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                    />
-                  </svg>
-                  Contenido del Proyecto
-                </label>
-                <textarea
-                  name="content"
-                  value={selectedProject.content}
-                  onChange={handleChange}
-                  rows={5}
-                  className="w-full px-4 py-4 border-2  rounded-2xl focus:outline-none  bg-white/70 dark:bg-gray-800/70 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition-all duration-300 backdrop-blur-sm"
-                  placeholder="📝 Describe los detalles emocionantes de tu proyecto..."
-                />
-              </div>
-
-              <div className="flex flex-col sm:flex-row gap-4 mt-10 pt-8 border-t-2 border-gray-200 dark:border-gray-700">
-                <button
-                  onClick={handleSave}
-                  disabled={saving}
-                  className="flex-1 sm:flex-none group relative bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 disabled:from-blue-300 disabled:to-blue-300  font-bold px-8 py-4 rounded-2xl transition-all duration-300 shadow-lg hover:shadow-2xl transform hover:-translate-y-1 disabled:transform-none"
-                >
-                  <div className="flex items-center justify-center gap-3">
-                    {saving ? (
-                      <>
-                        <div className="animate-spin rounded-full h-5 w-5 border-2  border-white border-t-transparent"></div>
-                        <span></span>
-                      </>
-                    ) : (
-                      <>
-                        <svg
-                          className="w-5 h-5 text-white"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M5 13l4 4L19 7"
-                          />
-                        </svg>
-                        <span className="text-white">💾 Guardar Cambios</span>
-                      </>
-                    )}
-                  </div>
-                </button>
-                <button
-                  onClick={() => setSelectedProject(null)}
-                  className="flex-1 sm:flex-none bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700  font-bold px-8 py-4 rounded-2xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
-                >
-                  <div className="flex items-center justify-center gap-3">
-                    <svg
-                      className="w-5 h-5 text-white"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M6 18L18 6M6 6l12 12"
-                      />
-                    </svg>
-                    <span className="text-white">Cancelar</span>
-                  </div>
-                </button>
-              </div>
-            </div>
-          </div>
+                );
+              })}
+            </tbody>
+          </table>
         )}
       </div>
+
+      {/* Edit modal */}
+      {selectedProject && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50, padding: 24 }}
+          onClick={() => setSelectedProject(null)}
+        >
+          <motion.div
+            ref={formRef}
+            initial={{ opacity: 0, scale: 0.95, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ duration: 0.2 }}
+            className="ec-project-card"
+            style={{ padding: "28px 32px", borderRadius: 18, width: "100%", maxWidth: 600, borderTop: "3px solid var(--ec-brand)", maxHeight: "90vh", overflowY: "auto" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20, paddingBottom: 16, borderBottom: "1px solid var(--ec-hairline)" }}>
+              <div>
+                <div className="font-mono-ec" style={{ fontSize: 10, color: "var(--ec-text-muted)", letterSpacing: "0.08em" }}>EDITANDO PROYECTO</div>
+                <div className="font-serif" style={{ fontSize: 18, fontWeight: 400, color: "var(--ec-text)" }}>{selectedProject.title}</div>
+              </div>
+              <button style={{ width: 30, height: 30, borderRadius: 7, display: "inline-flex", alignItems: "center", justifyContent: "center", border: "1px solid var(--ec-hairline)", background: "transparent", color: "var(--ec-text-muted)", cursor: "pointer", fontSize: 14 }} onClick={() => setSelectedProject(null)}>
+                ✕
+              </button>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
+              <div>
+                <label className="ec-field-label">Título del Proyecto</label>
+                <input className="ec-field-input" type="text" name="title" value={selectedProject.title} onChange={handleChange} />
+              </div>
+              <div>
+                <label className="ec-field-label">Nombre / Slug</label>
+                <input className="ec-field-input" type="text" name="project_name" value={selectedProject.project_name} onChange={handleChange} />
+              </div>
+              <div>
+                <label className="ec-field-label">Progreso (%)</label>
+                <input className="ec-field-input" type="number" name="percentage" value={selectedProject.percentage ?? ""} onChange={handleChange} min={0} max={100} />
+              </div>
+              <div>
+                <label className="ec-field-label">Usuario Asignado</label>
+                <select className="ec-field-input" name="id_user" value={selectedProject.id_user} onChange={handleChange}>
+                  <option value="">Selecciona un usuario</option>
+                  {users.map((user) => (
+                    <option key={user.id} value={user.id}>{user.userName}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div style={{ marginBottom: 24 }}>
+              <label className="ec-field-label">Descripción</label>
+              <textarea className="ec-field-input" name="content" value={selectedProject.content} onChange={handleChange} rows={4} style={{ resize: "vertical" }} />
+            </div>
+
+            <div style={{ display: "flex", gap: 10 }}>
+              <button className="ec-btn-primary" style={{ flex: 1, height: 42 }} onClick={handleSave} disabled={saving}>
+                {saving ? "Guardando..." : "Guardar Cambios"}
+              </button>
+              <button className="ec-btn-secondary" style={{ flex: 1, height: 42 }} onClick={() => setSelectedProject(null)}>
+                Cancelar
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Delete confirmation modal */}
+      {deleteConfirm && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50, padding: 24 }}
+          onClick={() => setDeleteConfirm(null)}
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ duration: 0.2 }}
+            className="ec-project-card"
+            style={{ padding: "32px 36px", borderRadius: 18, width: "100%", maxWidth: 440, borderTop: "3px solid var(--ec-brand)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
+              <div style={{ width: 56, height: 56, borderRadius: "50%", background: "var(--ec-brand-soft)", color: "var(--ec-brand)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginBottom: 18 }}>
+                <AlertCircle size={26} />
+              </div>
+              <h3 className="font-serif" style={{ fontSize: 26, fontWeight: 400, color: "var(--ec-text)", marginBottom: 8, lineHeight: 1.2 }}>
+                ¿Eliminar proyecto?
+              </h3>
+              <p style={{ color: "var(--ec-text-muted)", fontSize: 13.5, lineHeight: 1.6, marginBottom: 6 }}>
+                Esta acción eliminará{" "}
+                <strong style={{ color: "var(--ec-text)" }}>{deleteConfirm.title}</strong>{" "}
+                de forma permanente.
+              </p>
+              <span className="font-mono-ec" style={{ fontSize: 11, color: "var(--ec-text-dim)", background: "var(--ec-surface-2)", padding: "3px 10px", borderRadius: 6 }}>
+                {deleteConfirm.project_name}
+              </span>
+              <div style={{ width: "100%", height: 1, background: "var(--ec-hairline)", margin: "20px 0" }} />
+              <div style={{ display: "flex", gap: 10, width: "100%" }}>
+                <button className="ec-btn-secondary" style={{ flex: 1, padding: "9px 16px", fontSize: 13 }} onClick={() => setDeleteConfirm(null)}>
+                  Cancelar
+                </button>
+                <button
+                  style={{
+                    flex: 1, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6,
+                    padding: "9px 16px", borderRadius: 10, fontSize: 13, fontWeight: 600, fontFamily: "var(--font-inter), var(--font-sans)",
+                    background: "var(--ec-brand)", color: "#fff", border: "none", cursor: "pointer", transition: "opacity 150ms",
+                  }}
+                  disabled={deleting}
+                  onClick={() => handleDelete(deleteConfirm.id)}
+                >
+                  {deleting ? (
+                    <div style={{ width: 14, height: 14, borderRadius: "50%", border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", animation: "spin 0.7s linear infinite" }} />
+                  ) : (
+                    <><Trash2 size={14} /> Eliminar</>
+                  )}
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }

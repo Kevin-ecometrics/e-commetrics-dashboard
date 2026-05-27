@@ -1,74 +1,51 @@
-/* eslint-disable @next/next/no-img-element */
 import Link from "next/link";
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center px-4 relative overflow-hidden">
-      {/* Efectos de fondo sutiles */}
-      <div className="absolute inset-0">
-        <div className="absolute top-1/4 left-1/4 w-1 h-1 bg-white rounded-full animate-pulse"></div>
-        <div
-          className="absolute top-1/3 right-1/3 w-1 h-1 bg-white rounded-full animate-pulse"
-          style={{ animationDelay: "1s" }}
-        ></div>
-        <div
-          className="absolute bottom-1/4 left-1/3 w-1 h-1 bg-white rounded-full animate-pulse"
-          style={{ animationDelay: "2s" }}
-        ></div>
-        <div
-          className="absolute bottom-1/3 right-1/4 w-1 h-1 bg-white rounded-full animate-pulse"
-          style={{ animationDelay: "0.5s" }}
-        ></div>
-      </div>
+    <div style={{
+      minHeight: "100vh", background: "var(--ec-surface-0)",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      padding: "0 16px", position: "relative", overflow: "hidden",
+    }}>
+      {/* Ambient dots */}
+      <div style={{ position: "absolute", top: "25%", left: "25%", width: 4, height: 4, background: "var(--ec-brand)", borderRadius: "50%", opacity: 0.4 }} />
+      <div style={{ position: "absolute", top: "33%", right: "33%", width: 3, height: 3, background: "var(--ec-brand)", borderRadius: "50%", opacity: 0.3 }} />
+      <div style={{ position: "absolute", bottom: "25%", left: "33%", width: 3, height: 3, background: "var(--ec-brand)", borderRadius: "50%", opacity: 0.3 }} />
+      <div style={{ position: "absolute", bottom: "33%", right: "25%", width: 4, height: 4, background: "var(--ec-brand)", borderRadius: "50%", opacity: 0.2 }} />
 
-      <div className="max-w-lg w-full text-center relative z-10">
-        {/* Logo con efecto de brillo */}
-        <div className="mb-12 relative">
-          <div className="absolute inset-0 rounded-full bg-white opacity-5 animate-ping"></div>
-          <img
-            src="/logo.jpg"
-            alt="Logo"
-            className="rounded-full mx-auto size-40 relative z-10 border border-white/10"
-          />
-        </div>
+      <div style={{ maxWidth: 480, width: "100%", textAlign: "center", position: "relative", zIndex: 10 }}>
+        <div className="h-eyebrow" style={{ marginBottom: 20 }}>⎯⎯⎯&nbsp;&nbsp;ERROR</div>
 
-        {/* 404 con efecto glitch sutil */}
-        <div className="relative mb-8">
-          <h1 className="text-8xl font-black text-white mb-2 tracking-wider relative">
-            4<span className="inline-block transform rotate-12 mx-2">0</span>4
-          </h1>
-          <div className="absolute inset-0 text-8xl font-black text-white opacity-10 blur-sm">
-            404
-          </div>
-        </div>
+        <h1 className="font-serif" style={{
+          fontSize: "clamp(80px, 20vw, 140px)", fontWeight: 400,
+          letterSpacing: "-0.04em", lineHeight: 1,
+          color: "var(--ec-brand)", marginBottom: 8,
+        }}>
+          4<span style={{ display: "inline-block", transform: "rotate(12deg)", margin: "0 4px" }}>0</span>4
+        </h1>
 
-        {/* Línea decorativa */}
-        <div className="w-20 h-0.5 bg-white mx-auto mb-8 opacity-30"></div>
+        <div style={{ width: 40, height: 2, background: "var(--ec-brand)", margin: "0 auto 24px", opacity: 0.6 }} />
 
-        {/* Mensaje con tipografía mejorada */}
-        <p className="text-white/80 mb-12 text-lg tracking-wide font-light">
+        <p style={{ color: "var(--ec-text-muted)", fontSize: 16, marginBottom: 36, lineHeight: 1.6 }}>
           Esta página se ha perdido en el espacio
         </p>
 
-        {/* Botón con efecto hover innovador */}
-        <Link href="/" className="group relative inline-block">
-          <div className="absolute inset-0 bg-white rounded transform group-hover:scale-105 transition-transform duration-200"></div>
-          <div className="relative px-8 py-4 bg-black border border-white text-white rounded transform group-hover:-translate-y-1 group-hover:translate-x-1 transition-transform duration-200">
-            <span className="font-medium tracking-wide">REGRESAR</span>
-          </div>
+        <Link
+          href="/"
+          style={{
+            display: "inline-flex", alignItems: "center", gap: 8,
+            padding: "13px 32px", background: "var(--ec-brand)",
+            color: "white", borderRadius: 12, fontSize: 14, fontWeight: 600,
+            textDecoration: "none", letterSpacing: "0.06em",
+          }}
+        >
+          REGRESAR
         </Link>
 
-        {/* Elemento decorativo inferior */}
-        <div className="mt-16 flex justify-center space-x-2">
-          <div className="w-2 h-2 bg-white/20 rounded-full animate-bounce"></div>
-          <div
-            className="w-2 h-2 bg-white/20 rounded-full animate-bounce"
-            style={{ animationDelay: "0.2s" }}
-          ></div>
-          <div
-            className="w-2 h-2 bg-white/20 rounded-full animate-bounce"
-            style={{ animationDelay: "0.4s" }}
-          ></div>
+        <div style={{ marginTop: 48, display: "flex", justifyContent: "center", gap: 8 }}>
+          {[0, 1, 2].map((i) => (
+            <div key={i} style={{ width: 6, height: 6, background: "var(--ec-hairline-strong)", borderRadius: "50%" }} />
+          ))}
         </div>
       </div>
     </div>

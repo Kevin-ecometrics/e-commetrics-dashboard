@@ -1,17 +1,7 @@
 "use client";
 import React, { useState, useRef } from "react";
 import { QRCodeCanvas } from "qrcode.react";
-import {
-  FaDownload,
-  FaTrash,
-  FaQrcode,
-  FaUser,
-  FaEnvelope,
-  FaPhone,
-  FaBuilding,
-  FaMapMarkerAlt,
-  FaArrowLeft,
-} from "react-icons/fa";
+import { Download, Trash, QrCode, User, Mail, Phone, Building, MapPin, ArrowLeft } from "lucide-react";
 import { useLang } from "@/app/context/LangContext";
 
 type FormData = {
@@ -25,16 +15,9 @@ type FormData = {
 
 type FieldKey = keyof FormData;
 
-export default function InnovativeQRGenerator() {
+export default function VCardPage() {
   const { lang } = useLang();
-  const [formData, setFormData] = useState<FormData>({
-    name: "",
-    lastname: "",
-    org: "",
-    phone: "",
-    email: "",
-    address: "",
-  });
+  const [formData, setFormData] = useState<FormData>({ name: "", lastname: "", org: "", phone: "", email: "", address: "" });
   const [showQR, setShowQR] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
@@ -42,12 +25,7 @@ export default function InnovativeQRGenerator() {
   const ticketRef = useRef<HTMLDivElement>(null);
 
   const fieldIcons: Record<FieldKey, React.ElementType> = {
-    name: FaUser,
-    lastname: FaUser,
-    org: FaBuilding,
-    phone: FaPhone,
-    email: FaEnvelope,
-    address: FaMapMarkerAlt,
+    name: User, lastname: User, org: Building, phone: Phone, email: Mail, address: MapPin,
   };
 
   const fieldLabels: Record<FieldKey, string> = {
@@ -61,133 +39,16 @@ export default function InnovativeQRGenerator() {
 
   const handleShowQR = async () => {
     setIsGenerating(true);
-    await new Promise((resolve) => setTimeout(resolve, 1200));
+    await new Promise((resolve) => setTimeout(resolve, 800));
     setShowQR(true);
     setIsGenerating(false);
   };
 
   const handleReset = () => {
     setShowQR(false);
-    setFormData({
-      name: "",
-      lastname: "",
-      org: "",
-      phone: "",
-      email: "",
-      address: "",
-    });
+    setFormData({ name: "", lastname: "", org: "", phone: "", email: "", address: "" });
   };
 
-  // Función para descargar el ticket completo
-  const downloadCompleteTicket = async () => {
-    if (!ticketRef.current) return;
-
-    setIsDownloading(true);
-
-    try {
-      // Crear un canvas para dibujar el ticket
-      const canvas = document.createElement("canvas");
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return;
-
-      // Configurar dimensiones del canvas (tamaño del ticket)
-      const width = 400;
-      const height = 600;
-      canvas.width = width * 2; // Para alta resolución
-      canvas.height = height * 2;
-      ctx.scale(2, 2);
-
-      // Fondo azul
-      ctx.fillStyle = "#2563eb";
-      ctx.fillRect(0, 0, width, height);
-
-      // Configurar texto
-      ctx.fillStyle = "white";
-      ctx.textAlign = "left";
-
-      // Header - Organización
-      ctx.font = "14px Arial";
-      ctx.globalAlpha = 0.8;
-      ctx.fillText(formData.org || "CONTACT", 32, 60);
-
-      // Initial en círculo (esquina superior derecha)
-      ctx.globalAlpha = 1;
-      ctx.font = "bold 24px Arial";
-      ctx.textAlign = "center";
-      ctx.fillText(formData.name?.charAt(0) || "C", 360, 50);
-
-      // Nombre principal
-      ctx.textAlign = "left";
-      ctx.font = "bold 32px Arial";
-      ctx.fillText(formData.name || "Contact", 32, 120);
-      ctx.fillText(formData.lastname || "Card", 32, 160);
-
-      // Detalles de contacto
-      ctx.font = "14px Arial";
-      ctx.globalAlpha = 0.8;
-      let yPos = 200;
-
-      if (formData.org) {
-        ctx.fillText(`🏢 ${formData.org}`, 32, yPos);
-        yPos += 25;
-      }
-      if (formData.phone) {
-        ctx.fillText(`📱 ${formData.phone}`, 32, yPos);
-        yPos += 25;
-      }
-      if (formData.email) {
-        ctx.fillText(`✉️ ${formData.email}`, 32, yPos);
-        yPos += 25;
-      }
-      if (formData.address) {
-        ctx.fillText(`📍 ${formData.address}`, 32, yPos);
-        yPos += 25;
-      }
-
-      // Obtener el QR code
-      const qrCanvas = qrRef.current?.querySelector("canvas");
-      if (qrCanvas) {
-        // Fondo blanco para el QR
-        ctx.globalAlpha = 1;
-        ctx.fillStyle = "white";
-        ctx.fillRect(140, 320, 120, 120);
-
-        // Dibujar QR code
-        ctx.drawImage(qrCanvas, 150, 330, 100, 100);
-      }
-
-      // Footer
-      ctx.fillStyle = "white";
-      ctx.globalAlpha = 0.8;
-      ctx.font = "12px Arial";
-      ctx.textAlign = "center";
-      ctx.fillText("📱 DIGITAL CONTACT", width / 2, 480);
-
-      // Agujero del keychain (círculo negro)
-      ctx.globalAlpha = 1;
-      ctx.fillStyle = "black";
-      ctx.beginPath();
-      ctx.arc(width / 2, 20, 16, 0, 2 * Math.PI);
-      ctx.fill();
-
-      // Descargar la imagen
-      const url = canvas.toDataURL("image/png", 1.0);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${formData.name || "contact"}-vcard-ticket.png`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-    } catch (error) {
-      console.error("Error generating image:", error);
-      // Fallback: descargar solo el QR
-      downloadQROnly();
-    }
-
-    setIsDownloading(false);
-  };
-
-  // Función para descargar solo el QR
   const downloadQROnly = () => {
     const qrCanvas = qrRef.current?.querySelector("canvas");
     if (qrCanvas) {
@@ -195,38 +56,72 @@ export default function InnovativeQRGenerator() {
       const a = document.createElement("a");
       a.href = url;
       a.download = `${formData.name || "contact"}-qr-code.png`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
     }
+  };
+
+  const downloadCompleteTicket = async () => {
+    if (!ticketRef.current) return;
+    setIsDownloading(true);
+    try {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+      const width = 400, height = 600;
+      canvas.width = width * 2; canvas.height = height * 2;
+      ctx.scale(2, 2);
+      ctx.fillStyle = "#BD155C";
+      ctx.fillRect(0, 0, width, height);
+      ctx.fillStyle = "white"; ctx.textAlign = "left";
+      ctx.font = "14px Arial"; ctx.globalAlpha = 0.8;
+      ctx.fillText((formData.org || "CONTACT").slice(0, 3).toUpperCase(), 32, 60);
+      ctx.globalAlpha = 1; ctx.font = "bold 24px Arial"; ctx.textAlign = "center";
+      ctx.fillText(formData.name?.charAt(0) || "C", 360, 50);
+      ctx.textAlign = "left"; ctx.font = "bold 32px Arial";
+      ctx.fillText(formData.name || "Contact", 32, 120);
+      ctx.fillText(formData.lastname || "Card", 32, 160);
+      ctx.font = "14px Arial"; ctx.globalAlpha = 0.8;
+      let yPos = 200;
+      if (formData.org) { ctx.fillText(`🏢 ${formData.org}`, 32, yPos); yPos += 25; }
+      if (formData.phone) { ctx.fillText(`📱 ${formData.phone}`, 32, yPos); yPos += 25; }
+      if (formData.email) { ctx.fillText(`✉️ ${formData.email}`, 32, yPos); yPos += 25; }
+      if (formData.address) { ctx.fillText(`📍 ${formData.address}`, 32, yPos); yPos += 25; }
+      const qrCanvas = qrRef.current?.querySelector("canvas");
+      if (qrCanvas) {
+        ctx.globalAlpha = 1; ctx.fillStyle = "white";
+        ctx.fillRect(140, 320, 120, 120);
+        ctx.drawImage(qrCanvas, 150, 330, 100, 100);
+      }
+      ctx.fillStyle = "white"; ctx.globalAlpha = 0.8; ctx.font = "12px Arial";
+      ctx.textAlign = "center"; ctx.fillText("📱 DIGITAL CONTACT", width / 2, 480);
+      ctx.globalAlpha = 1; ctx.fillStyle = "rgba(0,0,0,0.3)";
+      ctx.beginPath(); ctx.arc(width / 2, 20, 16, 0, 2 * Math.PI); ctx.fill();
+      const url = canvas.toDataURL("image/png", 1.0);
+      const a = document.createElement("a"); a.href = url;
+      a.download = `${formData.name || "contact"}-vcard-ticket.png`;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    } catch {
+      downloadQROnly();
+    }
+    setIsDownloading(false);
   };
 
   const generateVCard = () => {
     const vcard = `BEGIN:VCARD\nVERSION:3.0\nFN:${formData.name} ${formData.lastname}\nN:${formData.lastname};${formData.name};;;\nORG:${formData.org}\nTEL;TYPE=WORK,VOICE:${formData.phone}\nEMAIL;TYPE=INTERNET,WORK:${formData.email}\nADR;TYPE=WORK:;;${formData.address};;;;\nEND:VCARD`;
     const blob = new Blob([vcard], { type: "text/vcard;charset=utf-8" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
+    const a = document.createElement("a"); a.href = url;
     a.download = `${formData.name || "contact"}-vcard.vcf`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
     URL.revokeObjectURL(url);
   };
 
   if (isGenerating) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-blue-500/30 border-t-blue-500 rounded-full mb-6 animate-spin mx-auto" />
-          <h3 className="text-white text-xl font-semibold mb-2">
-            {lang === "es" ? "Generando VCard" : "Generating VCard"}
-          </h3>
-          <p className="text-gray-400">
-            {lang === "es"
-              ? "Creando tu tarjeta de contacto..."
-              : "Creating your contact card..."}
-          </p>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "60vh" }}>
+        <div style={{ textAlign: "center" }}>
+          <div style={{ width: 44, height: 44, borderRadius: "50%", border: "3px solid var(--ec-brand)", borderTopColor: "transparent", animation: "spin 0.8s linear infinite", margin: "0 auto 16px" }} />
+          <p className="h-eyebrow">{lang === "es" ? "Generando VCard…" : "Generating VCard…"}</p>
         </div>
       </div>
     );
@@ -234,169 +129,93 @@ export default function InnovativeQRGenerator() {
 
   if (showQR) {
     return (
-      <div className="min-h-screen bg-black text-white p-4 flex items-center justify-center">
-        <div className="w-full max-w-4xl">
-          {/* Back Button */}
-          <button
-            onClick={() => setShowQR(false)}
-            className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-8"
-          >
-            <FaArrowLeft />
-            <span>
-              {lang === "es" ? "Regresar al formulario" : "Back to form"}
-            </span>
-          </button>
+      <div style={{ padding: "32px 24px" }} className="fade-in-up">
+        <button onClick={() => setShowQR(false)} style={{ display: "flex", alignItems: "center", gap: 6, color: "var(--ec-text-dim)", background: "none", border: 0, cursor: "pointer", fontSize: 13, marginBottom: 32 }}>
+          <ArrowLeft size={14} /> {lang === "es" ? "Regresar al formulario" : "Back to form"}
+        </button>
 
-          <div className="flex flex-col lg:flex-row gap-8 items-center">
-            {/* Left Side - Info */}
-            <div className="flex-1">
-              <h1 className="text-6xl lg:text-8xl font-bold mb-4 leading-tight">
-                {formData.name || "Your"}
-              </h1>
-              <p className="text-3xl text-white mb-4 font-bold">
-                {lang === "es" ? "Tarjeta de Contacto" : "VCard"}
-              </p>
-              <p className="text-xl text-gray-400 mb-8">
-                {lang === "es"
-                  ? "Escanea para guardar la información de contacto o descarga tu tarjeta de visita digital."
-                  : "Scan to save contact information or download your digital business card."}
-              </p>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 360px", gap: 56, alignItems: "center", maxWidth: 900, margin: "0 auto" }}>
+          {/* Left info */}
+          <div>
+            <div className="h-eyebrow" style={{ marginBottom: 10 }}>⎯⎯⎯  YOUR VCARD</div>
+            <h1 className="font-serif" style={{ fontSize: 64, fontWeight: 400, lineHeight: 0.95, letterSpacing: "-0.025em", marginBottom: 16, textTransform: "lowercase" }}>
+              {formData.name || "Untitled"} {formData.lastname}
+            </h1>
+            <div className="h-eyebrow" style={{ color: "var(--ec-brand)", marginBottom: 16 }}>VCARD</div>
+            <p style={{ color: "var(--ec-text-dim)", fontSize: 14, lineHeight: 1.6, maxWidth: "42ch", marginBottom: 24 }}>
+              {lang === "es"
+                ? "Escanea para guardar la información de contacto o descarga tu tarjeta de presentación digital."
+                : "Scan to save contact information or download your digital business card."}
+            </p>
 
-              <button
-                onClick={downloadCompleteTicket}
-                disabled={isDownloading}
-                className="bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 hover:from-blue-600 hover:via-blue-700 hover:to-blue-800 disabled:from-blue-800 disabled:via-blue-800 disabled:to-blue-800 text-white px-10 py-5 rounded-xl font-bold text-xl transition-all duration-300 inline-flex items-center gap-4 transform hover:scale-[1.02] active:scale-[0.98] shadow-xl hover:shadow-2xl relative overflow-hidden group"
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
-                <div className="relative z-10 flex items-center gap-4">
-                  {isDownloading ? (
-                    <>
-                      <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      <span>
-                        {lang === "es"
-                          ? "GENERANDO TICKET..."
-                          : "GENERATING TICKET..."}
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      <FaDownload className="text-2xl" />
-                      <span>
-                        {lang === "es" ? "DESCARGAR TICKET" : "DOWNLOAD TICKET"}
-                      </span>
-                    </>
-                  )}
-                </div>
+            <button
+              onClick={downloadCompleteTicket}
+              disabled={isDownloading}
+              style={{ padding: "14px 28px", background: "var(--ec-brand)", color: "white", border: 0, borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: isDownloading ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: 10, marginBottom: 16, opacity: isDownloading ? 0.7 : 1, width: 260 }}
+            >
+              {isDownloading
+                ? <><div style={{ width: 16, height: 16, borderRadius: "50%", border: "2px solid white", borderTopColor: "transparent", animation: "spin 0.8s linear infinite" }} /> {lang === "es" ? "Generando…" : "Generating…"}</>
+                : <><Download size={16} /> {lang === "es" ? "DESCARGAR TICKET" : "DOWNLOAD TICKET"}</>
+              }
+            </button>
+
+            <div style={{ display: "flex", gap: 8 }}>
+              <button onClick={downloadQROnly} style={{ padding: "10px 16px", background: "var(--ec-surface-2)", border: "1px solid var(--ec-border)", borderRadius: 10, color: "var(--ec-text)", fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
+                <QrCode size={13} /> {lang === "es" ? "Solo QR" : "QR Only"}
               </button>
-            </div>
-
-            {/* Right Side - Card */}
-            <div className="flex-1 flex justify-center">
-              <div className="relative">
-                {/* Card */}
-                <div
-                  ref={ticketRef}
-                  className="bg-blue-600 rounded-2xl p-8 w-80 relative overflow-hidden"
-                >
-                  {/* Background Pattern */}
-                  <div className="absolute inset-0 opacity-10">
-                    <div className="absolute top-6 right-4 text-5xl">
-                      <FaQrcode />
-                    </div>
-                  </div>
-
-                  {/* Card Content */}
-                  <div className="relative z-10">
-                    {/* Header */}
-                    <div className="flex items-center justify-between mb-8">
-                      <div className="text-sm opacity-80 uppercase font-bold">
-                        {formData.org ||
-                          (lang === "es" ? "CONTACTO" : "CONTACT")}
-                      </div>
-                      <div className="text-2xl font-bold uppercase">
-                        {formData.name?.charAt(0) || "C"}
-                      </div>
-                    </div>
-
-                    {/* Name */}
-                    <div className="mb-6">
-                      <h2 className="text-3xl font-bold leading-tight">
-                        {formData.name ||
-                          (lang === "es" ? "Contacto" : "Contact")}
-                        <br />
-                        {formData.lastname || "Card"}
-                      </h2>
-                    </div>
-
-                    {/* Contact Details */}
-                    <div className="space-y-3 mb-8 text-sm">
-                      {formData.org && (
-                        <div className="opacity-80">🏢 {formData.org}</div>
-                      )}
-
-                      {formData.phone && (
-                        <div className="opacity-80">📱 {formData.phone}</div>
-                      )}
-
-                      {formData.email && (
-                        <div className="opacity-80 truncate">
-                          ✉️ {formData.email}
-                        </div>
-                      )}
-
-                      {formData.address && (
-                        <div className="opacity-80">📍 {formData.address}</div>
-                      )}
-                    </div>
-
-                    {/* QR Code */}
-                    <div className="flex justify-start">
-                      <div ref={qrRef} className="bg-white p-3 rounded-lg">
-                        <QRCodeCanvas
-                          value={`BEGIN:VCARD\nVERSION:3.0\nFN:${formData.name}\nN:${formData.lastname}\nORG:${formData.org}\nTEL;TYPE=WORK,VOICE:${formData.phone}\nEMAIL;INTERNET;WORK:${formData.email}\nADR;TYPE=WORK:;;${formData.address}\nEND:VCARD`}
-                          size={120}
-                          level="H"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Footer */}
-                    <div className="mt-6 text-center"></div>
-                  </div>
-
-                  {/* Keychain hole effect */}
-                  <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 w-8 h-8 bg-black rounded-full"></div>
-                </div>
-
-                {/* Keychain ring */}
-                <div className="absolute -top-12 left-1/2 transform -translate-x-1/2"></div>
-              </div>
+              <button onClick={generateVCard} style={{ padding: "10px 16px", background: "#7A0E3B", border: 0, borderRadius: 10, color: "white", fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
+                <Download size={13} /> {lang === "es" ? "Archivo .VCF" : ".VCF File"}
+              </button>
+              <button onClick={handleReset} style={{ padding: "10px 16px", background: "rgba(248,113,113,0.12)", border: "1px solid rgba(248,113,113,0.3)", borderRadius: 10, color: "#F87171", fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
+                <Trash size={13} /> {lang === "es" ? "Nueva tarjeta" : "New card"}
+              </button>
             </div>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex flex-wrap gap-4 justify-start mt-12">
-            <button
-              onClick={downloadQROnly}
-              className="bg-gray-700 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors inline-flex items-center gap-2 shadow-lg hover:shadow-xl"
-            >
-              <FaQrcode />
-              {lang === "es" ? "Descargar solo QR" : "Download QR Only"}
-            </button>
-            <button
-              onClick={generateVCard}
-              className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors inline-flex items-center gap-2 shadow-lg hover:shadow-xl"
-            >
-              <FaDownload />
-              {lang === "es" ? "Descargar VCF" : "Download VCF File"}
-            </button>
-            <button
-              onClick={handleReset}
-              className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors inline-flex items-center gap-2 shadow-lg hover:shadow-xl"
-            >
-              <FaTrash />
-              {lang === "es" ? "Crear nueva tarjeta" : "Create New Card"}
-            </button>
+          {/* VCard ticket */}
+          <div
+            ref={ticketRef}
+            style={{
+              position: "relative",
+              background: "linear-gradient(135deg, var(--ec-brand), #7A0E3B)",
+              borderRadius: 22,
+              padding: 26,
+              color: "white",
+              aspectRatio: "0.7/1",
+              display: "flex", flexDirection: "column",
+              boxShadow: "0 24px 64px -16px rgba(189,21,92,0.5), 0 0 0 1px rgba(189,21,92,0.3)",
+              overflow: "hidden",
+            }}
+          >
+            {/* Hole at top */}
+            <div style={{ position: "absolute", top: -8, left: "50%", transform: "translateX(-50%)", width: 28, height: 12, background: "rgba(0,0,0,0.4)", borderRadius: "0 0 12px 12px" }} />
+
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
+              <span className="h-eyebrow" style={{ color: "rgba(255,255,255,0.7)" }}>{(formData.org?.slice(0,3) || "VCD").toUpperCase()}</span>
+              <div style={{ width: 32, height: 32, background: "rgba(255,255,255,0.18)", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--font-instrument-serif), serif", fontSize: 18 }}>
+                {(formData.name?.[0] || "?").toUpperCase()}
+              </div>
+            </div>
+
+            <div style={{ flex: 1 }}>
+              <div className="font-serif" style={{ fontSize: 32, lineHeight: 1, marginBottom: 6 }}>{formData.name || "Name"}</div>
+              <div className="font-serif" style={{ fontSize: 32, lineHeight: 1, marginBottom: 20 }}>{formData.lastname || "Lastname"}</div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 12, opacity: 0.85 }}>
+                {formData.org && <div style={{ display: "flex", alignItems: "center", gap: 6 }}><Building size={11} /><span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{formData.org}</span></div>}
+                {formData.phone && <div style={{ display: "flex", alignItems: "center", gap: 6 }}><Phone size={11} /><span>{formData.phone}</span></div>}
+                {formData.email && <div style={{ display: "flex", alignItems: "center", gap: 6 }}><Mail size={11} /><span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{formData.email}</span></div>}
+                {formData.address && <div style={{ display: "flex", alignItems: "center", gap: 6 }}><MapPin size={11} /><span>{formData.address}</span></div>}
+              </div>
+            </div>
+
+            <div ref={qrRef} style={{ background: "white", padding: 8, borderRadius: 8, alignSelf: "center", marginTop: 18 }}>
+              <QRCodeCanvas
+                value={`BEGIN:VCARD\nVERSION:3.0\nFN:${formData.name} ${formData.lastname}\nN:${formData.lastname};${formData.name};;;\nORG:${formData.org}\nTEL;TYPE=WORK,VOICE:${formData.phone}\nEMAIL;INTERNET;WORK:${formData.email}\nADR;TYPE=WORK:;;${formData.address}\nEND:VCARD`}
+                size={100}
+                level="H"
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -404,67 +223,79 @@ export default function InnovativeQRGenerator() {
   }
 
   return (
-    <div className="min-h-screen text-white p-4 flex items-center justify-center">
-      <div className="w-full max-w-lg bg-gray-800 p-8 rounded-3xl">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <div className="p-3 bg-blue-600 rounded-xl">
-              <FaQrcode className="text-white text-xl" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold">
-                {lang === "es" ? "Generador de VCard" : "VCard Generator"}
-              </h1>
-              <p className="text-gray-400">
-                {lang === "es" ? "Genera & Comparte" : "Generate & Share"}
-              </p>
-            </div>
-          </div>
+    <div style={{ padding: "32px 24px", display: "flex", alignItems: "flex-start", justifyContent: "center" }} className="fade-in-up">
+      <div style={{ maxWidth: 480, width: "100%" }}>
+        <div style={{ textAlign: "center", marginBottom: 28 }}>
+          <div className="h-eyebrow" style={{ marginBottom: 8 }}>⎯⎯⎯  VCARD BUILDER</div>
+          <h1 className="font-serif" style={{ fontSize: 44, lineHeight: 1, letterSpacing: "-0.025em", marginBottom: 10 }}>
+            {lang === "es" ? "Tarjeta Digital" : "Digital Card"}
+          </h1>
+          <p style={{ color: "var(--ec-text-dim)", fontSize: 14 }}>
+            {lang === "es" ? "Genera tu tarjeta de presentación y compártela como QR o archivo .vcf." : "Generate your business card and share it as a QR or .vcf file."}
+          </p>
         </div>
 
-        {/* Form */}
-        <div className="space-y-4">
-          {(Object.entries(formData) as [FieldKey, string][]).map(([key, value]) => {
-            const Icon = fieldIcons[key];
-            return (
-              <div key={key} className="relative group">
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-blue-600/20 rounded-xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                <div className="relative">
-                  <div className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10">
-                    <Icon className="text-blue-400 text-lg" />
+        <div className="ec-project-card" style={{ padding: 28, borderRadius: 18 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 22, paddingBottom: 18, borderBottom: "1px solid var(--ec-border)" }}>
+            <div style={{ width: 40, height: 40, borderRadius: 10, background: "rgba(189,21,92,0.12)", color: "var(--ec-brand)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <QrCode size={18} />
+            </div>
+            <div>
+              <h2 className="font-serif" style={{ fontSize: 22, fontWeight: 400 }}>VCard Generator</h2>
+              <p style={{ fontSize: 12, color: "var(--ec-text-dim)" }}>Generate &amp; Share</p>
+            </div>
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              {(["name", "lastname"] as FieldKey[]).map((key) => {
+                const Icon = fieldIcons[key];
+                return (
+                  <div key={key} style={{ display: "flex", alignItems: "center", background: "var(--ec-surface-2)", border: "1px solid var(--ec-border)", borderRadius: 12, overflow: "hidden" }}>
+                    <span style={{ paddingLeft: 12, paddingRight: 4, color: "var(--ec-brand)", display: "flex", alignItems: "center", flexShrink: 0 }}><Icon size={14} /></span>
+                    <input
+                      value={formData[key]}
+                      onChange={(e) => setFormData({ ...formData, [key]: e.target.value })}
+                      placeholder={fieldLabels[key]}
+                      style={{ flex: 1, padding: "11px 12px 11px 4px", background: "transparent", border: 0, outline: "none", color: "var(--ec-text)", fontSize: 14 }}
+                    />
                   </div>
+                );
+              })}
+            </div>
+
+            {(["org", "phone", "email", "address"] as FieldKey[]).map((key) => {
+              const Icon = fieldIcons[key];
+              return (
+                <div key={key} style={{ display: "flex", alignItems: "center", background: "var(--ec-surface-2)", border: "1px solid var(--ec-border)", borderRadius: 12, overflow: "hidden" }}>
+                  <span style={{ paddingLeft: 12, paddingRight: 4, color: "var(--ec-brand)", display: "flex", alignItems: "center", flexShrink: 0 }}><Icon size={14} /></span>
                   <input
-                    type={
-                      key === "email"
-                        ? "email"
-                        : key === "phone"
-                        ? "tel"
-                        : "text"
-                    }
-                    name={key}
+                    type={key === "email" ? "email" : key === "phone" ? "tel" : "text"}
+                    value={formData[key]}
+                    onChange={(e) => setFormData({ ...formData, [key]: e.target.value })}
                     placeholder={fieldLabels[key]}
-                    value={value}
-                    onChange={(e) =>
-                      setFormData({ ...formData, [key]: e.target.value })
-                    }
-                    className="w-full pl-12 pr-4 py-4 bg-gray-900/90 border border-gray-700 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:border-gray-600 group-hover:bg-gray-800/90"
-                    maxLength={key === "phone" ? 10 : undefined}
+                    maxLength={key === "phone" ? 15 : undefined}
+                    style={{ flex: 1, padding: "11px 12px 11px 4px", background: "transparent", border: 0, outline: "none", color: "var(--ec-text)", fontSize: 14 }}
                   />
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
 
-          <button
-            onClick={handleShowQR}
-            className="w-full bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 text-white px-8 py-5 rounded-xl font-bold text-lg transition-all duration-300 hover:from-blue-600 hover:via-blue-700 hover:to-blue-800 transform hover:scale-[1.02] active:scale-[0.98] mt-8 relative overflow-hidden group"
-          >
-            <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
-            <div className="flex items-center justify-center gap-3 relative z-10">
-              {lang === "es" ? "Generar VCard" : "Generate VCard"}
-            </div>
-          </button>
+            <button
+              onClick={handleShowQR}
+              disabled={!formData.name}
+              style={{
+                marginTop: 8, padding: "14px",
+                background: formData.name ? "var(--ec-brand)" : "var(--ec-surface-2)",
+                color: formData.name ? "white" : "var(--ec-text-dim)",
+                border: 0, borderRadius: 10, fontSize: 14, fontWeight: 600,
+                cursor: formData.name ? "pointer" : "not-allowed",
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+              }}
+            >
+              {lang === "es" ? "Generar VCard" : "Generate VCard"} <ArrowLeft size={14} style={{ transform: "rotate(180deg)" }} />
+            </button>
+          </div>
         </div>
       </div>
     </div>

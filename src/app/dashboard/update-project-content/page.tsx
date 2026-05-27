@@ -2,7 +2,11 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { toast, Toaster } from "react-hot-toast";
+import { Plus, Edit, Trash2, AlertCircle } from "lucide-react";
+import Link from "next/link";
+import { motion, AnimatePresence } from "motion/react";
 
 interface Project {
   id: number;
@@ -28,41 +32,43 @@ interface ProjectContent {
   created_at: string;
 }
 
+const CONTENT_TYPES = [
+  "Business and Objectives",
+  "MVP + IDEA",
+  "Business strategy",
+  "Growth Hacking strategy",
+  "Apps",
+] as const;
+
 export default function ProjectContentByProjectEditor() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [contents, setContents] = useState<ProjectContent[]>([]);
-  const [editingContent, setEditingContent] = useState<ProjectContent | null>(
-    null
-  );
+  const [editingContent, setEditingContent] = useState<ProjectContent | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<ProjectContent | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const [loading, setLoading] = useState(true);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [expandedProjects, setExpandedProjects] = useState<number[]>([]);
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  useEffect(() => { loadData(); }, []);
+
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
 
   const loadData = async () => {
     try {
       setLoading(true);
-
-      const projectsRes = await fetch(
-        `${process.env.NEXT_PUBLIC_URL}/api/projects`
-      );
+      const projectsRes = await fetch(`${process.env.NEXT_PUBLIC_URL}/api/projects`);
       if (!projectsRes.ok) throw new Error("Error al cargar proyectos");
       const projectsData: Project[] = await projectsRes.json();
 
-      const contentRes = await fetch(
-        `${process.env.NEXT_PUBLIC_URL}/api/project_content`
-      );
+      const contentRes = await fetch(`${process.env.NEXT_PUBLIC_URL}/api/project_content`);
       if (!contentRes.ok) throw new Error("Error al cargar contenido");
       const contentData: ProjectContent[] = await contentRes.json();
 
       const validProjectIds = new Set(projectsData.map((p) => p.id));
-      const filteredContent = contentData.filter((c) =>
-        validProjectIds.has(c.project_id)
-      );
+      const filteredContent = contentData.filter((c) => validProjectIds.has(c.project_id));
 
       setProjects(projectsData);
       setContents(filteredContent);
@@ -84,8 +90,6 @@ export default function ProjectContentByProjectEditor() {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-
-      // Validaciones
       if (!file.type.match("image.*")) {
         toast.error("Por favor, selecciona un archivo de imagen válido");
         return;
@@ -94,42 +98,34 @@ export default function ProjectContentByProjectEditor() {
         toast.error("La imagen no debe exceder los 5MB");
         return;
       }
-
       setImageFile(file);
-
-      // Crear vista previa
       const reader = new FileReader();
       reader.onload = (event) => {
-        if (event.target?.result) {
-          setImagePreview(event.target.result as string);
-        }
+        if (event.target?.result) setImagePreview(event.target.result as string);
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!confirm("¿Seguro que deseas eliminar este contenido?")) return;
+  const handleDeleteConfirm = async () => {
+    if (!deleteConfirm) return;
+    setDeleting(true);
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_URL}/api/project_content/${id}`,
-        {
-          method: "DELETE",
-        }
-      );
+      const res = await fetch(`${process.env.NEXT_PUBLIC_URL}/api/project_content/${deleteConfirm.id}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Error al eliminar");
       toast.success("Contenido eliminado");
-      setContents((prev) => prev.filter((c) => c.id !== id));
-      if (editingContent?.id === id) setEditingContent(null);
+      setContents((prev) => prev.filter((c) => c.id !== deleteConfirm.id));
+      if (editingContent?.id === deleteConfirm.id) setEditingContent(null);
+      setDeleteConfirm(null);
     } catch {
       toast.error("Error al eliminar contenido");
+    } finally {
+      setDeleting(false);
     }
   };
 
   const handleChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     if (!editingContent) return;
     const { name, value } = e.target;
@@ -138,43 +134,28 @@ export default function ProjectContentByProjectEditor() {
 
   const handleSave = async () => {
     if (!editingContent) return;
-
     try {
       const formData = new FormData();
-
-      // Agregar campos de texto
       formData.append("content_1", editingContent.content_1 || "");
       formData.append("content_2", editingContent.content_2 || "");
       formData.append("content_3", editingContent.content_3 || "");
       formData.append("link", editingContent.link || "");
       formData.append("href", editingContent.href || "");
       formData.append("type", editingContent.type);
-
-      // Agregar imagen si existe
-      if (imageFile) {
-        formData.append("image", imageFile);
-      }
+      if (imageFile) formData.append("image", imageFile);
 
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_URL}/api/project_content/${editingContent.id}`,
-        {
-          method: "PUT",
-          credentials: "include",
-          body: formData,
-        }
+        { method: "PUT", credentials: "include", body: formData }
       );
-
       if (!res.ok) throw new Error("Error al guardar cambios");
 
       const data = await res.json();
       toast.success("Contenido actualizado");
 
-      // Actualizar el estado con la nueva imagen si se subió
       if (data.imageUrl) {
         setContents((prev) =>
-          prev.map((c) =>
-            c.id === editingContent.id ? { ...c, source: data.imageUrl } : c
-          )
+          prev.map((c) => c.id === editingContent.id ? { ...c, source: data.imageUrl } : c)
         );
       }
 
@@ -182,12 +163,11 @@ export default function ProjectContentByProjectEditor() {
       setImageFile(null);
       setImagePreview(null);
       loadData();
-    } catch (err) {
+    } catch {
       toast.error("Error al actualizar contenido");
     }
   };
 
-  // Agrupa contenido por project_id
   const groupContentByProject = () => {
     const map = new Map<number, ProjectContent[]>();
     for (const c of contents) {
@@ -197,867 +177,333 @@ export default function ProjectContentByProjectEditor() {
     return map;
   };
 
-  if (loading) return <div className="p-6">Cargando...</div>;
+  if (loading) {
+    return (
+      <div className="fade-in-up" style={{ padding: "28px 24px", display: "flex", alignItems: "center", gap: 10, color: "var(--ec-text-muted)" }}>
+        <div style={{ width: 16, height: 16, borderRadius: "50%", border: "2px solid var(--ec-hairline)", borderTopColor: "var(--ec-brand)", animation: "spin 0.7s linear infinite" }} />
+        Cargando...
+      </div>
+    );
+  }
 
   const contentByProject = groupContentByProject();
 
-  // Para el select de tipos de contenido en edición
-  const contentTypes = [
-    "Business and Objectives",
-    "MVP + IDEA",
-    "Business strategy",
-    "Growth Hacking strategy",
-    "Apps",
-  ] as const;
-
   return (
-    <div className="min-h-screen dark:text-white text-black p-6">
-      <div className="max-w-7xl mx-auto">
-        <Toaster position="top-center" />
+    <div className="fade-in-up" style={{ padding: "28px 24px" }}>
+      <Toaster position="top-center" toastOptions={{ duration: 4000 }} />
 
-        {/* Header */}
-        <div className="mb-10 text-center">
-          <div className="inline-flex items-center gap-4 mb-6">
-            <div className="p-4 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-3xl shadow-xl">
-              <svg
-                className="w-10 h-10 text-white"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-                />
-              </svg>
-            </div>
-            <h2 className="text-5xl font-bold">Contenido por Proyecto</h2>
-          </div>
-          <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
-            🎨 Gestiona y organiza todo el contenido de tus proyectos en un solo
-            lugar
+      {/* Page header */}
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 28, flexWrap: "wrap", gap: 16 }}>
+        <div>
+          <div className="h-eyebrow" style={{ marginBottom: 8 }}>⎯⎯⎯  CONTENIDO POR PROYECTO</div>
+          <h1 className="font-serif" style={{ fontSize: 38, fontWeight: 400, lineHeight: 1, letterSpacing: "-0.025em", color: "var(--ec-text)" }}>
+            Editar Contenido
+          </h1>
+          <p style={{ fontSize: 14, color: "var(--ec-text-muted)", marginTop: 6 }}>
+            Modifica o elimina el contenido asociado a cada proyecto.
           </p>
         </div>
+        <Link href="/dashboard/create-project-content" className="ec-btn-primary" style={{ display: "inline-flex", alignItems: "center", gap: 8, textDecoration: "none", padding: "10px 18px", fontSize: 13 }}>
+          <Plus size={15} /> Crear Contenido
+        </Link>
+      </div>
 
-        {/* Projects List - Accordion Style */}
-        <div className="space-y-4">
+      {projects.length === 0 ? (
+        <div style={{ textAlign: "center", padding: "64px 20px", color: "var(--ec-text-muted)" }}>
+          <div style={{ fontSize: 40, marginBottom: 16 }}>📁</div>
+          <p style={{ fontSize: 14 }}>No hay proyectos disponibles</p>
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {projects.map((project) => {
             const isExpanded = expandedProjects.includes(project.id);
             const projectContents = contentByProject.get(project.id) || [];
-            const contentCount = projectContents.length;
 
             return (
-              <div
-                key={project.id}
-                className="bg-white dark:bg-gray-800 backdrop-blur-xl rounded-2xl shadow-lg border border-indigo-200 dark:border-indigo-700 overflow-hidden transition-all duration-300 hover:shadow-xl"
-              >
-                {/* Accordion Header */}
+              <div key={project.id} className="ec-project-card" style={{ borderRadius: 14, overflow: "hidden" }}>
+                {/* Accordion toggle */}
                 <button
                   onClick={() => toggleProject(project.id)}
-                  className="w-full px-6 py-4 flex items-center justify-between hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors duration-200"
+                  style={{
+                    width: "100%", padding: "14px 20px", display: "flex", alignItems: "center",
+                    justifyContent: "space-between", background: "none", border: "none", cursor: "pointer",
+                    textAlign: "left",
+                  }}
                 >
-                  <div className="flex items-center gap-4">
-                    <div className="p-2 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl shadow">
-                      <svg
-                        className="w-6 h-6 text-white"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                        />
-                      </svg>
-                    </div>
-                    <div className="text-left">
-                      <h3 className="text-xl font-bold">🚀 {project.title}</h3>
-                      <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                        <span className="inline-flex items-center gap-1">
-                          <svg
-                            className="w-4 h-4"
-                            fill="currentColor"
-                            viewBox="0 0 20 20"
-                          >
-                            <path
-                              fillRule="evenodd"
-                              d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"
-                              clipRule="evenodd"
-                            />
-                          </svg>
-                          {contentCount} contenido(s)
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm font-medium text-indigo-600 dark:text-indigo-400">
-                      {isExpanded ? "Ocultar" : "Mostrar"} contenido
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <h3 className="font-serif" style={{ fontSize: 16, fontWeight: 400, color: "var(--ec-text)" }}>
+                      {project.title}
+                    </h3>
+                    <span style={{
+                      padding: "2px 10px", borderRadius: 99, fontSize: 11, fontWeight: 700,
+                      background: "rgba(189,21,92,0.10)", color: "var(--ec-brand)",
+                      fontFamily: "var(--font-jetbrains-mono), monospace",
+                    }}>
+                      {projectContents.length}
                     </span>
-                    <div
-                      className={`transform transition-transform duration-300 ${
-                        isExpanded ? "rotate-180" : ""
-                      }`}
-                    >
-                      <svg
-                        className="w-6 h-6 text-indigo-500"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 9l-7 7-7-7"
-                        />
-                      </svg>
-                    </div>
                   </div>
+                  <svg
+                    width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="var(--ec-text-muted)"
+                    style={{ transform: isExpanded ? "rotate(180deg)" : "none", transition: "transform 200ms", flexShrink: 0 }}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
                 </button>
 
-                {/* Accordion Content */}
-                {isExpanded && (
-                  <div className="px-6 pb-6 pt-4 border-t border-indigo-100 dark:border-indigo-800">
-                    {contentCount > 0 ? (
-                      <div className="space-y-6">
-                        {/* Content Table - Existing Design */}
-                        <div className="overflow-x-auto rounded-xl border-2 border-indigo-200 dark:border-indigo-700">
-                          <table className="w-full">
-                            <thead>
-                              <tr>
-                                <th className="px-6 py-4 text-left text-sm font-bold uppercase tracking-wider">
-                                  <div className="flex items-center gap-2">
-                                    <svg
-                                      className="w-4 h-4"
-                                      fill="currentColor"
-                                      viewBox="0 0 20 20"
-                                    >
-                                      <path
-                                        fillRule="evenodd"
-                                        d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"
-                                        clipRule="evenodd"
-                                      />
-                                    </svg>
-                                    Tipo
-                                  </div>
-                                </th>
-                                <th className="px-6 py-4 text-left text-sm font-bold uppercase tracking-wider">
-                                  <div className="flex items-center gap-2">
-                                    <svg
-                                      className="w-4 h-4"
-                                      fill="currentColor"
-                                      viewBox="0 0 20 20"
-                                    >
-                                      <path
-                                        fillRule="evenodd"
-                                        d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z"
-                                        clipRule="evenodd"
-                                      />
-                                    </svg>
-                                    Contenido 1
-                                  </div>
-                                </th>
-                                <th className="px-6 py-4 text-left text-sm font-bold uppercase tracking-wider">
-                                  <div className="flex items-center gap-2">
-                                    <svg
-                                      className="w-4 h-4"
-                                      fill="currentColor"
-                                      viewBox="0 0 20 20"
-                                    >
-                                      <path
-                                        fillRule="evenodd"
-                                        d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z"
-                                        clipRule="evenodd"
-                                      />
-                                    </svg>
-                                    Contenido 2
-                                  </div>
-                                </th>
-                                <th className="px-6 py-4 text-left text-sm font-bold uppercase tracking-wider">
-                                  <div className="flex items-center gap-2">
-                                    <svg
-                                      className="w-4 h-4"
-                                      fill="currentColor"
-                                      viewBox="0 0 20 20"
-                                    >
-                                      <path
-                                        fillRule="evenodd"
-                                        d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z"
-                                        clipRule="evenodd"
-                                      />
-                                    </svg>
-                                    Contenido 3
-                                  </div>
-                                </th>
-                                <th className="px-6 py-4 text-left text-sm font-bold uppercase tracking-wider">
-                                  <div className="flex items-center gap-2">
-                                    <svg
-                                      className="w-4 h-4"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      viewBox="0 0 24 24"
-                                    >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
-                                      />
-                                    </svg>
-                                    Link
-                                  </div>
-                                </th>
-                                <th className="px-6 py-4 text-left text-sm font-bold uppercase tracking-wider">
-                                  <div className="flex items-center gap-2">
-                                    <svg
-                                      className="w-4 h-4"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      viewBox="0 0 24 24"
-                                    >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                                      />
-                                    </svg>
-                                    Href
-                                  </div>
-                                </th>
-                                <th className="px-6 py-4 text-center text-sm font-bold uppercase tracking-wider">
-                                  <div className="flex items-center justify-center gap-2">
-                                    <svg
-                                      className="w-4 h-4"
-                                      fill="currentColor"
-                                      viewBox="0 0 20 20"
-                                    >
-                                      <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                                    </svg>
-                                    Acciones
-                                  </div>
-                                </th>
-                              </tr>
-                            </thead>
-                            <tbody className="divide-y divide-indigo-100 dark:divide-indigo-800">
-                              {projectContents.map((content) => (
-                                <tr
-                                  key={content.id}
-                                  className="hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 dark:hover:from-indigo-900/30 dark:hover:to-purple-900/30 transition-all duration-300 group"
-                                >
-                                  <td className="px-6 py-4 whitespace-nowrap">
-                                    <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold shadow-lg">
-                                      <svg
-                                        className="w-4 h-4"
-                                        fill="currentColor"
-                                        viewBox="0 0 20 20"
-                                      >
-                                        <path
-                                          fillRule="evenodd"
-                                          d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"
-                                          clipRule="evenodd"
-                                        />
-                                      </svg>
-                                      {content.type}
+                {/* Content */}
+                <AnimatePresence>
+                  {isExpanded && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.25, ease: [0.2, 0.7, 0.2, 1] }}
+                      style={{ borderTop: "1px solid var(--ec-hairline)", overflow: "hidden" }}
+                    >
+                      {projectContents.length === 0 ? (
+                        <div style={{ padding: "32px 20px", textAlign: "center", color: "var(--ec-text-muted)", fontSize: 13 }}>
+                          Sin contenido en este proyecto
+                        </div>
+                      ) : (
+                        <div style={{ overflowX: "auto" }}>
+                          <table className="ec-table">
+                          <thead>
+                            <tr>
+                              <th>Tipo</th>
+                              <th>Contenido 1</th>
+                              <th>Contenido 2</th>
+                              <th>Contenido 3</th>
+                              <th>Link</th>
+                              <th>Acciones</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {projectContents.map((content) => (
+                              <tr key={content.id}>
+                                <td>
+                                  <span style={{
+                                    display: "inline-block", padding: "3px 10px", borderRadius: 99,
+                                    fontSize: 11, fontWeight: 700, background: "var(--ec-surface-2)",
+                                    color: "var(--ec-text-muted)", border: "1px solid var(--ec-hairline)",
+                                    whiteSpace: "nowrap",
+                                  }}>
+                                    {content.type}
+                                  </span>
+                                </td>
+                                <td style={{ maxWidth: 160 }}>
+                                  <span style={{ fontSize: 13, display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                    {content.content_1 || <em style={{ color: "var(--ec-text-muted)" }}>—</em>}
+                                  </span>
+                                </td>
+                                <td style={{ maxWidth: 160 }}>
+                                  <span style={{ fontSize: 13, display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                    {content.content_2 || <em style={{ color: "var(--ec-text-muted)" }}>—</em>}
+                                  </span>
+                                </td>
+                                <td style={{ maxWidth: 160 }}>
+                                  <span style={{ fontSize: 13, display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                    {content.content_3 || <em style={{ color: "var(--ec-text-muted)" }}>—</em>}
+                                  </span>
+                                </td>
+                                <td>
+                                  {content.link ? (
+                                    <span className="font-mono-ec" style={{ fontSize: 11, color: "var(--ec-brand)", maxWidth: 120, display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                      {content.link}
                                     </span>
-                                  </td>
-                                  <td className="px-6 py-4">
-                                    <div className="max-w-xs">
-                                      <p className="text-sm whitespace-pre-wrap line-clamp-6 truncate group-hover:whitespace-normal transition-all duration-300">
-                                        {content.content_1 || (
-                                          <span className="text-gray-400 italic">
-                                            Sin contenido
-                                          </span>
-                                        )}
-                                      </p>
-                                    </div>
-                                  </td>
-                                  <td className="px-6 py-4">
-                                    <div className="max-w-xs">
-                                      <p className="text-sm whitespace-pre-wrap line-clamp-6 truncate group-hover:whitespace-normal transition-all duration-300">
-                                        {content.content_2 || (
-                                          <span className="text-gray-400 italic">
-                                            Sin contenido
-                                          </span>
-                                        )}
-                                      </p>
-                                    </div>
-                                  </td>
-                                  <td className="px-6 py-4">
-                                    <div className="max-w-xs">
-                                      <p className="text-sm whitespace-pre-wrap truncate line-clamp-6 group-hover:whitespace-normal transition-all duration-300">
-                                        {content.content_3 || (
-                                          <span className="text-gray-400 italic">
-                                            Sin contenido
-                                          </span>
-                                        )}
-                                      </p>
-                                    </div>
-                                  </td>
-                                  <td className="px-6 py-4">
-                                    {content.link ? (
-                                      <div className="flex items-center gap-2">
-                                        <div className="p-1 bg-gradient-to-r from-blue-100 to-cyan-100 dark:from-blue-900 dark:to-cyan-900 rounded-lg">
-                                          <svg
-                                            className="w-4 h-4 text-blue-600 dark:text-blue-400"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                          >
-                                            <path
-                                              strokeLinecap="round"
-                                              strokeLinejoin="round"
-                                              strokeWidth={2}
-                                              d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
-                                            />
-                                          </svg>
-                                        </div>
-                                        <span className="text-sm text-gray-600 dark:text-gray-300 break-all max-w-32 truncate">
-                                          {content.link}
-                                        </span>
-                                      </div>
-                                    ) : (
-                                      <span className="text-gray-400 italic text-sm">
-                                        🔗 Sin enlace
-                                      </span>
-                                    )}
-                                  </td>
-                                  <td className="px-6 py-4">
-                                    {content.href ? (
-                                      <div className="flex items-center gap-2">
-                                        <div className="p-1 bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-900 dark:to-pink-900 rounded-lg">
-                                          <svg
-                                            className="w-4 h-4 text-purple-600 dark:text-purple-400"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                          >
-                                            <path
-                                              strokeLinecap="round"
-                                              strokeLinejoin="round"
-                                              strokeWidth={2}
-                                              d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                                            />
-                                          </svg>
-                                        </div>
-                                        <span className="text-sm text-gray-600 dark:text-gray-300 break-all max-w-32 truncate">
-                                          {content.href}
-                                        </span>
-                                      </div>
-                                    ) : (
-                                      <span className="text-gray-400 italic text-sm">
-                                        📎 Sin referencia
-                                      </span>
-                                    )}
-                                  </td>
-                                  <td className="px-6 py-4 whitespace-nowrap text-center">
-                                    <div className="flex justify-center gap-3">
-                                      <button
-                                        onClick={() => {
-                                          setEditingContent(content);
-                                          setImageFile(null);
-                                          setImagePreview(null);
-                                        }}
-                                        className="group relative bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-                                      >
-                                        <div className="flex items-center gap-2 text-white">
-                                          <svg
-                                            className="w-4 h-4"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                          >
-                                            <path
-                                              strokeLinecap="round"
-                                              strokeLinejoin="round"
-                                              strokeWidth={2}
-                                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                                            />
-                                          </svg>
-                                          Editar
-                                        </div>
-                                      </button>
-                                      <button
-                                        onClick={() => handleDelete(content.id)}
-                                        className="group relative bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-                                      >
-                                        <div className="flex items-center gap-2 text-white">
-                                          <svg
-                                            className="w-4 h-4"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                          >
-                                            <path
-                                              strokeLinecap="round"
-                                              strokeLinejoin="round"
-                                              strokeWidth={2}
-                                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                            />
-                                          </svg>
-                                          Eliminar
-                                        </div>
-                                      </button>
-                                    </div>
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-
-                        {/* Empty content message */}
-                        {contentCount === 0 && (
-                          <div className="text-center py-12">
-                            <div className="flex flex-col items-center gap-6">
-                              <div className="w-20 h-20 bg-gradient-to-r from-indigo-100 to-purple-100 dark:from-indigo-900 dark:to-purple-900 rounded-full flex items-center justify-center shadow-lg">
-                                <svg
-                                  className="w-10 h-10 text-indigo-500 dark:text-indigo-400"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.406 16.5c-.77.833.192 2.5 1.732 2.5z"
-                                  />
-                                </svg>
-                              </div>
-                              <div>
-                                <p className="text-xl font-bold mb-2">
-                                  📝 No hay contenido aún
-                                </p>
-                                <p className="text-gray-500 dark:text-gray-400">
-                                  Agrega contenido para este proyecto
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="text-center py-12">
-                        <div className="flex flex-col items-center gap-6">
-                          <div className="w-20 h-20 bg-gradient-to-r from-indigo-100 to-purple-100 dark:from-indigo-900 dark:to-purple-900 rounded-full flex items-center justify-center shadow-lg">
-                            <svg
-                              className="w-10 h-10 text-indigo-500 dark:text-indigo-400"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.406 16.5c-.77.833.192 2.5 1.732 2.5z"
-                              />
-                            </svg>
-                          </div>
-                          <div>
-                            <p className="text-xl font-bold mb-2">
-                              📝 ¡Espacio creativo disponible!
-                            </p>
-                            <p className="text-gray-500 dark:text-gray-400">
-                              Este proyecto está listo para recibir contenido
-                              increíble
-                            </p>
-                          </div>
-                        </div>
+                                  ) : (
+                                    <span style={{ color: "var(--ec-text-muted)", fontSize: 12 }}>—</span>
+                                  )}
+                                </td>
+                                <td>
+                                  <div style={{ display: "flex", gap: 8 }}>
+                                    <button
+                                      style={{ width: 30, height: 30, borderRadius: 7, display: "inline-flex", alignItems: "center", justifyContent: "center", border: "none", background: "var(--ec-brand)", color: "#fff", cursor: "pointer", transition: "opacity 150ms" }}
+                                      onClick={() => { setEditingContent(content); setImageFile(null); setImagePreview(null); }}
+                                      title="Editar"
+                                    >
+                                      <Edit size={13} />
+                                    </button>
+                                    <button
+                                      style={{ width: 30, height: 30, borderRadius: 7, display: "inline-flex", alignItems: "center", justifyContent: "center", border: "1px solid var(--ec-hairline-strong)", background: "transparent", color: "var(--ec-text-muted)", cursor: "pointer", transition: "color 150ms" }}
+                                      onClick={() => setDeleteConfirm(content)}
+                                      title="Eliminar"
+                                      onMouseEnter={(e) => e.currentTarget.style.color = "var(--ec-danger)"}
+                                      onMouseLeave={(e) => e.currentTarget.style.color = "var(--ec-text-muted)"}
+                                    >
+                                      <Trash2 size={13} />
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
                       </div>
                     )}
-                  </div>
+                  </motion.div>
                 )}
+              </AnimatePresence>
               </div>
             );
           })}
         </div>
+      )}
 
-        {/* Empty State */}
-        {projects.length === 0 && (
-          <div className="text-center py-20">
-            <div className="flex flex-col items-center gap-8">
-              <div className="w-32 h-32 bg-gradient-to-r from-indigo-100 to-purple-100 dark:from-indigo-900 dark:to-purple-900 rounded-full flex items-center justify-center shadow-xl">
-                <svg
-                  className="w-16 h-16 text-indigo-500 dark:text-indigo-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+      {/* Edit modal */}
+      {mounted && editingContent && createPortal(
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50, padding: 24 }}>
+          <div className="ec-project-card" style={{ borderRadius: 16, width: "100%", maxWidth: 720, maxHeight: "90vh", overflowY: "auto", borderTop: "3px solid var(--ec-brand)" }}>
+            {/* Modal header */}
+            <div style={{ padding: "20px 24px", borderBottom: "1px solid var(--ec-hairline)", position: "sticky", top: 0, background: "var(--ec-surface-1)", zIndex: 1 }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div>
+                  <div className="h-eyebrow" style={{ marginBottom: 4, fontSize: 10 }}>EDITANDO CONTENIDO</div>
+                  <div className="font-serif" style={{ fontSize: 18, fontWeight: 400, color: "var(--ec-text)" }}>
+                    {editingContent.type}
+                  </div>
+                </div>
+                <button
+                  className="ec-btn-secondary"
+                  style={{ padding: "6px 12px", fontSize: 12 }}
+                  onClick={() => { setEditingContent(null); setImageFile(null); setImagePreview(null); }}
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-                  />
-                </svg>
-              </div>
-              <div>
-                <p className="text-3xl font-bold mb-4">
-                  🚀 ¡El universo de proyectos te espera!
-                </p>
-                <p className="text-xl text-gray-500 dark:text-gray-400">
-                  Crea tu primer proyecto para comenzar la aventura
-                </p>
+                  ✕ Cerrar
+                </button>
               </div>
             </div>
-          </div>
-        )}
 
-        {/* Editing Panel */}
-        {editingContent && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-            <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-indigo-200 dark:border-indigo-700 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-              {/* Modal Header */}
-              <div className="px-8 py-6 rounded-t-3xl">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-sm">
-                      <svg
-                        className="w-8 h-8"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                        />
-                      </svg>
+            <div style={{ padding: "24px" }}>
+              {/* Type */}
+              <div style={{ marginBottom: 16 }}>
+                <label className="ec-field-label">Tipo de Contenido</label>
+                <select className="ec-field-input" name="type" value={editingContent.type} onChange={handleChange}>
+                  {CONTENT_TYPES.map((type) => (
+                    <option key={type} value={type}>{type}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Image */}
+              <div style={{ marginBottom: 16 }}>
+                <label className="ec-field-label">Imagen</label>
+                <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
+                  {(imagePreview || editingContent.source) && (
+                    <img
+                      src={imagePreview || `${process.env.NEXT_PUBLIC_URL}${editingContent.source}`}
+                      alt="Preview"
+                      style={{ width: 80, height: 80, objectFit: "cover", borderRadius: 8, border: "1px solid var(--ec-border)", flexShrink: 0 }}
+                      onError={(e) => { const t = e.target as HTMLImageElement; t.style.display = "none"; }}
+                    />
+                  )}
+                  <label style={{ flex: 1, cursor: "pointer" }}>
+                    <div style={{ border: "1.5px dashed var(--ec-border)", borderRadius: 8, padding: "14px 16px", textAlign: "center" }}>
+                      <span style={{ fontSize: 12, color: "var(--ec-text-muted)" }}>
+                        {imageFile ? imageFile.name : "Seleccionar nueva imagen"}
+                      </span>
                     </div>
-                    <div>
-                      <h3 className="text-2xl font-bold">Editar Contenido</h3>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => {
-                      setEditingContent(null);
-                      setImageFile(null);
-                      setImagePreview(null);
-                    }}
-                    className="p-2 hover:bg-white/20 rounded-xl transition-all duration-200"
-                  >
-                    <svg
-                      className="w-6 h-6"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M6 18L18 6M6 6l12 12"
-                      />
-                    </svg>
-                  </button>
+                    <input type="file" accept="image/*" onChange={handleImageChange} style={{ display: "none" }} />
+                  </label>
                 </div>
               </div>
 
-              {/* Modal Content */}
-              <div className="p-8">
-                <div className="space-y-6">
-                  {/* Type Selector */}
-                  <div className="space-y-2">
-                    <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
-                      <svg
-                        className="w-4 h-4 text-indigo-500"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                      Tipo de Contenido
-                    </label>
-                    <select
-                      name="type"
-                      value={editingContent.type}
-                      onChange={handleChange}
-                      className="w-full px-4 focus:outline-none py-4 border-2 rounded-2xl transition-all duration-300 backdrop-blur-sm"
-                    >
-                      {contentTypes.map((type) => (
-                        <option
-                          key={type}
-                          value={type}
-                          className="dark:bg-gray-800"
-                        >
-                          🏷️ {type}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Image Upload */}
-                  <div className="space-y-2">
-                    <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
-                      <svg
-                        className="w-4 h-4 text-yellow-500"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                        />
-                      </svg>
-                      Imagen del Contenido
-                    </label>
-                    <div className="flex items-center gap-4">
-                      {(imagePreview || editingContent.source) && (
-                        <div className="w-24 h-24 rounded-lg overflow-hidden border-2 border-gray-200 dark:border-gray-700">
-                          <img
-                            src={
-                              imagePreview ||
-                              `${process.env.NEXT_PUBLIC_URL}${editingContent.source}`
-                            }
-                            alt="Preview"
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.src = "";
-                              target.className = "hidden";
-                            }}
-                          />
-                        </div>
-                      )}
-                      <label className="flex-1">
-                        <div className="cursor-pointer bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/30 dark:to-purple-900/30 hover:from-indigo-100 hover:to-purple-100 dark:hover:from-indigo-800/30 dark:hover:to-purple-800/30 border-2 border-dashed border-indigo-300 dark:border-indigo-600 rounded-xl p-4 text-center transition-all duration-300">
-                          <svg
-                            className="w-8 h-8 mx-auto text-indigo-500 mb-2"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                            />
-                          </svg>
-                          <span className="text-sm font-medium text-indigo-600 dark:text-indigo-400">
-                            {imageFile
-                              ? "Cambiar imagen"
-                              : editingContent.source
-                              ? "Cambiar imagen"
-                              : "Subir imagen"}
-                          </span>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={handleImageChange}
-                            className="hidden"
-                          />
-                        </div>
-                      </label>
-                    </div>
-                  </div>
-
-                  {/* Content Fields Grid */}
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div className="space-y-2">
-                      <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
-                        <svg
-                          className="w-4 h-4 text-blue-500"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                        Contenido Principal
-                      </label>
-                      <textarea
-                        name="content_1"
-                        className="w-full px-4 focus:outline-none py-4 border-2 rounded-2xl transition-all duration-300 backdrop-blur-sm"
-                        rows={4}
-                        value={editingContent.content_1}
-                        onChange={handleChange}
-                        placeholder="📝 Escribe el contenido principal aquí..."
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
-                        <svg
-                          className="w-4 h-4 text-purple-500"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                        Contenido Secundario
-                      </label>
-                      <textarea
-                        name="content_2"
-                        className="w-full px-4 focus:outline-none py-4 border-2 rounded-2xl transition-all duration-300 backdrop-blur-sm"
-                        rows={4}
-                        value={editingContent.content_2}
-                        onChange={handleChange}
-                        placeholder="💡 Información adicional relevante..."
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
-                        <svg
-                          className="w-4 h-4 text-pink-500"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                        Contenido Extra
-                      </label>
-                      <textarea
-                        name="content_3"
-                        className="w-full px-4 focus:outline-none py-4 border-2 rounded-2xl transition-all duration-300 backdrop-blur-sm"
-                        rows={4}
-                        value={editingContent.content_3}
-                        onChange={handleChange}
-                        placeholder="✨ Detalles complementarios..."
-                      />
-                    </div>
-                  </div>
-
-                  {/* Links Section */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
-                        <svg
-                          className="w-4 h-4 text-cyan-500"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
-                          />
-                        </svg>
-                        Enlace Principal
-                      </label>
-                      <input
-                        type="text"
-                        name="link"
-                        className="w-full px-4 focus:outline-none py-4 border-2 rounded-2xl transition-all duration-300 backdrop-blur-sm"
-                        value={editingContent.link}
-                        onChange={handleChange}
-                        placeholder="🔗 https://ejemplo.com"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
-                        <svg
-                          className="w-4 h-4 text-green-500"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                          />
-                        </svg>
-                        Referencia Externa
-                      </label>
-                      <input
-                        type="text"
-                        name="href"
-                        className="w-full px-4 focus:outline-none py-4 border-2 rounded-2xl transition-all duration-300 backdrop-blur-sm"
-                        value={editingContent.href}
-                        onChange={handleChange}
-                        placeholder="📎 /ruta/recurso"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="flex flex-col sm:flex-row gap-4 mt-10 pt-8 border-t-2 border-gray-200 dark:border-gray-700">
-                    <button
-                      onClick={handleSave}
-                      className="flex-1 sm:flex-none group relative text-white bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-emerald-700 font-bold px-8 py-4 rounded-2xl transition-all duration-300 shadow-lg hover:shadow-2xl transform hover:-translate-y-1"
-                    >
-                      <div className="flex items-center justify-center gap-3">
-                        <svg
-                          className="w-5 h-5"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M5 13l4 4L19 7"
-                          />
-                        </svg>
-                        <span>💾 Guardar Cambios</span>
-                      </div>
-                    </button>
-                    <button
-                      onClick={() => {
-                        setEditingContent(null);
-                        setImageFile(null);
-                        setImagePreview(null);
-                      }}
-                      className="flex-1 sm:flex-none bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-bold px-8 py-4 rounded-2xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
-                    >
-                      <div className="flex items-center justify-center gap-3">
-                        <svg
-                          className="w-5 h-5"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M6 18L18 6M6 6l12 12"
-                          />
-                        </svg>
-                        <span>Cancelar</span>
-                      </div>
-                    </button>
-                  </div>
+              {/* Content fields */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 14, marginBottom: 16 }}>
+                <div>
+                  <label className="ec-field-label">Contenido Principal</label>
+                  <textarea className="ec-field-input" name="content_1" rows={4} value={editingContent.content_1} onChange={handleChange} style={{ resize: "vertical" }} />
                 </div>
+                <div>
+                  <label className="ec-field-label">Contenido Secundario</label>
+                  <textarea className="ec-field-input" name="content_2" rows={4} value={editingContent.content_2} onChange={handleChange} style={{ resize: "vertical" }} />
+                </div>
+                <div>
+                  <label className="ec-field-label">Contenido Extra</label>
+                  <textarea className="ec-field-input" name="content_3" rows={4} value={editingContent.content_3} onChange={handleChange} style={{ resize: "vertical" }} />
+                </div>
+              </div>
+
+              {/* Links */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 24 }}>
+                <div>
+                  <label className="ec-field-label">Enlace Principal</label>
+                  <input className="ec-field-input" type="text" name="link" value={editingContent.link} onChange={handleChange} placeholder="https://ejemplo.com" />
+                </div>
+                <div>
+                  <label className="ec-field-label">Referencia Externa</label>
+                  <input className="ec-field-input" type="text" name="href" value={editingContent.href} onChange={handleChange} placeholder="/ruta/recurso" />
+                </div>
+              </div>
+
+              <div style={{ display: "flex", gap: 10 }}>
+                <button className="ec-btn-primary" style={{ flex: 1, height: 42 }} onClick={handleSave}>
+                  Guardar Cambios
+                </button>
+                <button
+                  className="ec-btn-secondary"
+                  style={{ flex: 1, height: 42 }}
+                  onClick={() => { setEditingContent(null); setImageFile(null); setImagePreview(null); }}
+                >
+                  Cancelar
+                </button>
               </div>
             </div>
           </div>
-        )}
-      </div>
+        </div>, document.body
+      )}
+
+      {/* Delete confirmation modal */}
+      {mounted && deleteConfirm && createPortal(
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50, padding: 24 }}
+          onClick={() => { if (!deleting) setDeleteConfirm(null); }}
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ duration: 0.2 }}
+            className="ec-project-card"
+            style={{ padding: "32px 36px", borderRadius: 18, width: "100%", maxWidth: 440, borderTop: "3px solid var(--ec-brand)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
+              <div style={{ width: 56, height: 56, borderRadius: "50%", background: "var(--ec-brand-soft)", color: "var(--ec-brand)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginBottom: 18 }}>
+                <AlertCircle size={26} />
+              </div>
+              <h3 className="font-serif" style={{ fontSize: 26, fontWeight: 400, color: "var(--ec-text)", marginBottom: 8, lineHeight: 1.2 }}>
+                ¿Eliminar contenido?
+              </h3>
+              <p style={{ color: "var(--ec-text-muted)", fontSize: 13.5, lineHeight: 1.6, marginBottom: 6 }}>
+                Esta acción eliminará este contenido de forma permanente.
+              </p>
+              {deleteConfirm.content_1 && (
+                <span className="font-mono-ec" style={{ fontSize: 11, color: "var(--ec-text-dim)", background: "var(--ec-surface-2)", padding: "3px 10px", borderRadius: 6 }}>
+                  {deleteConfirm.content_1}
+                </span>
+              )}
+              <div style={{ width: "100%", height: 1, background: "var(--ec-hairline)", margin: "20px 0" }} />
+              <div style={{ display: "flex", gap: 10, width: "100%" }}>
+                <button className="ec-btn-secondary" style={{ flex: 1, padding: "9px 16px", fontSize: 13 }} onClick={() => setDeleteConfirm(null)} disabled={deleting}>
+                  Cancelar
+                </button>
+                <button
+                  style={{
+                    flex: 1, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6,
+                    padding: "9px 16px", borderRadius: 10, fontSize: 13, fontWeight: 600, fontFamily: "var(--font-inter), var(--font-sans)",
+                    background: "var(--ec-brand)", color: "#fff", border: "none", cursor: "pointer", transition: "opacity 150ms",
+                  }}
+                  disabled={deleting}
+                  onClick={handleDeleteConfirm}
+                >
+                  {deleting ? (
+                    <div style={{ width: 14, height: 14, borderRadius: "50%", border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", animation: "spin 0.7s linear infinite" }} />
+                  ) : (
+                    <><Trash2 size={14} /> Eliminar</>
+                  )}
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </div>, document.body
+      )}
     </div>
   );
 }
