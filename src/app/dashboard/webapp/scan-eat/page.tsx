@@ -5,6 +5,8 @@ import { toast, Toaster } from "react-hot-toast";
 import { Loader2, Search, RefreshCw, CheckCircle, XCircle, Clock, Mail, User, Store, Globe, CalendarDays, ChevronDown, ChevronUp } from "lucide-react";
 
 const API_BASE_URL = "https://www.scaneat.mx";
+const ADMIN_KEY = process.env.NEXT_PUBLIC_SCANEAT_ADMIN_KEY || "";
+const adminHeaders = ADMIN_KEY ? { "Authorization": `Bearer ${ADMIN_KEY}` } : {};
 const BRAND = "#059669";
 const STATUS_STYLES: Record<string, { label: string; color: string; bg: string }> = {
   pending:   { label: "Pendiente",  color: "#F59E0B", bg: "rgba(245,158,11,0.12)" },
@@ -53,7 +55,7 @@ export default function ScanEatPage() {
       const params = new URLSearchParams();
       params.set("limit", "200");
       if (statusFilter !== "all") params.set("status", statusFilter);
-      const res = await fetch(`${API_BASE_URL}/api/demo/requests?${params}`);
+      const res = await fetch(`${API_BASE_URL}/api/demo/requests?${params}`, { headers: adminHeaders });
       if (!res.ok) throw new Error();
       const data = await res.json();
       setRequests(Array.isArray(data) ? data : []);
@@ -72,7 +74,7 @@ export default function ScanEatPage() {
     try {
       const res = await fetch(`${API_BASE_URL}/api/demo/requests/${id}/status`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...adminHeaders },
         body: JSON.stringify({ status }),
       });
       if (!res.ok) throw new Error();
