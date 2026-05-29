@@ -31,7 +31,8 @@ type ComponentAccess = {
     | "Reforma"
     | "Monge"
     | "PromoPalmas"
-    | "CalendarioPalmas";
+    | "CalendarioPalmas"
+    | "ScanEat";
   can_view: boolean;
 };
 
@@ -44,6 +45,7 @@ const AVAILABLE_COMPONENTS: ComponentAccess["component"][] = [
   "Monge",
   "PromoPalmas",
   "CalendarioPalmas",
+  "ScanEat",
 ];
 
 const COMPONENT_CONFIG = {
@@ -55,6 +57,7 @@ const COMPONENT_CONFIG = {
   Monge: { icon: Calendar, name: "Cal. Monge" },
   PromoPalmas: { icon: Tag, name: "Promo Palmas" },
   CalendarioPalmas: { icon: Calendar, name: "Cal. Palmas" },
+  ScanEat: { icon: FileText, name: "ScanEat Demos" },
 };
 
 const fadeUpCard = {

@@ -19,6 +19,7 @@ import {
   CalendarClock,
   LucideIcon,
   Search,
+  Scan,
 } from "lucide-react";
 import { NavUser } from "@/components/nav-user";
 import Cookies from "js-cookie";
@@ -230,6 +231,14 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
       component: "CalendarioPalmas",
       category: "calendar",
     },
+    {
+      id: "scan-eat",
+      name: "ScanEat Demos",
+      url: "/dashboard/webapp/scan-eat",
+      icon: Scan,
+      component: "ScanEat",
+      category: "app",
+    },
   ];
 
   const appsEn: AppItem[] = [
@@ -296,6 +305,14 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
       icon: CalendarDays,
       component: "CalendarioPalmas",
       category: "calendar",
+    },
+    {
+      id: "scan-eat",
+      name: "ScanEat Demos",
+      url: "/dashboard/webapp/scan-eat",
+      icon: Scan,
+      component: "ScanEat",
+      category: "app",
     },
   ];
 
