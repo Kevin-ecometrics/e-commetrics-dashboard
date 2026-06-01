@@ -23,6 +23,7 @@ import {
   Monitor,
   Pencil,
   Plus,
+  Download,
 } from "lucide-react";
 
 const API_BASE_URL = "https://palmasrecovery.com";
@@ -1070,6 +1071,71 @@ function EmptyState({
   );
 }
 
+// ── ICS export ───────────────────────────────────────────────────────────────
+
+function toICSDate(dateStr: string): string {
+  return dateStr.replace(/-/g, "");
+}
+
+function escapeICS(str: string): string {
+  return str.replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\n/g, "\\n");
+}
+
+function generateICS(bookings: Booking[]): string {
+  const lines: string[] = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//Palmas Recovery//Calendario//ES",
+    "CALSCALE:GREGORIAN",
+    "METHOD:PUBLISH",
+    "X-WR-CALNAME:Palmas Recovery – Reservas",
+    "X-WR-TIMEZONE:America/Tijuana",
+  ];
+
+  for (const b of bookings) {
+    const checkIn = toICSDate(b.check_in.slice(0, 10));
+    const checkOut = toICSDate(b.check_out.slice(0, 10));
+    const room = ROOM_NAMES[b.room_id] ?? b.room_id;
+    const status = b.status === "confirmed" ? "CONFIRMED" : "CANCELLED";
+    const extrasStr = b.extras.length > 0 ? b.extras.map((e) => EXTRA_NAMES[e] ?? e).join(", ") : "Ninguno";
+    const desc = [
+      `Confirmación: #${b.confirmation_number}`,
+      `Email: ${b.email}`,
+      `Teléfono: ${b.phone}`,
+      `Cirujano: ${b.certified_doctor}`,
+      `Noches: ${b.nights}`,
+      `Total: $${b.total} USD`,
+      `Extras: ${extrasStr}`,
+      b.special_requests ? `Solicitudes: ${b.special_requests}` : null,
+    ].filter(Boolean).join("\\n");
+
+    lines.push(
+      "BEGIN:VEVENT",
+      `UID:palmas-booking-${b.id}@palmasrecovery.com`,
+      `SUMMARY:${escapeICS(`${room} – ${b.full_name}`)}`,
+      `DTSTART;VALUE=DATE:${checkIn}`,
+      `DTEND;VALUE=DATE:${checkOut}`,
+      `DESCRIPTION:${desc}`,
+      `STATUS:${status}`,
+      `CATEGORIES:${escapeICS(room)}`,
+      "END:VEVENT",
+    );
+  }
+
+  lines.push("END:VCALENDAR");
+  return lines.join("\r\n");
+}
+
+function downloadICS(content: string, filename: string) {
+  const blob = new Blob([content], { type: "text/calendar;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function CalendarioPalmasPage() {
@@ -1224,6 +1290,19 @@ export default function CalendarioPalmasPage() {
             >
               <Plus className="h-4 w-4" />
               Nueva Reserva
+            </button>
+            <button
+              onClick={() => {
+                if (bookings.length === 0) { toast.error("No hay reservas para exportar"); return; }
+                const ics = generateICS(bookings);
+                downloadICS(ics, "palmas-recovery-reservas.ics");
+                toast.success(`${bookings.length} reservas exportadas`);
+              }}
+              style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 14px", borderRadius: 10, border: "1px solid var(--ec-border)", background: "var(--ec-surface-2)", color: "var(--ec-text)", fontSize: 13, fontWeight: 500, cursor: "pointer" }}
+              title="Exportar a iCalendar (.ics)"
+            >
+              <Download className="h-4 w-4" />
+              Exportar citas
             </button>
             <button
               onClick={() => { fetchBookings(); fetchContacts(); }}
