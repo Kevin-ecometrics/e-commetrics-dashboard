@@ -16,6 +16,7 @@ const translations = {
     password: "Password",
     btn: "Sign in",
     back: "Back to home",
+    divider: "or go back",
     error: "Invalid credentials. Please try again.",
     rights: "All rights reserved · 2026",
     loading: "Verifying…",
@@ -23,6 +24,11 @@ const translations = {
     tagline2: "iterate",
     tagline3: "— together.",
     tagSub: "Centralise clients, projects and specialised apps in one results-oriented workspace.",
+    workspaceSub: "Workspace · Dashboard",
+    section: "GROWTH OPERATIONS",
+    stat1: "Projects",
+    stat2: "Clients",
+    stat3: "Apps",
   },
   es: {
     eyebrow: "INICIAR SESIÓN",
@@ -32,13 +38,19 @@ const translations = {
     password: "Contraseña",
     btn: "Iniciar sesión",
     back: "Volver a la página principal",
+    divider: "o vuelve",
     error: "Credenciales inválidas. Inténtalo de nuevo.",
     rights: "Todos los derechos reservados · 2026",
     loading: "Verificando…",
-    tagline1: "Build, measure,",
-    tagline2: "iterate",
-    tagline3: "— together.",
+    tagline1: "Construye, mide,",
+    tagline2: "itera",
+    tagline3: "— juntos.",
     tagSub: "Centraliza clientes, proyectos y apps especializadas en un solo espacio de trabajo orientado a resultados.",
+    workspaceSub: "Espacio de trabajo · Panel",
+    section: "OPERACIONES DE CRECIMIENTO",
+    stat1: "Proyectos",
+    stat2: "Clientes",
+    stat3: "Apps",
   },
 };
 
@@ -90,7 +102,7 @@ export default function LoginPage({ goToLanding }: { goToLanding?: () => void })
 
   if (user === undefined || redirecting) {
     return (
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", background: "#0A0508", color: "rgba(255,255,255,0.5)", fontFamily: "JetBrains Mono, monospace", fontSize: 13, letterSpacing: "0.1em" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", background: "var(--ec-bg)", color: "var(--ec-text-dim)", fontFamily: "JetBrains Mono, monospace", fontSize: 13, letterSpacing: "0.1em" }}>
         LOADING…
       </div>
     );
@@ -101,74 +113,51 @@ export default function LoginPage({ goToLanding }: { goToLanding?: () => void })
       <Toaster position="top-center" toastOptions={{ duration: 4000 }} />
 
       {/* ── LEFT — branded panel ── */}
-      <div style={{ position: "relative", overflow: "hidden", background: "linear-gradient(135deg, #1A0A12 0%, #0A0508 100%)" }}>
-        {/* Circuit SVG */}
-        <svg
-          viewBox="0 0 800 1000"
-          preserveAspectRatio="xMidYMid slice"
-          style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
-        >
-          <defs>
-            <radialGradient id="glowg" cx="0.5" cy="0.5">
-              <stop offset="0" stopColor="#BD155C" stopOpacity="0.45" />
-              <stop offset="1" stopColor="#BD155C" stopOpacity="0" />
-            </radialGradient>
-          </defs>
-          <ellipse cx="400" cy="500" rx="380" ry="500" fill="url(#glowg)" />
-          {Array.from({ length: 24 }).map((_, i) => (
-            <line
-              key={i}
-              x1={-200 + i * 60} y1={-100}
-              x2={400 + i * 60} y2={1100}
-              stroke="rgba(189,21,92,0.18)"
-              strokeWidth={i % 5 === 0 ? 1.5 : 0.6}
-            />
+      <div style={{ position: "relative", overflow: "hidden", background: "var(--ec-hero-base)" }}>
+        {/* Radial glow overlay */}
+        <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse 80% 70% at 50% 50%, var(--ec-hero-glow-a), transparent)", pointerEvents: "none" }} />
+        {/* Grid lines */}
+        <div style={{ position: "absolute", inset: 0, backgroundImage: "linear-gradient(var(--ec-grid-line) 1px, transparent 1px), linear-gradient(90deg, var(--ec-grid-line) 1px, transparent 1px)", backgroundSize: "48px 48px", pointerEvents: "none" }} />
+        {/* Accent dots */}
+        <div style={{ position: "absolute", inset: 0, pointerEvents: "none", overflow: "hidden" }}>
+          {[{ top: "12%", left: "20%" }, { top: "34%", left: "72%" }, { top: "55%", left: "40%" }, { top: "70%", left: "15%" }, { top: "82%", left: "65%" }, { top: "24%", left: "55%" }].map((pos, i) => (
+            <div key={i} style={{ position: "absolute", ...pos, width: 5, height: 5, borderRadius: "50%", background: "var(--ec-brand)", opacity: 0.5 }} />
           ))}
-          {Array.from({ length: 12 }).map((_, i) => (
-            <circle
-              key={`n${i}`}
-              cx={120 + (i * 67) % 600}
-              cy={120 + ((i * 137) % 800)}
-              r={2.5}
-              fill="#E73B85"
-              opacity={0.5}
-            />
-          ))}
-        </svg>
+        </div>
 
         {/* Left panel content */}
-        <div style={{ position: "relative", zIndex: 2, height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between", padding: 48, color: "white" }}>
+        <div style={{ position: "relative", zIndex: 2, height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between", padding: 48 }}>
           {/* Top brand */}
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <LogoMark size={36} />
             <div>
-              <div style={{ fontFamily: "Instrument Serif, serif", fontSize: 19 }}>E-commetrics</div>
-              <div style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 9.5, color: "rgba(255,255,255,0.45)", letterSpacing: "0.18em", textTransform: "uppercase" }}>
-                Workspace · Dashboard
+              <div style={{ fontFamily: "Instrument Serif, serif", fontSize: 19, color: "var(--ec-text)" }}>E-commetrics</div>
+              <div style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 9.5, color: "var(--ec-text-dim)", letterSpacing: "0.18em", textTransform: "uppercase" }}>
+                {t.workspaceSub}
               </div>
             </div>
           </div>
 
           {/* Hero copy */}
           <div>
-            <div style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 10.5, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.45)", marginBottom: 16 }}>
-              ⎯⎯⎯&nbsp;&nbsp;GROWTH OPERATIONS
+            <div style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 10.5, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--ec-text-dim)", marginBottom: 16 }}>
+              ⎯⎯⎯&nbsp;&nbsp;{t.section}
             </div>
-            <h2 style={{ fontFamily: "Instrument Serif, serif", fontSize: 52, fontWeight: 400, lineHeight: 1.02, letterSpacing: "-0.025em", color: "white", marginBottom: 20 }}>
+            <h2 style={{ fontFamily: "Instrument Serif, serif", fontSize: 52, fontWeight: 400, lineHeight: 1.02, letterSpacing: "-0.025em", color: "var(--ec-text)", marginBottom: 20 }}>
               {t.tagline1}<br />
-              <em style={{ color: "#E73B85", fontStyle: "italic" }}>{t.tagline2}</em> {t.tagline3}
+              <em style={{ color: "var(--ec-brand)", fontStyle: "italic" }}>{t.tagline2}</em> {t.tagline3}
             </h2>
-            <p style={{ fontSize: 15, color: "rgba(255,255,255,0.6)", maxWidth: "40ch", lineHeight: 1.6 }}>
+            <p style={{ fontSize: 15, color: "var(--ec-text-muted)", maxWidth: "40ch", lineHeight: 1.6 }}>
               {t.tagSub}
             </p>
           </div>
 
           {/* Stats footer */}
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", fontFamily: "JetBrains Mono, monospace", fontSize: 10.5, color: "rgba(255,255,255,0.4)", letterSpacing: "0.12em", textTransform: "uppercase" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", fontFamily: "JetBrains Mono, monospace", fontSize: 10.5, color: "var(--ec-text-dim)", letterSpacing: "0.12em", textTransform: "uppercase" }}>
             <div style={{ display: "flex", gap: 28 }}>
-              {[["11", "Projects"], ["8", "Clients"], ["8", "Apps"]].map(([num, label]) => (
+              {[["11", t.stat1], ["8", t.stat2], ["8", t.stat3]].map(([num, label]) => (
                 <div key={label}>
-                  <div style={{ color: "rgba(255,255,255,0.75)", fontFamily: "Instrument Serif, serif", fontSize: 22, letterSpacing: "-0.01em" }}>{num}</div>
+                  <div style={{ color: "var(--ec-text-muted)", fontFamily: "Instrument Serif, serif", fontSize: 22, letterSpacing: "-0.01em" }}>{num}</div>
                   <div>{label}</div>
                 </div>
               ))}
@@ -291,7 +280,7 @@ export default function LoginPage({ goToLanding }: { goToLanding?: () => void })
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 4 }}>
                 <div style={{ flex: 1, height: 1, background: "var(--ec-hairline)" }} />
                 <span style={{ fontFamily: "JetBrains Mono, monospace", textTransform: "uppercase", letterSpacing: "0.15em", fontSize: 10, color: "var(--ec-text-muted)" }}>
-                  o vuelve
+                  {t.divider}
                 </span>
                 <div style={{ flex: 1, height: 1, background: "var(--ec-hairline)" }} />
               </div>

@@ -6,7 +6,7 @@ import { Loader2, Search, RefreshCw, CheckCircle, XCircle, Clock, Mail, User, St
 
 const API_BASE_URL = "https://www.scaneat.mx";
 const ADMIN_KEY = process.env.NEXT_PUBLIC_SCANEAT_ADMIN_KEY || "";
-const adminHeaders = ADMIN_KEY ? { "Authorization": `Bearer ${ADMIN_KEY}` } : {};
+const adminHeaders: Record<string, string> = ADMIN_KEY ? { Authorization: `Bearer ${ADMIN_KEY}` } : {};
 const BRAND = "#059669";
 const STATUS_STYLES: Record<string, { label: string; color: string; bg: string }> = {
   pending:   { label: "Pendiente",  color: "#F59E0B", bg: "rgba(245,158,11,0.12)" },
