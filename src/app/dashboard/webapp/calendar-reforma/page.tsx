@@ -246,11 +246,10 @@ export default function CalendarReforma() {
         }
         for (const hour of hoursToBlock) {
           const hourKey = hour.substring(0, 5);
-          const hourFormatted = hourKey + ":00";
           const isAlreadyBlocked = blockedDates.some((d) => d.date === dateStr && d.hour.substring(0, 5) === hourKey);
           const isAlreadyBooked = selectedDates.some((s) => s.fecha === dateStr && s.hora.substring(0, 5) === hourKey);
           if (!isAlreadyBlocked && !isAlreadyBooked) {
-            await axios.post(`${API_BASE_URL}/bloquear-fecha`, { date: dateStr, hour: hourFormatted });
+            await axios.post(`${API_BASE_URL}/bloquear-fecha`, { date: dateStr, hour: hourKey });
             totalBlocked++;
           }
         }
@@ -270,7 +269,12 @@ export default function CalendarReforma() {
   const handleDeleteAppointment = async (id: number) => {
     setAppointmentActionLoading(true);
     try {
-      await axios.delete(`${API_BASE_URL}/api/appointments/${id}`);
+      const isBlocked = selectedAppointment?.nombre === "BLOQUEADO";
+      if (isBlocked) {
+        await axios.delete(`${API_BASE_URL}/desbloquear-fecha/${id}`);
+      } else {
+        await axios.delete(`${API_BASE_URL}/api/appointments/${id}`);
+      }
       await refreshAll();
       setSelectedDayAppointments((prev) => prev.filter((a) => a.id !== id));
       setShowAppointmentModal(false);
