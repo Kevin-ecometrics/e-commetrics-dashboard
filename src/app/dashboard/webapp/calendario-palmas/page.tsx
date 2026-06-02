@@ -24,6 +24,7 @@ import {
   Pencil,
   Plus,
   Download,
+  Info,
 } from "lucide-react";
 
 const API_BASE_URL = "https://palmasrecovery.com";
@@ -1136,6 +1137,81 @@ function downloadICS(content: string, filename: string) {
   URL.revokeObjectURL(url);
 }
 
+// ── InstallModal ─────────────────────────────────────────────────────────────
+
+function InstallModal({ onClose }: { onClose: () => void }) {
+  const steps = [
+    {
+      title: "1. Exportar las reservas",
+      desc: 'Haz clic en el botón "Exportar citas" para descargar el archivo .ics con todas las reservas.',
+    },
+    {
+      title: "2. Abrir el archivo .ics",
+      desc: 'Localiza el archivo "palmas-recovery-reservas.ics" en tus descargas y haz doble clic sobre él. Se abrirá automáticamente la app Calendario de macOS.',
+    },
+    {
+      title: "3. Seleccionar la cuenta de iCloud",
+      desc: "En la ventana emergente de Calendario, elige la cuenta de iCloud como destino. Si no aparece, ve a las preferencias de Calendario y asegúrate de tener iCloud habilitado.",
+    },
+    {
+      title: "4. Confirmar la importación",
+      desc: 'Haz clic en "Aceptar" o "Importar". Las reservas aparecerán como eventos de calendario en tu cuenta de iCloud.',
+    },
+    {
+      title: "5. Sincronizar con iPhone / iPad",
+      desc: "Asegúrate de tener la sincronización de Calendarios activada en Ajustes > [tu nombre] > iCloud > Calendarios en tu dispositivo iOS. Las reservas se sincronizarán automáticamente.",
+    },
+  ];
+
+  return (
+    <div
+      style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.65)", padding: 16 }}
+      onClick={onClose}
+    >
+      <div
+        className="ec-project-card"
+        style={{ borderRadius: 16, width: "100%", maxWidth: 560, maxHeight: "90vh", overflowY: "auto" }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 22px", borderBottom: "1px solid var(--ec-border)" }}>
+          <h2 className="font-serif" style={{ fontSize: 20, fontWeight: 400, color: "var(--ec-text)" }}>
+            Instalación en iCloud (Mac)
+          </h2>
+          <button
+            onClick={onClose}
+            style={{ padding: 6, borderRadius: 8, border: "none", background: "transparent", cursor: "pointer", color: "var(--ec-text-dim)" }}
+            className="hover:bg-[var(--ec-surface-2)]"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <div style={{ padding: "20px 22px", display: "flex", flexDirection: "column", gap: 16 }}>
+          {steps.map((step, i) => (
+            <div key={i} style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
+              <div
+                style={{
+                  width: 32, height: 32, borderRadius: "50%", display: "flex", alignItems: "center",
+                  justifyContent: "center", flexShrink: 0, fontSize: 13, fontWeight: 600,
+                  background: "rgba(245,158,11,0.12)", color: "#f59e0b",
+                }}
+              >
+                {i + 1}
+              </div>
+              <div>
+                <p style={{ fontWeight: 600, fontSize: 14, color: "var(--ec-text)", marginBottom: 4 }}>{step.title}</p>
+                <p style={{ fontSize: 13, color: "var(--ec-text-muted)", lineHeight: 1.5 }}>{step.desc}</p>
+              </div>
+            </div>
+          ))}
+          <div style={{ marginTop: 8, padding: 14, background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.25)", borderRadius: 12, fontSize: 13, color: "var(--ec-text-muted)", lineHeight: 1.5 }}>
+            <strong style={{ color: "#10b981" }}>Nota:</strong> Para mantener el calendario actualizado, repite estos pasos periódicamente después de exportar nuevamente.
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function CalendarioPalmasPage() {
@@ -1148,6 +1224,7 @@ export default function CalendarioPalmasPage() {
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showInstallModal, setShowInstallModal] = useState(false);
   const [createDefaultDate, setCreateDefaultDate] = useState<string | undefined>();
   const [createDefaultRoom, setCreateDefaultRoom] = useState<string | undefined>();
 
@@ -1250,6 +1327,9 @@ export default function CalendarioPalmasPage() {
     <div className="fade-in-up" style={{ padding: "28px 24px" }}>
       <Toaster />
 
+      {/* Install modal */}
+      {showInstallModal && <InstallModal onClose={() => setShowInstallModal(false)} />}
+
       {/* Detail modal */}
       {selectedBooking && !editingBooking && (
         <BookingDetailModal
@@ -1303,6 +1383,14 @@ export default function CalendarioPalmasPage() {
             >
               <Download className="h-4 w-4" />
               Exportar citas
+            </button>
+            <button
+              onClick={() => setShowInstallModal(true)}
+              style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 14px", borderRadius: 10, border: "1px solid var(--ec-border)", background: "var(--ec-surface-2)", color: "var(--ec-text)", fontSize: 13, fontWeight: 500, cursor: "pointer" }}
+              title="Guía de instalación en iCloud"
+            >
+              <Info className="h-4 w-4" />
+              Instalación
             </button>
             <button
               onClick={() => { fetchBookings(); fetchContacts(); }}
