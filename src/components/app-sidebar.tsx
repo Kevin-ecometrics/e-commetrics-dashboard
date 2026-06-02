@@ -184,14 +184,6 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
       category: "app",
     },
     {
-      id: "calendar",
-      name: "Calendario",
-      url: "/dashboard/webapp/calendar",
-      icon: CalendarDays,
-      component: "calendar",
-      category: "calendar",
-    },
-    {
       id: "blogs",
       name: "Gestor de Blogs",
       url: "/dashboard/webapp/blogs",
@@ -257,14 +249,6 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
       icon: CreditCard,
       component: "Vcard",
       category: "app",
-    },
-    {
-      id: "calendar",
-      name: "Calendar",
-      url: "/dashboard/webapp/calendar",
-      icon: CalendarDays,
-      component: "calendar",
-      category: "calendar",
     },
     {
       id: "blogs",

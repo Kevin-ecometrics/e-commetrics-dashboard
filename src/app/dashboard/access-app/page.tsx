@@ -27,7 +27,7 @@ type ComponentAccess = {
     | "QR"
     | "Vcard"
     | "blogs"
-    | "calendar"
+
     | "Reforma"
     | "Monge"
     | "PromoPalmas"
@@ -40,7 +40,6 @@ const AVAILABLE_COMPONENTS: ComponentAccess["component"][] = [
   "QR",
   "Vcard",
   "blogs",
-  "calendar",
   "Reforma",
   "Monge",
   "PromoPalmas",

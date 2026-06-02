@@ -2,49 +2,54 @@ import Link from "next/link";
 
 export default function NotFound() {
   return (
-    <div style={{
-      minHeight: "100vh", background: "var(--ec-surface-0)",
-      display: "flex", alignItems: "center", justifyContent: "center",
-      padding: "0 16px", position: "relative", overflow: "hidden",
-    }}>
-      {/* Ambient dots */}
-      <div style={{ position: "absolute", top: "25%", left: "25%", width: 4, height: 4, background: "var(--ec-brand)", borderRadius: "50%", opacity: 0.4 }} />
-      <div style={{ position: "absolute", top: "33%", right: "33%", width: 3, height: 3, background: "var(--ec-brand)", borderRadius: "50%", opacity: 0.3 }} />
-      <div style={{ position: "absolute", bottom: "25%", left: "33%", width: 3, height: 3, background: "var(--ec-brand)", borderRadius: "50%", opacity: 0.3 }} />
-      <div style={{ position: "absolute", bottom: "33%", right: "25%", width: 4, height: 4, background: "var(--ec-brand)", borderRadius: "50%", opacity: 0.2 }} />
+    <div className="min-h-screen bg-[var(--ec-bg)] flex items-center justify-center p-4 relative">
+      <div
+        className="fixed inset-0 pointer-events-none"
+        style={{
+          backgroundImage:
+            "linear-gradient(var(--ec-grid-line) 1px, transparent 1px), linear-gradient(90deg, var(--ec-grid-line) 1px, transparent 1px)",
+          backgroundSize: "64px 64px",
+        }}
+      />
 
-      <div style={{ maxWidth: 480, width: "100%", textAlign: "center", position: "relative", zIndex: 10 }}>
-        <div className="h-eyebrow" style={{ marginBottom: 20 }}>⎯⎯⎯&nbsp;&nbsp;ERROR</div>
+      <div className="ec-project-card max-w-[420px] w-full cursor-default text-center p-12 shadow-[var(--ec-shadow-lg)]">
+        <div className="relative w-20 h-20 mx-auto mb-6">
+          <div className="absolute inset-0 rounded-full bg-[var(--ec-brand-soft)] animate-pulse" />
+          <div className="absolute inset-2 rounded-full bg-[var(--ec-brand-soft)] opacity-50 animate-pulse" style={{ animationDelay: "0.5s" }} />
+          <span className="absolute inset-0 flex items-center justify-center text-3xl font-[400] text-[var(--ec-brand)]">
+            ?
+          </span>
+        </div>
 
-        <h1 className="font-serif" style={{
-          fontSize: "clamp(80px, 20vw, 140px)", fontWeight: 400,
-          letterSpacing: "-0.04em", lineHeight: 1,
-          color: "var(--ec-brand)", marginBottom: 8,
-        }}>
-          4<span style={{ display: "inline-block", transform: "rotate(12deg)", margin: "0 4px" }}>0</span>4
+        <h1 className="font-serif text-5xl font-[400] text-[var(--ec-text)] mb-1">
+          404
         </h1>
 
-        <div style={{ width: 40, height: 2, background: "var(--ec-brand)", margin: "0 auto 24px", opacity: 0.6 }} />
+        <p className="font-mono text-[11px] tracking-[0.12em] uppercase text-[var(--ec-text-dim)] mb-5">
+          Page not found
+        </p>
 
-        <p style={{ color: "var(--ec-text-muted)", fontSize: 16, marginBottom: 36, lineHeight: 1.6 }}>
-          Esta página se ha perdido en el espacio
+        <div className="w-8 h-0.5 bg-[var(--ec-brand)] opacity-50 mx-auto mb-5 rounded" />
+
+        <p className="text-sm text-[var(--ec-text-muted)] leading-relaxed mb-8">
+          The page you&apos;re looking for doesn&apos;t exist or has been
+          moved.
         </p>
 
         <Link
           href="/"
-          style={{
-            display: "inline-flex", alignItems: "center", gap: 8,
-            padding: "13px 32px", background: "var(--ec-brand)",
-            color: "white", borderRadius: 12, fontSize: 14, fontWeight: 600,
-            textDecoration: "none", letterSpacing: "0.06em",
-          }}
+          className="ec-btn-primary inline-flex items-center gap-2 px-7 py-3 text-[13px] font-semibold tracking-[0.06em] no-underline"
         >
-          REGRESAR
+          <span className="text-base leading-none">←</span>
+          BACK HOME
         </Link>
 
-        <div style={{ marginTop: 48, display: "flex", justifyContent: "center", gap: 8 }}>
+        <div className="flex justify-center gap-1.5 mt-8">
           {[0, 1, 2].map((i) => (
-            <div key={i} style={{ width: 6, height: 6, background: "var(--ec-hairline-strong)", borderRadius: "50%" }} />
+            <div
+              key={i}
+              className="w-1.5 h-1.5 rounded-full bg-[var(--ec-hairline-strong)]"
+            />
           ))}
         </div>
       </div>
