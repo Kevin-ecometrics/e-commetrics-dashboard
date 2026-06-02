@@ -25,6 +25,8 @@ import {
   Plus,
   Download,
   Info,
+  Link,
+  Check,
 } from "lucide-react";
 
 const API_BASE_URL = "https://palmasrecovery.com";
@@ -1137,31 +1139,46 @@ function downloadICS(content: string, filename: string) {
   URL.revokeObjectURL(url);
 }
 
+// ── SubscriptionButton ────────────────────────────────────────────────────────
+
+function SubscriptionButton({ apiBaseUrl }: { apiBaseUrl: string }) {
+  const [copied, setCopied] = useState(false);
+  const subUrl = `${apiBaseUrl}/api/calendar.ics`;
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(subUrl);
+      setCopied(true);
+      toast.success("URL de suscripción copiada al portapapeles");
+      setTimeout(() => setCopied(false), 2500);
+    } catch {
+      toast.error("No se pudo copiar la URL");
+    }
+  };
+
+  return (
+    <button
+      onClick={handleCopy}
+      style={{
+        display: "flex", alignItems: "center", gap: 6, padding: "8px 14px",
+        borderRadius: 10, border: "1px solid var(--ec-border)",
+        background: copied ? "rgba(16,185,129,0.12)" : "var(--ec-surface-2)",
+        color: copied ? "#10b981" : "var(--ec-text)",
+        fontSize: 13, fontWeight: 500, cursor: "pointer",
+        transition: "all 0.2s",
+      }}
+      title="Copiar URL de suscripción para el calendario"
+    >
+      {copied ? <Check className="h-4 w-4" /> : <Link className="h-4 w-4" />}
+      {copied ? "Copiado" : "Suscripción"}
+    </button>
+  );
+}
+
 // ── InstallModal ─────────────────────────────────────────────────────────────
 
-function InstallModal({ onClose }: { onClose: () => void }) {
-  const steps = [
-    {
-      title: "1. Exportar las reservas",
-      desc: 'Haz clic en el botón "Exportar citas" para descargar el archivo .ics con todas las reservas.',
-    },
-    {
-      title: "2. Abrir el archivo .ics",
-      desc: 'Localiza el archivo "palmas-recovery-reservas.ics" en tus descargas y haz doble clic sobre él. Se abrirá automáticamente la app Calendario de macOS.',
-    },
-    {
-      title: "3. Seleccionar la cuenta de iCloud",
-      desc: "En la ventana emergente de Calendario, elige la cuenta de iCloud como destino. Si no aparece, ve a las preferencias de Calendario y asegúrate de tener iCloud habilitado.",
-    },
-    {
-      title: "4. Confirmar la importación",
-      desc: 'Haz clic en "Aceptar" o "Importar". Las reservas aparecerán como eventos de calendario en tu cuenta de iCloud.',
-    },
-    {
-      title: "5. Sincronizar con iPhone / iPad",
-      desc: "Asegúrate de tener la sincronización de Calendarios activada en Ajustes > [tu nombre] > iCloud > Calendarios en tu dispositivo iOS. Las reservas se sincronizarán automáticamente.",
-    },
-  ];
+function InstallModal({ onClose, apiBaseUrl }: { onClose: () => void; apiBaseUrl: string }) {
+  const subUrl = `${apiBaseUrl}/api/calendar.ics`;
 
   return (
     <div
@@ -1175,7 +1192,7 @@ function InstallModal({ onClose }: { onClose: () => void }) {
       >
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 22px", borderBottom: "1px solid var(--ec-border)" }}>
           <h2 className="font-serif" style={{ fontSize: 20, fontWeight: 400, color: "var(--ec-text)" }}>
-            Instalación en iCloud (Mac)
+            Cómo ver las reservas en tu calendario
           </h2>
           <button
             onClick={onClose}
@@ -1185,26 +1202,88 @@ function InstallModal({ onClose }: { onClose: () => void }) {
             <X className="h-4 w-4" />
           </button>
         </div>
-        <div style={{ padding: "20px 22px", display: "flex", flexDirection: "column", gap: 16 }}>
-          {steps.map((step, i) => (
-            <div key={i} style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
-              <div
-                style={{
-                  width: 32, height: 32, borderRadius: "50%", display: "flex", alignItems: "center",
-                  justifyContent: "center", flexShrink: 0, fontSize: 13, fontWeight: 600,
-                  background: "rgba(245,158,11,0.12)", color: "#f59e0b",
-                }}
-              >
-                {i + 1}
+        <div style={{ padding: "20px 22px", display: "flex", flexDirection: "column", gap: 20 }}>
+
+          {/* ── Method A: Subscription ── */}
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+              <div style={{ width: 28, height: 28, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, background: "rgba(16,185,129,0.12)", color: "#10b981" }}>A</div>
+              <h3 style={{ fontSize: 16, fontWeight: 600, color: "var(--ec-text)", margin: 0 }}>Suscripción automática <span style={{ fontSize: 12, fontWeight: 500, color: "#10b981", background: "rgba(16,185,129,0.1)", padding: "2px 8px", borderRadius: 6 }}>RECOMENDADO</span></h3>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12, paddingLeft: 36 }}>
+              <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+                <div style={{ width: 22, height: 22, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 11, fontWeight: 600, background: "rgba(59,130,246,0.1)", color: "#3b82f6" }}>1</div>
+                <div>
+                  <p style={{ fontWeight: 600, fontSize: 13, color: "var(--ec-text)", margin: 0 }}>Haz clic en <strong>"Suscripción"</strong></p>
+                  <p style={{ fontSize: 12, color: "var(--ec-text-muted)", lineHeight: 1.5, margin: "2px 0 0" }}>Se copiará la URL del calendario al portapapeles.</p>
+                </div>
               </div>
-              <div>
-                <p style={{ fontWeight: 600, fontSize: 14, color: "var(--ec-text)", marginBottom: 4 }}>{step.title}</p>
-                <p style={{ fontSize: 13, color: "var(--ec-text-muted)", lineHeight: 1.5 }}>{step.desc}</p>
+              <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+                <div style={{ width: 22, height: 22, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 11, fontWeight: 600, background: "rgba(59,130,246,0.1)", color: "#3b82f6" }}>2</div>
+                <div>
+                  <p style={{ fontWeight: 600, fontSize: 13, color: "var(--ec-text)", margin: 0 }}>Abre la app <strong>Calendario</strong> en Mac</p>
+                  <p style={{ fontSize: 12, color: "var(--ec-text-muted)", lineHeight: 1.5, margin: "2px 0 0" }}>Ve a Archivo &gt; Nueva suscripción a calendario…</p>
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+                <div style={{ width: 22, height: 22, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 11, fontWeight: 600, background: "rgba(59,130,246,0.1)", color: "#3b82f6" }}>3</div>
+                <div>
+                  <p style={{ fontWeight: 600, fontSize: 13, color: "var(--ec-text)", margin: 0 }}>Pega la URL</p>
+                  <p style={{ fontSize: 12, color: "var(--ec-text-muted)", lineHeight: 1.5, margin: "2px 0 0" }}>Cmd+V y haz clic en <strong>"Suscribir"</strong>. En iPhone, abre el enlace desde Safari.</p>
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+                <div style={{ width: 22, height: 22, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 11, fontWeight: 600, background: "rgba(59,130,246,0.1)", color: "#3b82f6" }}>4</div>
+                <div>
+                  <p style={{ fontWeight: 600, fontSize: 13, color: "var(--ec-text)", margin: 0 }}>¡Listo!</p>
+                  <p style={{ fontSize: 12, color: "var(--ec-text-muted)", lineHeight: 1.5, margin: "2px 0 0" }}>Se actualiza automáticamente cuando se agreguen, modifiquen o cancelen reservas — tanto desde la página web (<strong>palmasrecovery.com</strong>) como desde este dashboard. Para forzar la actualización, haz clic derecho sobre el calendario en iCal y selecciona <strong>"Actualizar"</strong>.</p>
+                </div>
+              </div>
+              <div style={{ padding: 10, background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)", borderRadius: 8, fontSize: 12, color: "var(--ec-text-muted)", lineHeight: 1.5 }}>
+                <strong style={{ color: "#f59e0b" }}>Nota:</strong> Apple Calendar actualiza la suscripción automáticamente cada 24-48 horas para ahorrar batería. No es instantáneo, pero las reservas nuevas aparecerán solas. Puedes forzar la actualización manualmente cuando quieras.
+              </div>
+              <div style={{ padding: 10, background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.2)", borderRadius: 8, fontSize: 12, color: "var(--ec-text-muted)", lineHeight: 1.5 }}>
+                <strong style={{ color: "#10b981" }}>URL de suscripción:</strong>
+                <code style={{ display: "block", marginTop: 4, padding: "6px 10px", background: "var(--ec-surface-2)", borderRadius: 6, fontSize: 11, color: "var(--ec-text)", wordBreak: "break-all", userSelect: "all" }}>{subUrl}</code>
               </div>
             </div>
-          ))}
-          <div style={{ marginTop: 8, padding: 14, background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.25)", borderRadius: 12, fontSize: 13, color: "var(--ec-text-muted)", lineHeight: 1.5 }}>
-            <strong style={{ color: "#10b981" }}>Nota:</strong> Para mantener el calendario actualizado, repite estos pasos periódicamente después de exportar nuevamente.
+          </div>
+
+          {/* divider */}
+          <div style={{ borderTop: "1px solid var(--ec-border)", margin: "4px 0" }} />
+
+          {/* ── Method B: Manual export ── */}
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+              <div style={{ width: 28, height: 28, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, background: "rgba(107,114,128,0.12)", color: "#6b7280" }}>B</div>
+              <h3 style={{ fontSize: 16, fontWeight: 600, color: "var(--ec-text)", margin: 0 }}>Exportación manual (alternativa)</h3>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12, paddingLeft: 36 }}>
+              <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+                <div style={{ width: 22, height: 22, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 11, fontWeight: 600, background: "rgba(107,114,128,0.1)", color: "#6b7280" }}>1</div>
+                <div>
+                  <p style={{ fontWeight: 600, fontSize: 13, color: "var(--ec-text)", margin: 0 }}>Haz clic en <strong>"Exportar citas"</strong></p>
+                  <p style={{ fontSize: 12, color: "var(--ec-text-muted)", lineHeight: 1.5, margin: "2px 0 0" }}>Descarga el archivo .ics con todas las reservas.</p>
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+                <div style={{ width: 22, height: 22, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 11, fontWeight: 600, background: "rgba(107,114,128,0.1)", color: "#6b7280" }}>2</div>
+                <div>
+                  <p style={{ fontWeight: 600, fontSize: 13, color: "var(--ec-text)", margin: 0 }}>Abre el archivo .ics</p>
+                  <p style={{ fontSize: 12, color: "var(--ec-text-muted)", lineHeight: 1.5, margin: "2px 0 0" }}>Haz doble clic en <code>palmas-recovery-reservas.ics</code> y elige tu cuenta de iCloud.</p>
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+                <div style={{ width: 22, height: 22, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 11, fontWeight: 600, background: "rgba(107,114,128,0.1)", color: "#6b7280" }}>3</div>
+                <div>
+                  <p style={{ fontWeight: 600, fontSize: 13, color: "var(--ec-text)", margin: 0 }}>Se sincroniza con iPhone</p>
+                  <p style={{ fontSize: 12, color: "var(--ec-text-muted)", lineHeight: 1.5, margin: "2px 0 0" }}>Si tienes iCloud activado, aparecerá automáticamente en tus dispositivos.</p>
+                </div>
+              </div>
+              <div style={{ padding: 10, background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)", borderRadius: 8, fontSize: 12, color: "var(--ec-text-muted)", lineHeight: 1.5 }}>
+                <strong style={{ color: "#f59e0b" }}>Nota:</strong> Con este método debes repetir la exportación cada vez que cambien las reservas para mantener el calendario actualizado. Es más trabajo pero te da control total.
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -1328,7 +1407,7 @@ export default function CalendarioPalmasPage() {
       <Toaster />
 
       {/* Install modal */}
-      {showInstallModal && <InstallModal onClose={() => setShowInstallModal(false)} />}
+      {showInstallModal && <InstallModal onClose={() => setShowInstallModal(false)} apiBaseUrl={API_BASE_URL} />}
 
       {/* Detail modal */}
       {selectedBooking && !editingBooking && (
@@ -1384,6 +1463,7 @@ export default function CalendarioPalmasPage() {
               <Download className="h-4 w-4" />
               Exportar citas
             </button>
+            <SubscriptionButton apiBaseUrl={API_BASE_URL} />
             <button
               onClick={() => setShowInstallModal(true)}
               style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 14px", borderRadius: 10, border: "1px solid var(--ec-border)", background: "var(--ec-surface-2)", color: "var(--ec-text)", fontSize: 13, fontWeight: 500, cursor: "pointer" }}
