@@ -22,6 +22,7 @@ export default function AccountPage() {
   const [currPw, setCurrPw] = useState("");
   const [newPw, setNewPw] = useState("");
   const [confPw, setConfPw] = useState("");
+  const [pwLoading, setPwLoading] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -52,6 +53,36 @@ export default function AccountPage() {
     if (!res.ok) throw new Error("Error al subir la imagen");
     const data = await res.json();
     return data.imageUrl;
+  };
+
+  const handlePasswordChange = async () => {
+    if (!user || !currPw || !newPw || newPw !== confPw) return;
+    if (newPw.length < 8) {
+      toast.error(lang === "es" ? "Mínimo 8 caracteres." : "Minimum 8 characters.");
+      return;
+    }
+    setPwLoading(true);
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_URL}/api/change-password`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ id: user.id, currentPassword: currPw, newPassword: newPw }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.message || (lang === "es" ? "Error al cambiar contraseña." : "Error changing password."));
+        return;
+      }
+      toast.success(lang === "es" ? "Contraseña actualizada correctamente." : "Password updated successfully.");
+      setCurrPw("");
+      setNewPw("");
+      setConfPw("");
+    } catch {
+      toast.error(lang === "es" ? "Error al cambiar contraseña." : "Error changing password.");
+    } finally {
+      setPwLoading(false);
+    }
   };
 
   const handleUpdate = async (e: React.FormEvent) => {
@@ -279,17 +310,27 @@ export default function AccountPage() {
               </div>
             </div>
             <button
-              disabled={!currPw || !newPw || newPw !== confPw}
+              onClick={handlePasswordChange}
+              disabled={pwLoading || !currPw || !newPw || newPw !== confPw}
               style={{
                 marginTop: 4, padding: "12px", width: "100%",
-                background: "var(--ec-surface-2)", border: "1px solid var(--ec-border)",
-                color: (!currPw || !newPw || newPw !== confPw) ? "var(--ec-text-dim)" : "var(--ec-text)",
+                background: pwLoading ? "var(--ec-surface-2)" : (!currPw || !newPw || newPw !== confPw) ? "var(--ec-surface-2)" : "var(--ec-brand)",
+                border: "1px solid var(--ec-border)",
+                color: (pwLoading || !currPw || !newPw || newPw !== confPw) ? "var(--ec-text-dim)" : "white",
                 borderRadius: 10, fontSize: 14, fontWeight: 500,
-                cursor: (!currPw || !newPw || newPw !== confPw) ? "not-allowed" : "pointer",
+                cursor: (pwLoading || !currPw || !newPw || newPw !== confPw) ? "not-allowed" : "pointer",
                 display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                transition: "background 0.15s, color 0.15s",
               }}
             >
-              <Check size={14} /> {lang === "es" ? "Actualizar contraseña" : "Update password"}
+              {pwLoading ? (
+                <>
+                  <div style={{ width: 14, height: 14, borderRadius: "50%", border: "2px solid currentColor", borderTopColor: "transparent", animation: "spin 0.8s linear infinite" }} />
+                  {lang === "es" ? "Actualizando…" : "Updating…"}
+                </>
+              ) : (
+                <><Check size={14} /> {lang === "es" ? "Actualizar contraseña" : "Update password"}</>
+              )}
             </button>
           </div>
         </div>

@@ -17,7 +17,7 @@ export default function UserManager() {
   const [users, setUsers] = useState<User[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [form, setForm] = useState({ email: "", role: "client" });
+  const [form, setForm] = useState({ email: "", role: "client", password: "" });
   const [loadingUpdate, setLoadingUpdate] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<User | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -41,7 +41,7 @@ export default function UserManager() {
 
   const handleSelectUser = (user: User) => {
     setSelectedUser(user);
-    setForm({ email: user.email, role: user.role });
+    setForm({ email: user.email, role: user.role, password: "" });
   };
 
   const handleUpdate = async (e: React.FormEvent) => {
@@ -62,7 +62,7 @@ export default function UserManager() {
       }
       toast.success("Usuario actualizado correctamente");
       setSelectedUser(null);
-      setForm({ email: "", role: "client" });
+      setForm({ email: "", role: "client", password: "" });
       fetchUsers();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Error al actualizar usuario");
@@ -80,7 +80,7 @@ export default function UserManager() {
         throw new Error(error.message || "Error al eliminar usuario");
       }
       toast.success("Usuario eliminado");
-      if (selectedUser?.id === id) { setSelectedUser(null); setForm({ email: "", role: "client" }); }
+      if (selectedUser?.id === id) { setSelectedUser(null); setForm({ email: "", role: "client", password: "" }); }
       setDeleteConfirm(null);
       fetchUsers();
     } catch (err) {
@@ -292,7 +292,14 @@ export default function UserManager() {
                     Nueva contraseña{" "}
                     <span style={{ color: "var(--ec-text-dim)", textTransform: "none", letterSpacing: 0, fontSize: 11 }}>(opcional)</span>
                   </label>
-                  <input className="ec-field-input" type="password" placeholder="Dejar vacío para no cambiar" />
+                  <input
+                    className="ec-field-input"
+                    type="password"
+                    placeholder="Dejar vacío para no cambiar"
+                    value={form.password}
+                    onChange={(e) => setForm({ ...form, password: e.target.value })}
+                    autoComplete="new-password"
+                  />
                 </div>
 
                 <div style={{ height: 1, background: "var(--ec-hairline)", margin: "4px 0" }} />
