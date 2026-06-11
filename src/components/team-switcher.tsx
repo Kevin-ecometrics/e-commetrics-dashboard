@@ -18,9 +18,7 @@ interface User {
 export function TeamSwitcher({ user }: { user: User }) {
   // Construye la URL de la imagen de forma segura
   const profileImageUrl = user?.profileImage
-    ? `https://ecommetrica.com${user.profileImage.startsWith("/") ? "" : "/"}${
-        user.profileImage
-      }`
+    ? `${process.env.NEXT_PUBLIC_URL}${user.profileImage}`
     : "/logo.jpg";
 
   return (

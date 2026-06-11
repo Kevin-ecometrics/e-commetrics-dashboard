@@ -143,7 +143,7 @@ export default function AccountPage() {
   const resolvedImage = profileImage
     ? profileImage.startsWith("blob:") || profileImage.startsWith("data:")
       ? profileImage
-      : `${process.env.NEXT_PUBLIC_URL}/${profileImage}`
+      : `${process.env.NEXT_PUBLIC_URL}${profileImage}`
     : null;
 
   return (

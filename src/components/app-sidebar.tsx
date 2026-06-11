@@ -898,7 +898,18 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
 
       </SidebarContent>
 
-      <SidebarFooter>{user && <NavUser user={user} />}</SidebarFooter>
+      <SidebarFooter>
+        {user && (
+          <NavUser
+            user={{
+              ...user,
+              avatar: user.profileImage
+                ? `${process.env.NEXT_PUBLIC_URL}${user.profileImage}`
+                : undefined,
+            }}
+          />
+        )}
+      </SidebarFooter>
 
       <SidebarRail />
     </Sidebar>
