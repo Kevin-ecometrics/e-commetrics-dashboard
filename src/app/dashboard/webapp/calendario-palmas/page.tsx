@@ -15,6 +15,8 @@ import {
   Phone,
   ChevronLeft,
   ChevronRight,
+  ChevronUp,
+  ChevronDown,
   DollarSign,
   X,
   Eye,
@@ -1074,6 +1076,37 @@ function EmptyState({
   );
 }
 
+// ── SortHeader ────────────────────────────────────────────────────────────────
+
+function SortHeader({
+  label, field, sortField, sortDir, onSort,
+}: {
+  label: string; field: string; sortField: string; sortDir: "asc" | "desc";
+  onSort: (f: string) => void;
+}) {
+  const active = sortField === field;
+  return (
+    <th
+      onClick={() => onSort(field)}
+      style={{
+        textAlign: "left", padding: "10px 16px",
+        fontFamily: "JetBrains Mono, monospace", fontSize: 10, fontWeight: 600,
+        letterSpacing: "0.08em", textTransform: "uppercase",
+        color: active ? "var(--ec-text)" : "var(--ec-text-dim)",
+        cursor: "pointer", userSelect: "none", whiteSpace: "nowrap",
+      }}
+    >
+      <div style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+        {label}
+        <div style={{ display: "flex", flexDirection: "column", lineHeight: 1 }}>
+          <ChevronUp size={9} style={{ opacity: active && sortDir === "asc" ? 1 : 0.25, marginBottom: -1 }} />
+          <ChevronDown size={9} style={{ opacity: active && sortDir === "desc" ? 1 : 0.25 }} />
+        </div>
+      </div>
+    </th>
+  );
+}
+
 // ── ICS export ───────────────────────────────────────────────────────────────
 
 function toICSDate(dateStr: string): string {
@@ -1307,6 +1340,18 @@ export default function CalendarioPalmasPage() {
   const [createDefaultDate, setCreateDefaultDate] = useState<string | undefined>();
   const [createDefaultRoom, setCreateDefaultRoom] = useState<string | undefined>();
 
+  // Bookings table filter/sort
+  const [bookingSearch, setBookingSearch] = useState("");
+  const [bookingStatusFilter, setBookingStatusFilter] = useState("");
+  const [bookingRoomFilter, setBookingRoomFilter] = useState("");
+  const [bookingSortField, setBookingSortField] = useState("created_at");
+  const [bookingSortDir, setBookingSortDir] = useState<"asc" | "desc">("desc");
+
+  // Contacts table filter/sort
+  const [contactSearch, setContactSearch] = useState("");
+  const [contactSortField, setContactSortField] = useState("created_at");
+  const [contactSortDir, setContactSortDir] = useState<"asc" | "desc">("desc");
+
   const fetchBookings = useCallback(async () => {
     setLoadingBookings(true);
     try {
@@ -1380,6 +1425,66 @@ export default function CalendarioPalmasPage() {
 
   const confirmedBookings = bookings.filter((b) => b.status === "confirmed");
   const totalRevenue = confirmedBookings.reduce((s, b) => s + Number(b.total), 0);
+
+  const filteredBookings = useMemo(() => {
+    let list = [...bookings];
+    if (bookingSearch) {
+      const q = bookingSearch.toLowerCase();
+      list = list.filter((b) =>
+        b.full_name.toLowerCase().includes(q) ||
+        b.email.toLowerCase().includes(q) ||
+        b.confirmation_number.toLowerCase().includes(q) ||
+        (b.phone && b.phone.toLowerCase().includes(q))
+      );
+    }
+    if (bookingStatusFilter) list = list.filter((b) => b.status === bookingStatusFilter);
+    if (bookingRoomFilter) list = list.filter((b) => b.room_id === bookingRoomFilter);
+    list.sort((a, b) => {
+      let va: string | number, vb: string | number;
+      if (bookingSortField === "nights" || bookingSortField === "total") {
+        va = Number(a[bookingSortField as keyof Booking]) || 0;
+        vb = Number(b[bookingSortField as keyof Booking]) || 0;
+      } else {
+        va = String(a[bookingSortField as keyof Booking] ?? "");
+        vb = String(b[bookingSortField as keyof Booking] ?? "");
+      }
+      if (va < vb) return bookingSortDir === "asc" ? -1 : 1;
+      if (va > vb) return bookingSortDir === "asc" ? 1 : -1;
+      return 0;
+    });
+    return list;
+  }, [bookings, bookingSearch, bookingStatusFilter, bookingRoomFilter, bookingSortField, bookingSortDir]);
+
+  const filteredContacts = useMemo(() => {
+    let list = [...contacts];
+    if (contactSearch) {
+      const q = contactSearch.toLowerCase();
+      list = list.filter((c) =>
+        c.name.toLowerCase().includes(q) ||
+        c.email.toLowerCase().includes(q) ||
+        c.message.toLowerCase().includes(q) ||
+        (c.phone && c.phone.toLowerCase().includes(q))
+      );
+    }
+    list.sort((a, b) => {
+      const va = String(a[contactSortField as keyof ContactMessage] ?? "");
+      const vb = String(b[contactSortField as keyof ContactMessage] ?? "");
+      if (va < vb) return contactSortDir === "asc" ? -1 : 1;
+      if (va > vb) return contactSortDir === "asc" ? 1 : -1;
+      return 0;
+    });
+    return list;
+  }, [contacts, contactSearch, contactSortField, contactSortDir]);
+
+  const handleBookingSort = (field: string) => {
+    if (bookingSortField === field) setBookingSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    else { setBookingSortField(field); setBookingSortDir("asc"); }
+  };
+
+  const handleContactSort = (field: string) => {
+    if (contactSortField === field) setContactSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    else { setContactSortField(field); setContactSortDir("asc"); }
+  };
 
   const getStatusBadge = (status: string) => {
     if (status === "confirmed") {
@@ -1554,43 +1659,98 @@ export default function CalendarioPalmasPage() {
                 desc="Todavía no hay reservas registradas."
               />
             ) : (
-              <div style={{ overflowX: "auto" }}>
-                <table style={{ width: "100%", fontSize: 13, borderCollapse: "collapse" }}>
-                  <thead>
-                    <tr style={{ borderBottom: "1px solid var(--ec-hairline)", background: "var(--ec-surface-1)" }}>
-                      {["Confirmación","Huésped","Habitación","Check-in","Check-out","Noches","Total","Estado","Origen",""].map((h, i) => (
-                        <th key={i} style={{ textAlign: "left", padding: "10px 16px", fontFamily: "JetBrains Mono, monospace", fontSize: 10, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--ec-text-dim)" }}>{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {bookings.map((booking) => {
-                      const rc = ROOM_COLORS[booking.room_id] ?? DEFAULT_ROOM_COLOR;
-                      return (
-                        <tr key={booking.id} style={{ borderBottom: "1px solid var(--ec-hairline)" }}>
-                          <td style={{ padding: "10px 16px", fontFamily: "JetBrains Mono, monospace", fontSize: 11, color: "var(--ec-text-dim)" }}>#{booking.confirmation_number}</td>
-                          <td style={{ padding: "10px 16px" }}>
-                            <div style={{ fontWeight: 500, color: "var(--ec-text)" }}>{booking.full_name}</div>
-                            <div style={{ fontSize: 12, color: "var(--ec-text-dim)" }}>{booking.email}</div>
-                          </td>
-                          <td style={{ padding: "10px 16px" }}>
-                            <span style={{ display: "inline-flex", alignItems: "center", padding: "2px 8px", borderRadius: 99, fontSize: 11, fontWeight: 500, background: rc.bg, color: rc.color }}>{ROOM_NAMES[booking.room_id] ?? booking.room_id}</span>
-                          </td>
-                          <td style={{ padding: "10px 16px", color: "var(--ec-text-muted)", whiteSpace: "nowrap" }}>{parseDateLocal(booking.check_in.slice(0, 10)).toLocaleDateString("es-MX")}</td>
-                          <td style={{ padding: "10px 16px", color: "var(--ec-text-muted)", whiteSpace: "nowrap" }}>{parseDateLocal(booking.check_out.slice(0, 10)).toLocaleDateString("es-MX")}</td>
-                          <td style={{ padding: "10px 16px", textAlign: "center", color: "var(--ec-text-muted)" }}>{booking.nights}</td>
-                          <td style={{ padding: "10px 16px", fontWeight: 600, color: "var(--ec-text)" }}>${booking.total}</td>
-                          <td style={{ padding: "10px 16px" }}>{getStatusBadge(booking.status)}</td>
-                          <td style={{ padding: "10px 16px" }}><SourceBadge source={booking.source} /></td>
-                          <td style={{ padding: "10px 16px" }}>
-                            <button onClick={() => setSelectedBooking(booking)} style={{ padding: "5px 6px", borderRadius: 6, background: "none", border: "none", cursor: "pointer", color: "var(--ec-text-dim)", display: "flex" }} title="Ver detalle"><Eye size={15} /></button>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+              <>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8, padding: "12px 16px", borderBottom: "1px solid var(--ec-hairline)", background: "var(--ec-surface-1)" }}>
+                  <input
+                    type="text"
+                    placeholder="Buscar nombre, email, confirmación..."
+                    value={bookingSearch}
+                    onChange={(e) => setBookingSearch(e.target.value)}
+                    className="ec-field-input"
+                    style={{ flex: "1 1 220px", minWidth: 180, padding: "6px 12px", fontSize: 13 }}
+                  />
+                  <select
+                    value={bookingStatusFilter}
+                    onChange={(e) => setBookingStatusFilter(e.target.value)}
+                    className="ec-field-input"
+                    style={{ flex: "0 1 160px", padding: "6px 10px", fontSize: 13 }}
+                  >
+                    <option value="">Todos los estados</option>
+                    <option value="confirmed">Confirmada</option>
+                    <option value="cancelled">Cancelada</option>
+                  </select>
+                  <select
+                    value={bookingRoomFilter}
+                    onChange={(e) => setBookingRoomFilter(e.target.value)}
+                    className="ec-field-input"
+                    style={{ flex: "0 1 185px", padding: "6px 10px", fontSize: 13 }}
+                  >
+                    <option value="">Todas las habitaciones</option>
+                    {Object.entries(ROOM_NAMES).map(([id, name]) => (
+                      <option key={id} value={id}>{name}</option>
+                    ))}
+                  </select>
+                  {(bookingSearch || bookingStatusFilter || bookingRoomFilter) && (
+                    <button
+                      onClick={() => { setBookingSearch(""); setBookingStatusFilter(""); setBookingRoomFilter(""); }}
+                      style={{ padding: "6px 12px", borderRadius: 8, border: "1px solid var(--ec-border)", background: "transparent", color: "var(--ec-text-dim)", fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}
+                    >
+                      <X size={12} /> Limpiar
+                    </button>
+                  )}
+                  <span style={{ display: "flex", alignItems: "center", fontSize: 12, color: "var(--ec-text-dim)", marginLeft: "auto" }}>
+                    {filteredBookings.length} de {bookings.length}
+                  </span>
+                </div>
+                <div style={{ overflowX: "auto" }}>
+                  <table style={{ width: "100%", fontSize: 13, borderCollapse: "collapse" }}>
+                    <thead>
+                      <tr style={{ borderBottom: "1px solid var(--ec-hairline)", background: "var(--ec-surface-1)" }}>
+                        <SortHeader label="Confirmación" field="confirmation_number" sortField={bookingSortField} sortDir={bookingSortDir} onSort={handleBookingSort} />
+                        <SortHeader label="Huésped" field="full_name" sortField={bookingSortField} sortDir={bookingSortDir} onSort={handleBookingSort} />
+                        <SortHeader label="Habitación" field="room_id" sortField={bookingSortField} sortDir={bookingSortDir} onSort={handleBookingSort} />
+                        <SortHeader label="Check-in" field="check_in" sortField={bookingSortField} sortDir={bookingSortDir} onSort={handleBookingSort} />
+                        <SortHeader label="Check-out" field="check_out" sortField={bookingSortField} sortDir={bookingSortDir} onSort={handleBookingSort} />
+                        <SortHeader label="Noches" field="nights" sortField={bookingSortField} sortDir={bookingSortDir} onSort={handleBookingSort} />
+                        <SortHeader label="Total" field="total" sortField={bookingSortField} sortDir={bookingSortDir} onSort={handleBookingSort} />
+                        <SortHeader label="Estado" field="status" sortField={bookingSortField} sortDir={bookingSortDir} onSort={handleBookingSort} />
+                        <SortHeader label="Origen" field="source" sortField={bookingSortField} sortDir={bookingSortDir} onSort={handleBookingSort} />
+                        <SortHeader label="Creado" field="created_at" sortField={bookingSortField} sortDir={bookingSortDir} onSort={handleBookingSort} />
+                        <th style={{ padding: "10px 16px" }} />
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredBookings.map((booking) => {
+                        const rc = ROOM_COLORS[booking.room_id] ?? DEFAULT_ROOM_COLOR;
+                        return (
+                          <tr key={booking.id} style={{ borderBottom: "1px solid var(--ec-hairline)" }}>
+                            <td style={{ padding: "10px 16px", fontFamily: "JetBrains Mono, monospace", fontSize: 11, color: "var(--ec-text-dim)" }}>#{booking.confirmation_number}</td>
+                            <td style={{ padding: "10px 16px" }}>
+                              <div style={{ fontWeight: 500, color: "var(--ec-text)" }}>{booking.full_name}</div>
+                              <div style={{ fontSize: 12, color: "var(--ec-text-dim)" }}>{booking.email}</div>
+                            </td>
+                            <td style={{ padding: "10px 16px" }}>
+                              <span style={{ display: "inline-flex", alignItems: "center", padding: "2px 8px", borderRadius: 99, fontSize: 11, fontWeight: 500, background: rc.bg, color: rc.color }}>{ROOM_NAMES[booking.room_id] ?? booking.room_id}</span>
+                            </td>
+                            <td style={{ padding: "10px 16px", color: "var(--ec-text-muted)", whiteSpace: "nowrap" }}>{parseDateLocal(booking.check_in.slice(0, 10)).toLocaleDateString("es-MX")}</td>
+                            <td style={{ padding: "10px 16px", color: "var(--ec-text-muted)", whiteSpace: "nowrap" }}>{parseDateLocal(booking.check_out.slice(0, 10)).toLocaleDateString("es-MX")}</td>
+                            <td style={{ padding: "10px 16px", textAlign: "center", color: "var(--ec-text-muted)" }}>{booking.nights}</td>
+                            <td style={{ padding: "10px 16px", fontWeight: 600, color: "var(--ec-text)" }}>${booking.total}</td>
+                            <td style={{ padding: "10px 16px" }}>{getStatusBadge(booking.status)}</td>
+                            <td style={{ padding: "10px 16px" }}><SourceBadge source={booking.source} /></td>
+                            <td style={{ padding: "10px 16px", color: "var(--ec-text-dim)", whiteSpace: "nowrap", fontSize: 12 }}>
+                              {booking.created_at ? new Date(booking.created_at).toLocaleDateString("es-MX", { year: "numeric", month: "short", day: "numeric" }) : "—"}
+                            </td>
+                            <td style={{ padding: "10px 16px" }}>
+                              <button onClick={() => setSelectedBooking(booking)} style={{ padding: "5px 6px", borderRadius: 6, background: "none", border: "none", cursor: "pointer", color: "var(--ec-text-dim)", display: "flex" }} title="Ver detalle"><Eye size={15} /></button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </>
             )}
           </div>
         )}
@@ -1609,34 +1769,58 @@ export default function CalendarioPalmasPage() {
                 desc="Todavía no hay mensajes de contacto registrados."
               />
             ) : (
-              <div style={{ overflowX: "auto" }}>
-                <table style={{ width: "100%", fontSize: 13, borderCollapse: "collapse" }}>
-                  <thead>
-                    <tr style={{ borderBottom: "1px solid var(--ec-hairline)", background: "var(--ec-surface-1)" }}>
-                      {["Nombre","Contacto","Mensaje","Fecha"].map((h, i) => (
-                        <th key={i} style={{ textAlign: "left", padding: "10px 16px", fontFamily: "JetBrains Mono, monospace", fontSize: 10, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--ec-text-dim)" }}>{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {contacts.map((contact) => (
-                      <tr key={contact.id} style={{ borderBottom: "1px solid var(--ec-hairline)" }}>
-                        <td style={{ padding: "10px 16px", fontWeight: 500, color: "var(--ec-text)" }}>{contact.name}</td>
-                        <td style={{ padding: "10px 16px" }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 13, color: "var(--ec-text-muted)" }}><Mail size={11} style={{ flexShrink: 0 }} />{contact.email}</div>
-                          {contact.phone && <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "var(--ec-text-dim)", marginTop: 2 }}><Phone size={11} style={{ flexShrink: 0 }} />{contact.phone}</div>}
-                        </td>
-                        <td style={{ padding: "10px 16px", color: "var(--ec-text-muted)", maxWidth: 280 }}>
-                          <p style={{ overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{contact.message}</p>
-                        </td>
-                        <td style={{ padding: "10px 16px", color: "var(--ec-text-dim)", whiteSpace: "nowrap", fontSize: 12 }}>
-                          {new Date(contact.created_at).toLocaleDateString("es-MX", { year: "numeric", month: "short", day: "numeric" })}
-                        </td>
+              <>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8, padding: "12px 16px", borderBottom: "1px solid var(--ec-hairline)", background: "var(--ec-surface-1)" }}>
+                  <input
+                    type="text"
+                    placeholder="Buscar nombre, email, mensaje..."
+                    value={contactSearch}
+                    onChange={(e) => setContactSearch(e.target.value)}
+                    className="ec-field-input"
+                    style={{ flex: "1 1 220px", minWidth: 180, padding: "6px 12px", fontSize: 13 }}
+                  />
+                  {contactSearch && (
+                    <button
+                      onClick={() => setContactSearch("")}
+                      style={{ padding: "6px 12px", borderRadius: 8, border: "1px solid var(--ec-border)", background: "transparent", color: "var(--ec-text-dim)", fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}
+                    >
+                      <X size={12} /> Limpiar
+                    </button>
+                  )}
+                  <span style={{ display: "flex", alignItems: "center", fontSize: 12, color: "var(--ec-text-dim)", marginLeft: "auto" }}>
+                    {filteredContacts.length} de {contacts.length}
+                  </span>
+                </div>
+                <div style={{ overflowX: "auto" }}>
+                  <table style={{ width: "100%", fontSize: 13, borderCollapse: "collapse" }}>
+                    <thead>
+                      <tr style={{ borderBottom: "1px solid var(--ec-hairline)", background: "var(--ec-surface-1)" }}>
+                        <SortHeader label="Nombre" field="name" sortField={contactSortField} sortDir={contactSortDir} onSort={handleContactSort} />
+                        <SortHeader label="Contacto" field="email" sortField={contactSortField} sortDir={contactSortDir} onSort={handleContactSort} />
+                        <SortHeader label="Mensaje" field="message" sortField={contactSortField} sortDir={contactSortDir} onSort={handleContactSort} />
+                        <SortHeader label="Fecha" field="created_at" sortField={contactSortField} sortDir={contactSortDir} onSort={handleContactSort} />
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {filteredContacts.map((contact) => (
+                        <tr key={contact.id} style={{ borderBottom: "1px solid var(--ec-hairline)" }}>
+                          <td style={{ padding: "10px 16px", fontWeight: 500, color: "var(--ec-text)" }}>{contact.name}</td>
+                          <td style={{ padding: "10px 16px" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 13, color: "var(--ec-text-muted)" }}><Mail size={11} style={{ flexShrink: 0 }} />{contact.email}</div>
+                            {contact.phone && <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "var(--ec-text-dim)", marginTop: 2 }}><Phone size={11} style={{ flexShrink: 0 }} />{contact.phone}</div>}
+                          </td>
+                          <td style={{ padding: "10px 16px", color: "var(--ec-text-muted)", maxWidth: 280 }}>
+                            <p style={{ overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{contact.message}</p>
+                          </td>
+                          <td style={{ padding: "10px 16px", color: "var(--ec-text-dim)", whiteSpace: "nowrap", fontSize: 12 }}>
+                            {new Date(contact.created_at).toLocaleDateString("es-MX", { year: "numeric", month: "short", day: "numeric" })}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
             )}
           </div>
         )}
