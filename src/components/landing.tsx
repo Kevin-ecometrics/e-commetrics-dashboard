@@ -31,8 +31,15 @@ type ConsultingItem = {
   title: string;
   desc: string;
   icon: React.ReactNode;
-  gradient: string;
 };
+
+/* Same 4-accent palette used by the package tiers, reused here for visual consistency. */
+const CONSULTING_ACCENTS = [
+  { accent: "#6366f1", soft: "rgba(99,102,241,0.10)" },
+  { accent: "#BD155C", soft: "rgba(189,21,92,0.10)" },
+  { accent: "#f59e0b", soft: "rgba(245,158,11,0.10)" },
+  { accent: "#10b981", soft: "rgba(16,185,129,0.10)" },
+];
 
 /* ─── Hero ───────────────────────────────────────────────── */
 const Hero = ({ locale, goToLogin }: { locale: Locale; goToLogin: () => void }) => {
@@ -713,10 +720,10 @@ const Services = ({ locale }: { locale: Locale }) => {
 /* ─── Consulting ─────────────────────────────────────────── */
 const Consulting = ({ locale }: { locale: Locale }) => {
   const items: ConsultingItem[] = [
-    { id: 1, title: locale === "en" ? "Programming" : "Programación", desc: locale === "en" ? "Fast and secure websites." : "Páginas Web, rápida y segura.", icon: <Code2 size={20} color="white" />, gradient: "from-blue-600 to-indigo-800" },
-    { id: 2, title: "Marketing", desc: locale === "en" ? "We provide the best S.S.L. with NameCheap." : "Tenemos el mejor S.S.L. con NameCheap.", icon: <Megaphone size={20} color="white" />, gradient: "from-fuchsia-600 to-[#7A0E3B]" },
-    { id: 3, title: "SEO", desc: locale === "en" ? "Your site will be better structured for Google©." : "Tu sitio estará mejor estructurado para Google©.", icon: <Search size={20} color="white" />, gradient: "from-violet-600 to-purple-900" },
-    { id: 4, title: "Web Master", desc: locale === "en" ? "Fast, secure and reliable hosting." : "Hospedaje rápido, seguro y confiable.", icon: <Server size={20} color="white" />, gradient: "from-rose-500 to-[#7A0E3B]" },
+    { id: 1, title: locale === "en" ? "Programming" : "Programación", desc: locale === "en" ? "Fast and secure websites." : "Páginas Web, rápida y segura.", icon: <Code2 size={19} /> },
+    { id: 2, title: "Marketing", desc: locale === "en" ? "We provide the best S.S.L. with NameCheap." : "Tenemos el mejor S.S.L. con NameCheap.", icon: <Megaphone size={19} /> },
+    { id: 3, title: "SEO", desc: locale === "en" ? "Your site will be better structured for Google©." : "Tu sitio estará mejor estructurado para Google©.", icon: <Search size={19} /> },
+    { id: 4, title: "Web Master", desc: locale === "en" ? "Fast, secure and reliable hosting." : "Hospedaje rápido, seguro y confiable.", icon: <Server size={19} /> },
   ];
 
   return (
@@ -744,80 +751,75 @@ const Consulting = ({ locale }: { locale: Locale }) => {
             gap: 16,
           }}
         >
-          {items.map((item) => (
-            <motion.div
-              key={item.id}
-              whileInView={{ opacity: 1, y: 0 }}
-              initial={{ opacity: 0, y: 16 }}
-              whileHover={{ scale: 1.02 }}
-              transition={{ duration: 0.4 }}
-              className={`group relative h-80 rounded-2xl overflow-hidden cursor-pointer flex items-end justify-start bg-gradient-to-br ${item.gradient}`}
-            >
-              {/* EC brand accent overlay */}
-              <div
+          {items.map((item, i) => {
+            const tier = CONSULTING_ACCENTS[i];
+            return (
+              <motion.div
+                key={item.id}
+                whileInView={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0, y: 16 }}
+                whileHover={{ y: -3, boxShadow: "var(--ec-shadow-md)" } as never}
+                transition={{ duration: 0.4 }}
                 style={{
-                  position: "absolute",
-                  inset: 0,
-                  background: "linear-gradient(to top, rgba(189,21,92,0.35) 0%, transparent 55%)",
-                  opacity: 0,
-                  transition: "opacity 300ms",
-                  zIndex: 1,
+                  position: "relative",
+                  background: "var(--ec-surface-2)",
+                  border: "1px solid var(--ec-hairline-strong)",
+                  borderRadius: 14,
+                  padding: "22px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 12,
+                  transition: "all 220ms cubic-bezier(.2,.7,.2,1)",
                 }}
-                className="group-hover:opacity-100"
-              />
-
-              <div className="relative z-10 p-5">
+              >
+                {/* Top accent bar */}
                 <div
                   style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: 8,
-                    background: "rgba(255,255,255,0.12)",
-                    border: "1px solid rgba(255,255,255,0.2)",
+                    position: "absolute",
+                    top: 0,
+                    left: 22,
+                    right: 22,
+                    height: 3,
+                    borderRadius: "0 0 4px 4px",
+                    background: `linear-gradient(90deg, ${tier.accent}, ${tier.accent}80)`,
+                  }}
+                />
+
+                <div
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 10,
+                    background: tier.soft,
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    marginBottom: 10,
+                    color: tier.accent,
                   }}
                 >
                   {item.icon}
                 </div>
-                <h3
-                  className="font-serif"
-                  style={{ fontSize: 22, color: "white", marginBottom: 6 }}
-                >
+
+                <h3 className="font-serif" style={{ fontSize: 20, color: "var(--ec-text)", lineHeight: 1.15 }}>
                   {item.title}
                 </h3>
-                <p
-                  style={{
-                    color: "rgba(255,255,255,0.8)",
-                    fontSize: 13,
-                    lineHeight: 1.5,
-                    opacity: 0,
-                    transform: "translateY(6px)",
-                    transition: "all 300ms",
-                  }}
-                  className="group-hover:opacity-100 group-hover:translate-y-0"
-                >
+                <p style={{ color: "var(--ec-text-muted)", fontSize: 13, lineHeight: 1.6 }}>
                   {item.desc}
                 </p>
-              </div>
 
-              {/* Bottom tag */}
-              <div
-                style={{
-                  position: "absolute",
-                  top: 12,
-                  right: 12,
-                  zIndex: 10,
-                }}
-              >
-                <span className="ec-badge ec-badge-brand ec-badge-mono" style={{ background: "rgba(189,21,92,0.9)", color: "white" }}>
-                  EC
-                </span>
-              </div>
-            </motion.div>
-          ))}
+                {/* Brand accent line */}
+                <div
+                  style={{
+                    marginTop: "auto",
+                    height: 2,
+                    borderRadius: 999,
+                    background: `linear-gradient(90deg, ${tier.accent}, ${tier.accent}80, transparent)`,
+                    opacity: 0.4,
+                  }}
+                />
+              </motion.div>
+            );
+          })}
         </div>
       </div>
     </section>
