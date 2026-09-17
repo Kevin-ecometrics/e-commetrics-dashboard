@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { toast, Toaster } from "react-hot-toast";
 import {
   Calendar,
@@ -19,7 +19,6 @@ import {
   ChevronDown,
   DollarSign,
   X,
-  Eye,
   Ban,
   Globe,
   Monitor,
@@ -54,6 +53,7 @@ interface Booking {
   extras: string[];
   source?: string;
   created_at: string;
+  reminder_sent_at?: string | null;
 }
 
 interface ContactMessage {
@@ -226,7 +226,13 @@ function BookingFormModal({
   onClose: () => void;
   onSuccess: () => void;
 }) {
+  const modalRef = useRef<HTMLDivElement>(null);
   const isEdit = booking !== null;
+
+  useEffect(() => {
+    modalRef.current?.scrollTo(0, 0);
+
+  }, []);
 
   const [form, setForm] = useState<FormData>(() => {
     if (booking) {
@@ -265,11 +271,16 @@ function BookingFormModal({
 
   const [submitting, setSubmitting] = useState(false);
   const [promoCode, setPromoCode] = useState("");
-  const [promoApplied, setPromoApplied] = useState<{
+  interface PromoApplied {
     code: string;
     discount_type: "percentage" | "fixed";
     discount_value: number;
-  } | null>(null);
+    applies_to: "all" | "room" | "extra" | "targets";
+    target_ids: string[] | null;
+    targets?: { type: "room" | "extra"; id: string; discount: number }[] | null;
+  }
+
+  const [promoApplied, setPromoApplied] = useState<PromoApplied | null>(null);
   const [promoLoading, setPromoLoading] = useState(false);
   const [promoError, setPromoError] = useState("");
 
@@ -290,11 +301,38 @@ function BookingFormModal({
 
   const discountAmount = useMemo(() => {
     if (!promoApplied) return 0;
-    if (promoApplied.discount_type === "percentage") {
-      return Math.round(baseTotal * promoApplied.discount_value / 100);
+
+    // Targets mode: sum individual discounts per item
+    if (promoApplied.applies_to === "targets" && promoApplied.targets) {
+      let total = 0;
+      const roomCost = nights * Number(form.pricePerNight || 0);
+      for (const t of promoApplied.targets) {
+        if (t.type === "room") {
+          total += Math.round(roomCost * t.discount / 100);
+        } else if (t.type === "extra" && form.extras.includes(t.id)) {
+          total += Math.round((EXTRA_PRICES[t.id] ?? 0) * t.discount / 100);
+        }
+      }
+      return total;
     }
-    return Math.min(promoApplied.discount_value, baseTotal);
-  }, [promoApplied, baseTotal]);
+
+    let applicableBase = baseTotal;
+
+    if (promoApplied.applies_to === "room") {
+      const roomCost = nights * Number(form.pricePerNight || 0);
+      applicableBase = roomCost;
+    } else if (promoApplied.applies_to === "extra") {
+      const targetedExtrasTotal = form.extras
+        .filter((id) => promoApplied.target_ids?.includes(id))
+        .reduce((s, id) => s + (EXTRA_PRICES[id] ?? 0), 0);
+      applicableBase = targetedExtrasTotal;
+    }
+
+    if (promoApplied.discount_type === "percentage") {
+      return Math.round(applicableBase * promoApplied.discount_value / 100);
+    }
+    return Math.min(promoApplied.discount_value, applicableBase);
+  }, [promoApplied, baseTotal, form.extras, form.pricePerNight, nights]);
 
   const autoTotal = useMemo(() => baseTotal - discountAmount, [baseTotal, discountAmount]);
 
@@ -324,6 +362,9 @@ function BookingFormModal({
         code: promoCode.trim().toUpperCase(),
         discount_type: data.discount_type,
         discount_value: data.discount_value,
+        applies_to: data.applies_to || "all",
+        target_ids: data.target_ids || null,
+        targets: data.targets || null,
       });
       setPromoCode("");
       setPromoError("");
@@ -450,6 +491,7 @@ function BookingFormModal({
       onClick={onClose}
     >
       <div
+        ref={modalRef}
         className="ec-project-card"
         style={{ borderRadius: 16, width: "100%", maxWidth: 680, maxHeight: "90vh", overflowY: "auto" }}
         onClick={(e) => e.stopPropagation()}
@@ -644,19 +686,54 @@ function BookingDetailModal({
   onClose,
   onCancel,
   onEdit,
+  onRefresh,
 }: {
   booking: Booking;
   onClose: () => void;
   onCancel: (id: number) => void;
   onEdit: (booking: Booking) => void;
+  onRefresh?: () => void;
 }) {
+  const modalRef = useRef<HTMLDivElement>(null);
   const [cancelling, setCancelling] = useState(false);
+  const [sendingReminder, setSendingReminder] = useState(false);
+
+  useEffect(() => {
+    modalRef.current?.scrollTo(0, 0);
+
+  }, []);
 
   const handleCancel = async () => {
     setCancelling(true);
     await onCancel(booking.id);
     setCancelling(false);
   };
+
+  const handleSendReminder = async () => {
+    setSendingReminder(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/bookings/${booking.id}/send-reminder`, {
+        method: "POST",
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Error al enviar recordatorio");
+      }
+      toast.success("Recordatorio enviado correctamente");
+      onRefresh?.();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Error al enviar recordatorio";
+      toast.error(msg);
+    } finally {
+      setSendingReminder(false);
+    }
+  };
+
+  const checkInDate = new Date(booking.check_in);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  checkInDate.setHours(0, 0, 0, 0);
+  const canSendReminder = booking.status === "confirmed" && checkInDate >= today;
 
   const extrasTotal = booking.extras.reduce((s, e) => s + (EXTRA_PRICES[e] ?? 0), 0);
 
@@ -666,6 +743,7 @@ function BookingDetailModal({
       onClick={onClose}
     >
       <div
+        ref={modalRef}
         className="ec-project-card"
         style={{ borderRadius: 16, width: "100%", maxWidth: 520, maxHeight: "90vh", overflowY: "auto" }}
         onClick={(e) => e.stopPropagation()}
@@ -792,6 +870,36 @@ function BookingDetailModal({
             <span style={{ fontWeight: 600, color: "#f59e0b" }}>Total</span>
             <span style={{ fontSize: 20, fontWeight: 700, color: "#f59e0b" }}>${booking.total} USD</span>
           </div>
+
+          {/* Reminder section */}
+          <div style={{ padding: "12px 16px", background: "var(--ec-surface-2)", borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <Mail className="h-4 w-4" style={{ color: booking.reminder_sent_at ? "#10b981" : "var(--ec-text-dim)" }} />
+              <div>
+                <p style={{ fontSize: 12, fontWeight: 500, color: "var(--ec-text)" }}>Recordatorio por correo</p>
+                <p style={{ fontSize: 11, color: "var(--ec-text-dim)" }}>
+                  {booking.reminder_sent_at
+                    ? `Enviado ${new Date(booking.reminder_sent_at).toLocaleDateString("es-MX", { day: "numeric", month: "short", year: "numeric" })}`
+                    : canSendReminder ? "No enviado aún" : "No disponible"}
+                </p>
+              </div>
+            </div>
+            {canSendReminder && !booking.reminder_sent_at && (
+              <button
+                onClick={handleSendReminder}
+                disabled={sendingReminder}
+                className="ec-btn-primary"
+                style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, padding: "8px 14px" }}
+              >
+                {sendingReminder ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Mail className="h-3.5 w-3.5" />
+                )}
+                {sendingReminder ? "Enviando..." : "Enviar ahora"}
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -813,13 +921,19 @@ function DetailRow({ label, value }: { label: string; value: string | number | n
 function CalendarView({
   bookings,
   onCreateForDay,
+  viewYear,
+  viewMonth,
+  onPrevMonth,
+  onNextMonth,
 }: {
   bookings: Booking[];
   onCreateForDay: (dateStr: string, roomId?: string) => void;
+  viewYear: number;
+  viewMonth: number;
+  onPrevMonth: () => void;
+  onNextMonth: () => void;
 }) {
   const today = new Date();
-  const [viewYear, setViewYear] = useState(today.getFullYear());
-  const [viewMonth, setViewMonth] = useState(today.getMonth());
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
   const [roomFilter, setRoomFilter] = useState<string>(""); // "" = all rooms
 
@@ -831,17 +945,11 @@ function CalendarView({
   });
 
   const prevMonth = () => {
-    if (viewMonth === 0) {
-      setViewYear((y) => y - 1);
-      setViewMonth(11);
-    } else setViewMonth((m) => m - 1);
+    onPrevMonth();
     setSelectedDay(null);
   };
   const nextMonth = () => {
-    if (viewMonth === 11) {
-      setViewYear((y) => y + 1);
-      setViewMonth(0);
-    } else setViewMonth((m) => m + 1);
+    onNextMonth();
     setSelectedDay(null);
   };
 
@@ -1213,6 +1321,10 @@ function SubscriptionButton({ apiBaseUrl }: { apiBaseUrl: string }) {
 function InstallModal({ onClose, apiBaseUrl }: { onClose: () => void; apiBaseUrl: string }) {
   const subUrl = `${apiBaseUrl}/api/calendar.ics`;
 
+  useEffect(() => {
+
+  }, []);
+
   return (
     <div
       style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.65)", padding: 16 }}
@@ -1340,12 +1452,19 @@ export default function CalendarioPalmasPage() {
   const [createDefaultDate, setCreateDefaultDate] = useState<string | undefined>();
   const [createDefaultRoom, setCreateDefaultRoom] = useState<string | undefined>();
 
-  // Bookings table filter/sort
+  // Calendar month state (lifted for stats filtering)
+  const today = new Date();
+  const [calYear, setCalYear] = useState(today.getFullYear());
+  const [calMonth, setCalMonth] = useState(today.getMonth());
+
+  // Bookings table filter/sort/pagination
   const [bookingSearch, setBookingSearch] = useState("");
   const [bookingStatusFilter, setBookingStatusFilter] = useState("");
   const [bookingRoomFilter, setBookingRoomFilter] = useState("");
   const [bookingSortField, setBookingSortField] = useState("created_at");
   const [bookingSortDir, setBookingSortDir] = useState<"asc" | "desc">("desc");
+  const [bookingPage, setBookingPage] = useState(1);
+  const PAGE_SIZE = 10;
 
   // Contacts table filter/sort
   const [contactSearch, setContactSearch] = useState("");
@@ -1423,8 +1542,33 @@ export default function CalendarioPalmasPage() {
     setCreateDefaultRoom(undefined);
   };
 
+  // Month overlap helper
+  function bookingOverlapsMonth(b: Booking, year: number, month: number): boolean {
+    const monthStart = new Date(year, month, 1);
+    const monthEnd = new Date(year, month + 1, 0, 23, 59, 59);
+    const checkIn = parseDateLocal(b.check_in.slice(0, 10));
+    const checkOut = parseDateLocal(b.check_out.slice(0, 10));
+    return checkIn < monthEnd && checkOut > monthStart;
+  }
+
+  const monthBookings = useMemo(
+    () => bookings.filter((b) => bookingOverlapsMonth(b, calYear, calMonth)),
+    [bookings, calYear, calMonth],
+  );
+  const confirmedMonthBookings = monthBookings.filter((b) => b.status === "confirmed");
+  const monthRevenue = confirmedMonthBookings.reduce((s, b) => s + Number(b.total), 0);
+
   const confirmedBookings = bookings.filter((b) => b.status === "confirmed");
   const totalRevenue = confirmedBookings.reduce((s, b) => s + Number(b.total), 0);
+
+  const handlePrevMonth = () => {
+    if (calMonth === 0) { setCalYear((y) => y - 1); setCalMonth(11); }
+    else setCalMonth((m) => m - 1);
+  };
+  const handleNextMonth = () => {
+    if (calMonth === 11) { setCalYear((y) => y + 1); setCalMonth(0); }
+    else setCalMonth((m) => m + 1);
+  };
 
   const filteredBookings = useMemo(() => {
     let list = [...bookings];
@@ -1455,6 +1599,12 @@ export default function CalendarioPalmasPage() {
     return list;
   }, [bookings, bookingSearch, bookingStatusFilter, bookingRoomFilter, bookingSortField, bookingSortDir]);
 
+  const totalPages = Math.max(1, Math.ceil(filteredBookings.length / PAGE_SIZE));
+  const paginatedBookings = useMemo(
+    () => filteredBookings.slice((bookingPage - 1) * PAGE_SIZE, bookingPage * PAGE_SIZE),
+    [filteredBookings, bookingPage],
+  );
+
   const filteredContacts = useMemo(() => {
     let list = [...contacts];
     if (contactSearch) {
@@ -1475,6 +1625,8 @@ export default function CalendarioPalmasPage() {
     });
     return list;
   }, [contacts, contactSearch, contactSortField, contactSortDir]);
+
+  useEffect(() => { setBookingPage(1); }, [bookingSearch, bookingStatusFilter, bookingRoomFilter, bookingSortField, bookingSortDir]);
 
   const handleBookingSort = (field: string) => {
     if (bookingSortField === field) setBookingSortDir((d) => (d === "asc" ? "desc" : "asc"));
@@ -1521,6 +1673,7 @@ export default function CalendarioPalmasPage() {
           onClose={() => setSelectedBooking(null)}
           onCancel={handleCancelBooking}
           onEdit={handleOpenEdit}
+          onRefresh={fetchBookings}
         />
       )}
 
@@ -1587,30 +1740,30 @@ export default function CalendarioPalmasPage() {
           </div>
         </div>
 
-        {/* Stats */}
+        {/* Stats — filtradas por el mes visible del calendario */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <StatCard
             icon={<BedDouble className="h-5 w-5" />}
             iconStyle={{ background: "rgba(59,130,246,0.12)", color: "#3b82f6" }}
-            label="Total Reservas"
-            value={loadingBookings ? "—" : bookings.length}
+            label="Reservas del mes"
+            value={loadingBookings ? "—" : monthBookings.length}
           />
           <StatCard
             icon={<CheckCircle className="h-5 w-5" />}
             iconStyle={{ background: "rgba(16,185,129,0.12)", color: "#10b981" }}
-            label="Confirmadas"
-            value={loadingBookings ? "—" : confirmedBookings.length}
+            label="Confirmadas del mes"
+            value={loadingBookings ? "—" : confirmedMonthBookings.length}
           />
           <StatCard
             icon={<DollarSign className="h-5 w-5" />}
             iconStyle={{ background: "rgba(245,158,11,0.12)", color: "#f59e0b" }}
-            label="Ingresos"
-            value={loadingBookings ? "—" : `$${totalRevenue.toLocaleString()}`}
+            label="Ingresos del mes"
+            value={loadingBookings ? "—" : `$${monthRevenue.toLocaleString()}`}
           />
           <StatCard
             icon={<MessageSquare className="h-5 w-5" />}
             iconStyle={{ background: "rgba(168,85,247,0.12)", color: "#a855f7" }}
-            label="Contactos"
+            label="Total Contactos"
             value={loadingContacts ? "—" : contacts.length}
           />
         </div>
@@ -1642,7 +1795,14 @@ export default function CalendarioPalmasPage() {
               <Loader2 className="h-8 w-8 animate-spin text-amber-600" />
             </div>
           ) : (
-            <CalendarView bookings={bookings} onCreateForDay={handleCreateForDay} />
+            <CalendarView
+              bookings={bookings}
+              onCreateForDay={handleCreateForDay}
+              viewYear={calYear}
+              viewMonth={calMonth}
+              onPrevMonth={handlePrevMonth}
+              onNextMonth={handleNextMonth}
+            />
           ))}
 
         {/* Bookings tab */}
@@ -1715,15 +1875,15 @@ export default function CalendarioPalmasPage() {
                         <SortHeader label="Total" field="total" sortField={bookingSortField} sortDir={bookingSortDir} onSort={handleBookingSort} />
                         <SortHeader label="Estado" field="status" sortField={bookingSortField} sortDir={bookingSortDir} onSort={handleBookingSort} />
                         <SortHeader label="Origen" field="source" sortField={bookingSortField} sortDir={bookingSortDir} onSort={handleBookingSort} />
+                        <th style={{ padding: "10px 16px", fontSize: 11, fontWeight: 600, color: "var(--ec-text-dim)", textTransform: "uppercase", letterSpacing: "0.05em", textAlign: "center", whiteSpace: "nowrap" }}>Recordatorio</th>
                         <SortHeader label="Creado" field="created_at" sortField={bookingSortField} sortDir={bookingSortDir} onSort={handleBookingSort} />
-                        <th style={{ padding: "10px 16px" }} />
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredBookings.map((booking) => {
+                      {paginatedBookings.map((booking) => {
                         const rc = ROOM_COLORS[booking.room_id] ?? DEFAULT_ROOM_COLOR;
                         return (
-                          <tr key={booking.id} style={{ borderBottom: "1px solid var(--ec-hairline)" }}>
+                          <tr key={booking.id} onClick={() => setSelectedBooking(booking)} style={{ borderBottom: "1px solid var(--ec-hairline)", cursor: "pointer", transition: "background 0.1s" }} className="hover:bg-[var(--ec-surface-1)]">
                             <td style={{ padding: "10px 16px", fontFamily: "JetBrains Mono, monospace", fontSize: 11, color: "var(--ec-text-dim)" }}>#{booking.confirmation_number}</td>
                             <td style={{ padding: "10px 16px" }}>
                               <div style={{ fontWeight: 500, color: "var(--ec-text)" }}>{booking.full_name}</div>
@@ -1738,11 +1898,23 @@ export default function CalendarioPalmasPage() {
                             <td style={{ padding: "10px 16px", fontWeight: 600, color: "var(--ec-text)" }}>${booking.total}</td>
                             <td style={{ padding: "10px 16px" }}>{getStatusBadge(booking.status)}</td>
                             <td style={{ padding: "10px 16px" }}><SourceBadge source={booking.source} /></td>
+                            <td style={{ padding: "10px 16px", textAlign: "center" }}>
+                              {booking.reminder_sent_at ? (
+                                <span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "2px 8px", borderRadius: 99, fontSize: 11, fontWeight: 500, background: "rgba(16,185,129,0.12)", color: "#10b981", whiteSpace: "nowrap" }}>
+                                  <CheckCircle className="h-3 w-3" /> Enviado
+                                </span>
+                              ) : booking.status === "confirmed" && new Date(booking.check_in) >= new Date(new Date().toDateString()) ? (
+                                <span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "2px 8px", borderRadius: 99, fontSize: 11, fontWeight: 500, background: "rgba(245,158,11,0.12)", color: "#f59e0b", whiteSpace: "nowrap" }}>
+                                  <Mail className="h-3 w-3" /> Pendiente
+                                </span>
+                              ) : (
+                                <span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "2px 8px", borderRadius: 99, fontSize: 11, fontWeight: 500, background: "var(--ec-surface-2)", color: "var(--ec-text-dim)", whiteSpace: "nowrap" }}>
+                                  —
+                                </span>
+                              )}
+                            </td>
                             <td style={{ padding: "10px 16px", color: "var(--ec-text-dim)", whiteSpace: "nowrap", fontSize: 12 }}>
                               {booking.created_at ? new Date(booking.created_at).toLocaleDateString("es-MX", { year: "numeric", month: "short", day: "numeric" }) : "—"}
-                            </td>
-                            <td style={{ padding: "10px 16px" }}>
-                              <button onClick={() => setSelectedBooking(booking)} style={{ padding: "5px 6px", borderRadius: 6, background: "none", border: "none", cursor: "pointer", color: "var(--ec-text-dim)", display: "flex" }} title="Ver detalle"><Eye size={15} /></button>
                             </td>
                           </tr>
                         );
@@ -1750,6 +1922,29 @@ export default function CalendarioPalmasPage() {
                     </tbody>
                   </table>
                 </div>
+                {totalPages > 1 && (
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "12px 16px", borderTop: "1px solid var(--ec-hairline)" }}>
+                    <button onClick={() => setBookingPage((p) => Math.max(1, p - 1))} disabled={bookingPage <= 1}
+                      style={{ padding: "6px 12px", borderRadius: 8, border: "1px solid var(--ec-border)", background: "var(--ec-surface-2)", color: bookingPage <= 1 ? "var(--ec-text-dim)" : "var(--ec-text)", fontSize: 13, cursor: bookingPage <= 1 ? "not-allowed" : "pointer", opacity: bookingPage <= 1 ? 0.5 : 1 }}>
+                      Anterior
+                    </button>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                      <button key={p} onClick={() => setBookingPage(p)}
+                        style={{
+                          width: 32, height: 32, borderRadius: 8, border: "none",
+                          background: p === bookingPage ? "#f59e0b" : "var(--ec-surface-2)",
+                          color: p === bookingPage ? "white" : "var(--ec-text)",
+                          fontSize: 13, fontWeight: p === bookingPage ? 600 : 400,
+                          cursor: "pointer", transition: "all 0.1s",
+                        }}
+                      >{p}</button>
+                    ))}
+                    <button onClick={() => setBookingPage((p) => Math.min(totalPages, p + 1))} disabled={bookingPage >= totalPages}
+                      style={{ padding: "6px 12px", borderRadius: 8, border: "1px solid var(--ec-border)", background: "var(--ec-surface-2)", color: bookingPage >= totalPages ? "var(--ec-text-dim)" : "var(--ec-text)", fontSize: 13, cursor: bookingPage >= totalPages ? "not-allowed" : "pointer", opacity: bookingPage >= totalPages ? 0.5 : 1 }}>
+                      Siguiente
+                    </button>
+                  </div>
+                )}
               </>
             )}
           </div>

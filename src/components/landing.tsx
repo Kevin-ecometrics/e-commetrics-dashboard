@@ -5,7 +5,7 @@ import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import Packages from "@/components/packages";
 import { useLang } from "@/app/context/LangContext";
-import { ArrowRight, ArrowLeft, Mail, X, Sun, Moon, Phone, ExternalLink } from "lucide-react";
+import { ArrowRight, ArrowLeft, Mail, X, Sun, Moon, Phone, ExternalLink, Code2, Megaphone, Search, Server } from "lucide-react";
 import { useTheme } from "next-themes";
 
 type Locale = "en" | "es";
@@ -24,16 +24,14 @@ type Service = {
   title: string;
   description: string;
   desc2: string;
-  banner: string;
 };
 
 type ConsultingItem = {
   id: number;
   title: string;
   desc: string;
-  image: string;
-  icon: string;
-  hoverColor: string;
+  icon: React.ReactNode;
+  gradient: string;
 };
 
 /* ─── Hero ───────────────────────────────────────────────── */
@@ -437,14 +435,14 @@ const Services = ({ locale }: { locale: Locale }) => {
   const [selected, setSelected] = useState<Service | null>(null);
 
   const services: Service[] = [
-    { id: 1, key: "video", title: locale === "en" ? "Video Production" : "Video Producción", description: locale === "en" ? "Pre-production, production, and post-production to bring your vision to life." : "Pre, producción y post producción para transformar tu visión en realidad.", desc2: locale === "en" ? "We design and execute all key processes of pre-production, production, and post-production to transform our clients' vision into reality." : "Diseñamos y ejecutamos todos los procesos clave de preproducción, producción y post producción para transformar la visión de nuestros clientes en realidad.", banner: "https://ecommetrica.com/banner1.webp" },
-    { id: 2, key: "brand", title: locale === "en" ? "Brand Identity" : "Identidad de Marca", description: locale === "en" ? "Beyond a logo — unified name, colors, and marketing strategy." : "Más allá de un logo: nombre, colores y estrategia de marketing unificados.", desc2: locale === "en" ? "Beyond a logo, we unify name, colors, and marketing strategy for powerful visual coherence." : "Más allá de un logo, unificamos nombre, colores y estrategia de marketing para lograr una coherencia visual poderosa.", banner: "https://ecommetrica.com/banner2.webp" },
-    { id: 3, key: "writing", title: locale === "en" ? "Creative Writing" : "Escritura Creativa", description: locale === "en" ? "Soul and personality for your brand through narrative and storytelling." : "Alma y personalidad para tu marca a través de narrativa y storytelling.", desc2: locale === "en" ? "We give soul and personality to your brand while playing with imagination to create stories that connect." : "Le damos alma y personalidad a tu marca mientras creamos narrativas e historias que conecten con las personas.", banner: "https://ecommetrica.com/banner3.webp" },
-    { id: 4, key: "web", title: locale === "en" ? "Web Positioning" : "Posicionamiento Web", description: locale === "en" ? "Comprehensive SEO strategies that maximize lead retention and conversion." : "Estrategias SEO integrales que maximizan la retención y conversión de leads.", desc2: locale === "en" ? "We boost your business on search engines with strategies that maximize lead retention and conversion." : "Impulsamos tu negocio en motores de búsqueda con estrategias integrales que maximizan la retención de leads.", banner: "https://ecommetrica.com/banner4.webp" },
-    { id: 5, key: "webapp", title: locale === "en" ? "Programming & WebApps" : "Programación y WebApps", description: locale === "en" ? "Impactful, adaptable websites and web applications that grow with you." : "Páginas web y aplicaciones impactantes y adaptables que crecen contigo.", desc2: locale === "en" ? "We develop impactful and adaptable online pages and stores that grow with you." : "Desarrollamos páginas y tiendas en línea impactantes y adaptables que crecen contigo.", banner: "https://ecommetrica.com/banner5.webp" },
-    { id: 6, key: "desing", title: locale === "en" ? "Web Design" : "Diseño Web", description: locale === "en" ? "UX-focused design and interface that stands out from the competition." : "Diseño de interfaz centrado en UX que destaca del resto.", desc2: locale === "en" ? "We focus on providing a user experience (UX) and interface design that stands out from the rest." : "Nos enfocamos en brindar una experiencia de usuario (UX) y diseño de interfaz que destaque del resto.", banner: "https://ecommetrica.com/banner6.webp" },
-    { id: 7, key: "ecommerce", title: "E-commerce", description: locale === "en" ? "B2C and B2B specialists — step-by-step strategic plan for your growth." : "Especialistas B2C y B2B — plan estratégico paso a paso para tu crecimiento.", desc2: locale === "en" ? "We specialize in B2C, B2B. We guide you step by step to design a strategic plan that drives your growth." : "Nos especializamos en B2C, B2B. Te guiamos paso a paso para diseñar un plan estratégico que impulse tu crecimiento.", banner: "https://ecommetrica.com/banner7.webp" },
-    { id: 8, key: "planning", title: locale === "en" ? "Strategic Planning" : "Planeación Estratégica", description: locale === "en" ? "Identify improvement opportunities and implement growth strategies." : "Identifica oportunidades de mejora e implementa estrategias de crecimiento.", desc2: locale === "en" ? "We focus on the growth of your business, helping you identify improvement opportunities and implement strategies." : "Nos enfocamos en el crecimiento de tu negocio, ayudándote a identificar oportunidades de mejora e implementar estrategias.", banner: "https://ecommetrica.com/banner8.webp" },
+    { id: 1, key: "video", title: locale === "en" ? "Video Production" : "Video Producción", description: locale === "en" ? "Pre-production, production, and post-production to bring your vision to life." : "Pre, producción y post producción para transformar tu visión en realidad.", desc2: locale === "en" ? "We design and execute all key processes of pre-production, production, and post-production to transform our clients' vision into reality." : "Diseñamos y ejecutamos todos los procesos clave de preproducción, producción y post producción para transformar la visión de nuestros clientes en realidad." },
+    { id: 2, key: "brand", title: locale === "en" ? "Brand Identity" : "Identidad de Marca", description: locale === "en" ? "Beyond a logo — unified name, colors, and marketing strategy." : "Más allá de un logo: nombre, colores y estrategia de marketing unificados.", desc2: locale === "en" ? "Beyond a logo, we unify name, colors, and marketing strategy for powerful visual coherence." : "Más allá de un logo, unificamos nombre, colores y estrategia de marketing para lograr una coherencia visual poderosa." },
+    { id: 3, key: "writing", title: locale === "en" ? "Creative Writing" : "Escritura Creativa", description: locale === "en" ? "Soul and personality for your brand through narrative and storytelling." : "Alma y personalidad para tu marca a través de narrativa y storytelling.", desc2: locale === "en" ? "We give soul and personality to your brand while playing with imagination to create stories that connect." : "Le damos alma y personalidad a tu marca mientras creamos narrativas e historias que conecten con las personas." },
+    { id: 4, key: "web", title: locale === "en" ? "Web Positioning" : "Posicionamiento Web", description: locale === "en" ? "Comprehensive SEO strategies that maximize lead retention and conversion." : "Estrategias SEO integrales que maximizan la retención y conversión de leads.", desc2: locale === "en" ? "We boost your business on search engines with strategies that maximize lead retention and conversion." : "Impulsamos tu negocio en motores de búsqueda con estrategias integrales que maximizan la retención de leads." },
+    { id: 5, key: "webapp", title: locale === "en" ? "Programming & WebApps" : "Programación y WebApps", description: locale === "en" ? "Impactful, adaptable websites and web applications that grow with you." : "Páginas web y aplicaciones impactantes y adaptables que crecen contigo.", desc2: locale === "en" ? "We develop impactful and adaptable online pages and stores that grow with you." : "Desarrollamos páginas y tiendas en línea impactantes y adaptables que crecen contigo." },
+    { id: 6, key: "desing", title: locale === "en" ? "Web Design" : "Diseño Web", description: locale === "en" ? "UX-focused design and interface that stands out from the competition." : "Diseño de interfaz centrado en UX que destaca del resto.", desc2: locale === "en" ? "We focus on providing a user experience (UX) and interface design that stands out from the rest." : "Nos enfocamos en brindar una experiencia de usuario (UX) y diseño de interfaz que destaque del resto." },
+    { id: 7, key: "ecommerce", title: "E-commerce", description: locale === "en" ? "B2C and B2B specialists — step-by-step strategic plan for your growth." : "Especialistas B2C y B2B — plan estratégico paso a paso para tu crecimiento.", desc2: locale === "en" ? "We specialize in B2C, B2B. We guide you step by step to design a strategic plan that drives your growth." : "Nos especializamos en B2C, B2B. Te guiamos paso a paso para diseñar un plan estratégico que impulse tu crecimiento." },
+    { id: 8, key: "planning", title: locale === "en" ? "Strategic Planning" : "Planeación Estratégica", description: locale === "en" ? "Identify improvement opportunities and implement growth strategies." : "Identifica oportunidades de mejora e implementa estrategias de crecimiento.", desc2: locale === "en" ? "We focus on the growth of your business, helping you identify improvement opportunities and implement strategies." : "Nos enfocamos en el crecimiento de tu negocio, ayudándote a identificar oportunidades de mejora e implementar estrategias." },
   ];
 
   return (
@@ -623,15 +621,30 @@ const Services = ({ locale }: { locale: Locale }) => {
               }}
             >
               {/* Banner */}
-              <div style={{ position: "relative", height: 180 }}>
-                <Image
-                  src={selected.banner}
-                  alt={selected.title}
-                  fill
-                  style={{ objectFit: "cover" }}
-                  loading="lazy"
-                  loader={({ src }) => src}
-                />
+              <div
+                style={{
+                  position: "relative",
+                  height: 180,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  background: "linear-gradient(135deg, var(--ec-brand-deep), var(--ec-brand))",
+                }}
+              >
+                <div
+                  style={{
+                    width: 64,
+                    height: 64,
+                    borderRadius: 16,
+                    background: "rgba(255,255,255,0.12)",
+                    border: "1px solid rgba(255,255,255,0.2)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  {getServiceIcon(selected.key, "white")}
+                </div>
                 <div
                   style={{
                     position: "absolute",
@@ -700,10 +713,10 @@ const Services = ({ locale }: { locale: Locale }) => {
 /* ─── Consulting ─────────────────────────────────────────── */
 const Consulting = ({ locale }: { locale: Locale }) => {
   const items: ConsultingItem[] = [
-    { id: 1, title: locale === "en" ? "Programming" : "Programación", desc: locale === "en" ? "Fast and secure websites." : "Páginas Web, rápida y segura.", image: "https://ecommetrica.com/programacion.webp", icon: "https://ecommetrica.com/MarketingIcon.svg", hoverColor: "bg-gradient-to-br from-blue-500/80 to-purple-600/10" },
-    { id: 2, title: "Marketing", desc: locale === "en" ? "We provide the best S.S.L. with NameCheap." : "Tenemos el mejor S.S.L. con NameCheap.", image: "https://ecommetrica.com/marketing.webp", icon: "https://ecommetrica.com/MarketingIcon.svg", hoverColor: "bg-gradient-to-br from-purple-600/80 to-black/10" },
-    { id: 3, title: "SEO", desc: locale === "en" ? "Your site will be better structured for Google©." : "Tu sitio estará mejor estructurado para Google©.", image: "https://ecommetrica.com/SEO.webp", icon: "https://ecommetrica.com/SeoIcon.svg", hoverColor: "bg-gradient-to-br from-violet-700/80 to-purple-900/10" },
-    { id: 4, title: "Web Master", desc: locale === "en" ? "Fast, secure and reliable hosting." : "Hospedaje rápido, seguro y confiable.", image: "https://ecommetrica.com/webMaster.webp", icon: "https://ecommetrica.com/WebMasterIcon.svg", hoverColor: "bg-gradient-to-br from-pink-500/80 to-rose-600/10" },
+    { id: 1, title: locale === "en" ? "Programming" : "Programación", desc: locale === "en" ? "Fast and secure websites." : "Páginas Web, rápida y segura.", icon: <Code2 size={20} color="white" />, gradient: "from-blue-600 to-indigo-800" },
+    { id: 2, title: "Marketing", desc: locale === "en" ? "We provide the best S.S.L. with NameCheap." : "Tenemos el mejor S.S.L. con NameCheap.", icon: <Megaphone size={20} color="white" />, gradient: "from-fuchsia-600 to-[#7A0E3B]" },
+    { id: 3, title: "SEO", desc: locale === "en" ? "Your site will be better structured for Google©." : "Tu sitio estará mejor estructurado para Google©.", icon: <Search size={20} color="white" />, gradient: "from-violet-600 to-purple-900" },
+    { id: 4, title: "Web Master", desc: locale === "en" ? "Fast, secure and reliable hosting." : "Hospedaje rápido, seguro y confiable.", icon: <Server size={20} color="white" />, gradient: "from-rose-500 to-[#7A0E3B]" },
   ];
 
   return (
@@ -738,18 +751,14 @@ const Consulting = ({ locale }: { locale: Locale }) => {
               initial={{ opacity: 0, y: 16 }}
               whileHover={{ scale: 1.02 }}
               transition={{ duration: 0.4 }}
-              className={`group relative h-80 rounded-2xl overflow-hidden bg-cover bg-center cursor-pointer flex items-end justify-start`}
-              style={{ backgroundImage: `url('${item.image}')` }}
+              className={`group relative h-80 rounded-2xl overflow-hidden cursor-pointer flex items-end justify-start bg-gradient-to-br ${item.gradient}`}
             >
-              <div className="absolute inset-0 bg-black/60 z-0 group-hover:opacity-0 transition-opacity duration-300" />
-              <div className={`absolute inset-0 ${item.hoverColor} opacity-0 group-hover:opacity-100 transition-all duration-300 z-0`} />
-
               {/* EC brand accent overlay */}
               <div
                 style={{
                   position: "absolute",
                   inset: 0,
-                  background: "linear-gradient(to top, rgba(189,21,92,0.3) 0%, transparent 50%)",
+                  background: "linear-gradient(to top, rgba(189,21,92,0.35) 0%, transparent 55%)",
                   opacity: 0,
                   transition: "opacity 300ms",
                   zIndex: 1,
@@ -771,7 +780,7 @@ const Consulting = ({ locale }: { locale: Locale }) => {
                     marginBottom: 10,
                   }}
                 >
-                  <Image src={item.icon} alt={item.title} height={22} width={22} loading="lazy" />
+                  {item.icon}
                 </div>
                 <h3
                   className="font-serif"

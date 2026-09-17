@@ -15,7 +15,8 @@
       "Bash(gzip -d -f \"C:\\\\Users\\\\kevin\\\\.claude\\\\temp-design.gz\")",
       "Read(//c/Users/kevin/.claude/**)",
       "Bash(mkdir -p design-extract-4)",
-      "Bash(tar -xf temp-design -C design-extract-4)"
+      "Bash(tar -xf temp-design -C design-extract-4)",
+      "Bash(node -c backend.js)"
     ]
   }
 }

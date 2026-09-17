@@ -2,10 +2,16 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { toast, Toaster } from "react-hot-toast";
-import { Tag, Plus, Trash2, Copy, Check, RefreshCw, Calendar, Hash, Percent, DollarSign, Users, Eye, EyeOff, Loader2, Shuffle } from "lucide-react";
+import { Tag, Plus, Trash2, Copy, Check, RefreshCw, Calendar, Hash, Percent, DollarSign, Users, Eye, EyeOff, Loader2, Shuffle, BedDouble, Sparkles } from "lucide-react";
 
 const API_BASE_URL = "https://palmasrecovery.com";
 const PALMAS_COLOR = "#10B981";
+
+interface Target {
+  type: "room" | "extra";
+  id: string;
+  discount: number;
+}
 
 interface PromoCode {
   id: number;
@@ -17,7 +23,26 @@ interface PromoCode {
   usage_count: number;
   is_active: boolean;
   created_at: string;
+  applies_to: "all" | "room" | "extra" | "targets";
+  target_ids: string[] | null;
+  targets: Target[] | null;
 }
+
+const ROOM_OPTIONS: Record<string, string> = {
+  shared: "Shared Room",
+  private: "Private Room",
+  "large-private": "Large Private Room",
+  vip: "VIP Suite",
+};
+
+const EXTRA_OPTIONS: Record<string, string> = {
+  lymphatic: "Lymphatic Massage",
+  "5massages": "5 Lymphatic Massages Package",
+  b01g: "Original Recovery Bra B01G",
+  fvom: "Open Bust Vest FVOM",
+  sfbhrs: "Reinforced Girdle SFBHRS",
+  sfbhs2: "Girdle High-Back SFBHS2",
+};
 
 const INITIAL_FORM = {
   code: "",
@@ -25,6 +50,9 @@ const INITIAL_FORM = {
   discount_value: 10,
   expires_at: "",
   usage_limit: "",
+  applies_to: "all" as "all" | "room" | "extra" | "targets",
+  target_ids: [] as string[],
+  targets: [] as Target[],
 };
 
 export default function PromoPalmasPage() {
@@ -35,7 +63,7 @@ export default function PromoPalmasPage() {
   const [copiedId, setCopiedId] = useState<number | null>(null);
   const [form, setForm] = useState(INITIAL_FORM);
   const [showForm, setShowForm] = useState(false);
-
+  const [advancedMode, setAdvancedMode] = useState(false);
   const fetchCodes = useCallback(async () => {
     setLoading(true);
     try {
@@ -62,6 +90,21 @@ export default function PromoPalmasPage() {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.code.trim()) return;
+    if (advancedMode) {
+      if (form.targets.length === 0) {
+        toast.error("Agrega al menos un target");
+        return;
+      }
+      for (const t of form.targets) {
+        if (!t.discount || t.discount <= 0) {
+          toast.error(`El target "${t.id}" necesita un descuento válido`);
+          return;
+        }
+      }
+    } else if (form.applies_to !== "all" && form.target_ids.length === 0) {
+      toast.error("Selecciona al menos una habitación o extra");
+      return;
+    }
     setSaving(true);
     try {
       const res = await fetch(`${API_BASE_URL}/promo-codes`, {
@@ -69,15 +112,18 @@ export default function PromoPalmasPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           code: form.code.trim().toUpperCase(),
-          discount_type: form.discount_type,
-          discount_value: Number(form.discount_value),
+          discount_type: advancedMode ? "percentage" : form.discount_type,
+          discount_value: advancedMode ? 0 : Number(form.discount_value),
           expires_at: form.expires_at || null,
           usage_limit: form.usage_limit ? Number(form.usage_limit) : null,
+          applies_to: advancedMode ? "targets" : form.applies_to,
+          target_ids: !advancedMode && form.applies_to !== "all" ? form.target_ids : null,
+          targets: advancedMode ? form.targets : null,
         }),
       });
       if (!res.ok) throw new Error();
       toast.success("Código creado exitosamente");
-      setForm(INITIAL_FORM); setShowForm(false); fetchCodes();
+      setForm(INITIAL_FORM); setShowForm(false); setAdvancedMode(false); fetchCodes();
     } catch {
       toast.error("Error al crear el código");
     } finally {
@@ -207,28 +253,32 @@ export default function PromoPalmasPage() {
                 </button>
               </div>
             </div>
-            <div>
-              <label className="h-eyebrow" style={{ display: "block", marginBottom: 6 }}>Tipo de descuento</label>
-              <select value={form.discount_type} onChange={(e) => setForm((p) => ({ ...p, discount_type: e.target.value as "percentage" | "fixed" }))}
-                style={{ ...inputStyle, cursor: "pointer" }}>
-                <option value="percentage">Porcentaje (%)</option>
-                <option value="fixed">Monto fijo ($)</option>
-              </select>
-            </div>
-            <div>
-              <label className="h-eyebrow" style={{ display: "block", marginBottom: 6 }}>
-                {form.discount_type === "percentage" ? "Porcentaje" : "Monto"}
-              </label>
-              <div style={{ display: "flex", alignItems: "center", background: "var(--ec-surface-2)", border: "1px solid var(--ec-border)", borderRadius: 10, overflow: "hidden" }}>
-                <span style={{ padding: "0 10px", color: "var(--ec-text-dim)", display: "flex", alignItems: "center", flexShrink: 0 }}>
-                  {form.discount_type === "percentage" ? <Percent size={13} /> : <DollarSign size={13} />}
-                </span>
-                <input type="number" min="1" max={form.discount_type === "percentage" ? "100" : undefined}
-                  value={form.discount_value} onChange={(e) => setForm((p) => ({ ...p, discount_value: Number(e.target.value) }))} required
-                  style={{ flex: 1, padding: "11px 12px 11px 4px", background: "transparent", border: 0, outline: "none", color: "var(--ec-text)", fontSize: 14 }}
-                />
-              </div>
-            </div>
+            {!advancedMode && (
+              <>
+                <div>
+                  <label className="h-eyebrow" style={{ display: "block", marginBottom: 6 }}>Tipo de descuento</label>
+                  <select value={form.discount_type} onChange={(e) => setForm((p) => ({ ...p, discount_type: e.target.value as "percentage" | "fixed" }))}
+                    style={{ ...inputStyle, cursor: "pointer" }}>
+                    <option value="percentage">Porcentaje (%)</option>
+                    <option value="fixed">Monto fijo ($)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="h-eyebrow" style={{ display: "block", marginBottom: 6 }}>
+                    {form.discount_type === "percentage" ? "Porcentaje" : "Monto"}
+                  </label>
+                  <div style={{ display: "flex", alignItems: "center", background: "var(--ec-surface-2)", border: "1px solid var(--ec-border)", borderRadius: 10, overflow: "hidden" }}>
+                    <span style={{ padding: "0 10px", color: "var(--ec-text-dim)", display: "flex", alignItems: "center", flexShrink: 0 }}>
+                      {form.discount_type === "percentage" ? <Percent size={13} /> : <DollarSign size={13} />}
+                    </span>
+                    <input type="number" min="1" max={form.discount_type === "percentage" ? "100" : undefined}
+                      value={form.discount_value} onChange={(e) => setForm((p) => ({ ...p, discount_value: Number(e.target.value) }))} required
+                      style={{ flex: 1, padding: "11px 12px 11px 4px", background: "transparent", border: 0, outline: "none", color: "var(--ec-text)", fontSize: 14 }}
+                    />
+                  </div>
+                </div>
+              </>
+            )}
             <div>
               <label className="h-eyebrow" style={{ display: "block", marginBottom: 6 }}>Fecha de expiración <span style={{ textTransform: "none", letterSpacing: 0, color: "var(--ec-text-dim)", fontSize: 10 }}>(opcional)</span></label>
               <div style={{ display: "flex", alignItems: "center", background: "var(--ec-surface-2)", border: "1px solid var(--ec-border)", borderRadius: 10, overflow: "hidden" }}>
@@ -247,9 +297,125 @@ export default function PromoPalmasPage() {
                 />
               </div>
             </div>
+
+            {/* Alcance del descuento */}
+            <div style={{ gridColumn: "1 / -1" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+                <label className="h-eyebrow">Alcance del descuento</label>
+                <button type="button" onClick={() => { setAdvancedMode((m) => !m); setForm((p) => ({ ...p, applies_to: "all", target_ids: [], targets: [] })); }}
+                  style={{ fontSize: 11, padding: "4px 10px", borderRadius: 6, border: `1px solid ${PALMAS_COLOR}`, background: `${PALMAS_COLOR}12`, color: PALMAS_COLOR, cursor: "pointer" }}>
+                  {advancedMode ? "Modo simple" : "Modo avanzado"}
+                </button>
+              </div>
+              {advancedMode ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {form.targets.map((t, i) => (
+                    <div key={i} style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                      <select value={t.type} onChange={(e) => { const nt = [...form.targets]; nt[i] = { ...nt[i], type: e.target.value as "room" | "extra", id: "" }; setForm((p) => ({ ...p, targets: nt })); }}
+                        style={{ padding: "8px 10px", borderRadius: 8, border: "1px solid var(--ec-border)", background: "var(--ec-surface-2)", color: "var(--ec-text)", fontSize: 13, cursor: "pointer", outline: "none" }}>
+                        <option value="room">Habitación</option>
+                        <option value="extra">Extra</option>
+                      </select>
+                      <select value={t.id} onChange={(e) => { const nt = [...form.targets]; nt[i] = { ...nt[i], id: e.target.value }; setForm((p) => ({ ...p, targets: nt })); }}
+                        style={{ flex: 1, padding: "8px 10px", borderRadius: 8, border: "1px solid var(--ec-border)", background: "var(--ec-surface-2)", color: "var(--ec-text)", fontSize: 13, cursor: "pointer", outline: "none" }}>
+                        <option value="">Seleccionar...</option>
+                        {Object.entries(t.type === "room" ? ROOM_OPTIONS : EXTRA_OPTIONS).map(([id, name]) => (
+                          <option key={id} value={id} disabled={form.targets.some((ot, oi) => oi !== i && ot.id === id)}>{name}</option>
+                        ))}
+                      </select>
+                      <div style={{ display: "flex", alignItems: "center", gap: 2, flexShrink: 0 }}>
+                        <input type="number" min="1" max="100" value={t.discount || ""} onChange={(e) => { const nt = [...form.targets]; nt[i] = { ...nt[i], discount: Number(e.target.value) }; setForm((p) => ({ ...p, targets: nt })); }}
+                          placeholder="%" style={{ width: 56, padding: "8px 6px", borderRadius: 8, border: "1px solid var(--ec-border)", background: "var(--ec-surface-2)", color: "var(--ec-text)", fontSize: 13, textAlign: "center", outline: "none" }} />
+                        <span style={{ fontSize: 11, color: "var(--ec-text-dim)", width: 14 }}>%</span>
+                      </div>
+                      <button type="button" onClick={() => setForm((p) => ({ ...p, targets: p.targets.filter((_, j) => j !== i) }))}
+                        style={{ width: 32, height: 32, borderRadius: 8, border: "1px solid rgba(248,113,113,0.3)", background: "none", color: "#F87171", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  ))}
+                  <button type="button" onClick={() => setForm((p) => ({ ...p, targets: [...p.targets, { type: "room", id: "", discount: 10 }] }))}
+                    style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "9px", borderRadius: 8, border: `1px dashed var(--ec-border)`, background: "transparent", color: "var(--ec-text-dim)", fontSize: 13, cursor: "pointer" }}>
+                    <Plus size={14} /> Agregar target
+                  </button>
+                  {form.targets.length === 0 && (
+                    <p style={{ fontSize: 12, color: "#F87171", marginTop: 2 }}>Agrega al menos un target</p>
+                  )}
+                </div>
+              ) : (
+                <>
+                  <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+                    {(["all"] as const).map((opt) => (
+                      <button key={opt} type="button"
+                        style={{
+                          flex: 1, padding: "10px 12px", borderRadius: 10, cursor: "pointer", fontSize: 13, fontWeight: 500,
+                          border: `2px solid ${PALMAS_COLOR}`, background: `${PALMAS_COLOR}12`, color: PALMAS_COLOR,
+                          display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                        }}
+                      >
+                        <Tag size={14} /> Todo
+                      </button>
+                    ))}
+                  </div>
+                  {form.applies_to === "room" && (
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                      {Object.entries(ROOM_OPTIONS).map(([id, name]) => {
+                        const selected = form.target_ids.includes(id);
+                        return (
+                          <label key={id} style={{
+                            display: "flex", alignItems: "center", gap: 8, padding: "7px 12px", borderRadius: 8, cursor: "pointer", fontSize: 13,
+                            border: `1px solid ${selected ? PALMAS_COLOR : "var(--ec-border)"}`,
+                            background: selected ? `${PALMAS_COLOR}12` : "var(--ec-surface-2)",
+                            color: selected ? PALMAS_COLOR : "var(--ec-text)",
+                            transition: "all 140ms",
+                          }}>
+                            <input type="checkbox" checked={selected}
+                              onChange={() => setForm((p) => ({
+                                ...p,
+                                target_ids: selected ? p.target_ids.filter((t) => t !== id) : [...p.target_ids, id],
+                              }))}
+                              style={{ accentColor: PALMAS_COLOR, margin: 0 }}
+                            />
+                            {name}
+                          </label>
+                        );
+                      })}
+                    </div>
+                  )}
+                  {form.applies_to === "extra" && (
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                      {Object.entries(EXTRA_OPTIONS).map(([id, name]) => {
+                        const selected = form.target_ids.includes(id);
+                        return (
+                          <label key={id} style={{
+                            display: "flex", alignItems: "center", gap: 8, padding: "7px 12px", borderRadius: 8, cursor: "pointer", fontSize: 13,
+                            border: `1px solid ${selected ? PALMAS_COLOR : "var(--ec-border)"}`,
+                            background: selected ? `${PALMAS_COLOR}12` : "var(--ec-surface-2)",
+                            color: selected ? PALMAS_COLOR : "var(--ec-text)",
+                            transition: "all 140ms",
+                          }}>
+                            <input type="checkbox" checked={selected}
+                              onChange={() => setForm((p) => ({
+                                ...p,
+                                target_ids: selected ? p.target_ids.filter((t) => t !== id) : [...p.target_ids, id],
+                              }))}
+                              style={{ accentColor: PALMAS_COLOR, margin: 0 }}
+                            />
+                            {name}
+                          </label>
+                        );
+                      })}
+                    </div>
+                  )}
+                  {form.applies_to !== "all" && form.target_ids.length === 0 && (
+                    <p style={{ fontSize: 12, color: "#F87171", marginTop: 6 }}>Selecciona al menos un elemento</p>
+                  )}
+                </>
+              )}
+            </div>
           </div>
           <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
-            <button type="button" onClick={() => { setShowForm(false); setForm(INITIAL_FORM); }}
+            <button type="button" onClick={() => { setShowForm(false); setForm(INITIAL_FORM); setAdvancedMode(false); }}
               style={{ padding: "10px 18px", background: "var(--ec-surface-2)", border: "1px solid var(--ec-border)", borderRadius: 10, color: "var(--ec-text)", fontSize: 13, cursor: "pointer" }}>
               Cancelar
             </button>
@@ -276,7 +442,8 @@ export default function PromoPalmasPage() {
           <p style={{ color: "var(--ec-text-dim)", fontSize: 13 }}>Crea tu primer código de promoción con el botón de arriba.</p>
         </div>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        <>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {codes.map((code) => {
             const isExpired = code.expires_at ? new Date(code.expires_at) < new Date() : false;
             const isExhausted = code.usage_limit !== null && code.usage_count >= code.usage_limit;
@@ -299,12 +466,27 @@ export default function PromoPalmasPage() {
                     {!code.is_active && <span style={{ padding: "2px 8px", borderRadius: 100, background: "var(--ec-surface-2)", color: "var(--ec-text-dim)", fontSize: 11 }}>Inactivo</span>}
                   </div>
                   <div style={{ display: "flex", gap: 16, fontSize: 12, color: "var(--ec-text-dim)", flexWrap: "wrap" }}>
-                    <span>{code.discount_type === "percentage" ? `${code.discount_value}% descuento` : `$${code.discount_value} fijo`}</span>
+                    {code.applies_to === "targets" && code.targets ? (
+                      <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                        <Tag size={11} />
+                        Targets: {code.targets.map((t) => `${t.type === "room" ? ROOM_OPTIONS[t.id] ?? t.id : EXTRA_OPTIONS[t.id] ?? t.id} (${t.discount}%)`).join(", ")}
+                      </span>
+                    ) : (
+                      <span>{code.discount_type === "percentage" ? `${code.discount_value}% descuento` : `$${code.discount_value} fijo`}</span>
+                    )}
                     <span style={{ color: "var(--ec-border)" }}>·</span>
                     <span style={{ display: "flex", alignItems: "center", gap: 4 }}><Users size={11} />{code.usage_count ?? 0}{code.usage_limit !== null ? ` / ${code.usage_limit}` : ""} usos</span>
                     {code.expires_at && (
                       <><span style={{ color: "var(--ec-border)" }}>·</span>
                       <span style={{ display: "flex", alignItems: "center", gap: 4 }}><Calendar size={11} />{new Date(code.expires_at).toLocaleDateString("es-MX")}</span></>
+                    )}
+                    {code.applies_to && code.applies_to !== "all" && code.applies_to !== "targets" && (
+                      <><span style={{ color: "var(--ec-border)" }}>·</span>
+                      <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                        {code.applies_to === "room" ? <BedDouble size={11} /> : <Sparkles size={11} />}
+                        {code.applies_to === "room" ? "Habitaciones: " : "Extras: "}
+                        {code.target_ids?.map((id) => ROOM_OPTIONS[id] ?? EXTRA_OPTIONS[id] ?? id).join(", ")}
+                      </span></>
                     )}
                   </div>
                 </div>
@@ -326,6 +508,7 @@ export default function PromoPalmasPage() {
             );
           })}
         </div>
+        </>
       )}
     </div>
   );
