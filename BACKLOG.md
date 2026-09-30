@@ -1,13 +1,13 @@
 # Backlog
 
-Última actualización: **2026-09-29**.
+Última actualización: **2026-09-30**.
 
 Orden de prioridad: de arriba hacia abajo. No empezar un punto hasta cerrar el anterior.
 
 ## 1. Cerrar el módulo CRM (en curso)
 
-El frontend del CRM (`src/app/dashboard/webapp/crm/`) está listo pero **sin subir ni
-commitear**. El estado detallado y los pasos viven en el repo de Reforma:
+El frontend del CRM (`src/app/dashboard/webapp/crm/`) está listo y **ya commiteado**, pero
+**sin subir** al hosting. El estado detallado y los pasos viven en el repo de Reforma:
 `ReformaDental2025/CRM_STATUS.md` y `ReformaDental2025/CRM_USUARIOS.md`.
 
 Pendiente para darlo por cerrado:
@@ -16,7 +16,7 @@ Pendiente para darlo por cerrado:
 - [ ] Probar de punta a punta: dashboard → CRM → login propio → pipeline → crear y editar
       un lead → enviar plantilla → "Sync now".
 - [ ] Revisar la consola del navegador: sin errores de CORS hacia `https://reformadental.com/crm`.
-- [ ] Commitear `access-app/page.tsx`, `app-sidebar.tsx` y `webapp/crm/`.
+- [x] Commitear `access-app/page.tsx`, `app-sidebar.tsx` y `webapp/crm/`.
 - [ ] Si un usuario **no admin** debe ver el CRM: agregar `"CRM"` a `allComponents` en
       `GET /api/users/:id/apps` del backend del dashboard y marcarle el permiso.
 
@@ -25,13 +25,23 @@ Pendiente para darlo por cerrado:
 **Objetivo:** que el frontend deje de ser estático y de subirse a mano, para que crear una
 ruta o un proyecto nuevo no exija build y subida cada vez.
 
+**Decisión (2026-09-30):** frontend en Vercel, dinámico (sin `output: 'export'`);
+backend, bases de datos, cron **e imágenes subidas se quedan en cPanel**.
+
 **Alcance:** solo el frontend. El backend Express, las bases de datos y el cron
 **se quedan en cPanel**. No mover Express a Vercel: el cron del CRM (sync de Facebook cada
 5 min) y las conexiones persistentes a MySQL no encajan en funciones serverless.
 
+**Imágenes:** no se necesita bucket. Multer guarda en `server/public/images/` del backend
+(`dashboard.js`), Express las sirve con `express.static`, la base de datos guarda la ruta
+relativa `/images/<archivo>` y el frontend la antepone con `NEXT_PUBLIC_URL`. El navegador
+sube y pide las imágenes directo al backend, así que Vercel no interviene. Vercel no puede
+guardar subidas (disco temporal); un bucket (Vercel Blob, R2, S3) solo haría falta si algún
+día se sacan las imágenes de cPanel.
+
 ```
 Navegador ──► e-commetrics.com (Vercel)   ← solo el frontend
-                 ├──► backend Express del dashboard (cPanel)   /api/...
+                 ├──► backend Express del dashboard (cPanel)   /api/... y /images/...
                  └──► reformadental.com/crm (cPanel)           /crm/...
 ```
 
@@ -58,10 +68,19 @@ Navegador ──► e-commetrics.com (Vercel)   ← solo el frontend
    - [ ] En `[project_name]/page.tsx` agregar `export const dynamic = "force-dynamic";`
          (o `revalidate = 60` si se acepta un minuto de retraso).
    - [ ] Leer `ProjectClient` y confirmar si ya recarga datos en el navegador.
+   - [ ] Confirmar que toda imagen (incl. `source` de `project_content`) se renderiza con el
+         prefijo `NEXT_PUBLIC_URL`; ninguna ruta relativa sola.
+   - [ ] Si se usa `next/image` con imágenes del backend, agregar su dominio a
+         `images.remotePatterns` en `next.config.ts`.
    - [ ] `next build` limpio y revisar página por página lo que cambie.
 2. **Crear el proyecto en Vercel**
    - [ ] Conectar el repo (rama `main`).
-   - [ ] Definir `NEXT_PUBLIC_URL` con la URL pública del backend Express del dashboard.
+   - [ ] Definir `NEXT_PUBLIC_URL` en Vercel (Settings → Environment Variables) con la URL
+         pública del backend Express del dashboard, sin barra final, en Production y
+         Preview. Vercel no lee el `.env` local; sin la variable, las llamadas y las
+         imágenes irían a `undefined/...`. Es variable de build (se incrusta al compilar):
+         si se cambia, hay que hacer redeploy. Es pública, solo la URL del backend: nunca
+         poner claves ahí. `CRM_API` no necesita variable (fija en `webapp/crm/lib/api.ts`).
    - [ ] Desplegar primero en la URL `*.vercel.app` **solo para revisar el build y el
          render**. El login no funcionará ahí (ver CORS abajo); es esperado.
 3. **Dominio**
@@ -74,6 +93,8 @@ Navegador ──► e-commetrics.com (Vercel)   ← solo el frontend
    - [ ] Entrar al CRM y a las demás apps.
    - [ ] Crear un proyecto nuevo desde el dashboard y abrir su página **sin hacer deploy**.
    - [ ] Editar el contenido de un proyecto y comprobar que se ve al momento.
+   - [ ] Subir una foto de perfil y una imagen de contenido; comprobar que se ven (vienen
+         del backend en cPanel).
 5. **Retirar lo anterior**
    - [ ] Dejar el hosting estático de cPanel como respaldo unos días.
    - [ ] Después, borrar `out/` de `public_html`.
@@ -96,6 +117,8 @@ Navegador ──► e-commetrics.com (Vercel)   ← solo el frontend
   revisar antes de fusionar.
 - **Plan de Vercel.** El plan gratuito tiene límites y es de uso no comercial. Revisar si
   hace falta el plan Pro, al ser una plataforma con clientes.
+- **Imágenes en disco de cPanel.** Un redeploy del backend que sobrescriba `server/public/`
+  las borraría. Respaldar esa carpeta antes de desplegar el backend.
 - **Ver también** el punto 3: la seguridad del backend debe arreglarse pronto
   independientemente de esta migración.
 
@@ -120,6 +143,9 @@ la migración a Vercel y conviene hacerlos pronto.
 - [ ] `/api/register` envía la contraseña en texto plano por correo.
 - [ ] Middleware `requireAuth` y `requireAdmin` para las rutas de listado y escritura.
 - [ ] Añadir `"CRM"` a `allComponents` (si no se hizo ya en el punto 1).
+- [ ] Rutas de subida (`/api/upload-profile-image`, `/api/projects/content`,
+      `PUT /api/project_content/:id`): exigir sesión, y limitar tamaño y tipo de archivo en
+      multer.
 
 ## 4. Ideas para más adelante
 
