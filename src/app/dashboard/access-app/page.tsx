@@ -12,6 +12,7 @@ import {
   Loader2,
   Settings,
   Tag,
+  KanbanSquare,
 } from "lucide-react";
 import { motion } from "motion/react";
 
@@ -32,7 +33,8 @@ type ComponentAccess = {
     | "Monge"
     | "PromoPalmas"
     | "CalendarioPalmas"
-    | "ScanEat";
+    | "ScanEat"
+    | "CRM";
   can_view: boolean;
 };
 
@@ -45,6 +47,7 @@ const AVAILABLE_COMPONENTS: ComponentAccess["component"][] = [
   "PromoPalmas",
   "CalendarioPalmas",
   "ScanEat",
+  "CRM",
 ];
 
 const COMPONENT_CONFIG = {
@@ -57,6 +60,7 @@ const COMPONENT_CONFIG = {
   PromoPalmas: { icon: Tag, name: "Promo Palmas" },
   CalendarioPalmas: { icon: Calendar, name: "Cal. Palmas" },
   ScanEat: { icon: FileText, name: "ScanEat Demos" },
+  CRM: { icon: KanbanSquare, name: "CRM" },
 };
 
 const fadeUpCard = {

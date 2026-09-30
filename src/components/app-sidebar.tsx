@@ -20,6 +20,7 @@ import {
   LucideIcon,
   Search,
   Scan,
+  KanbanSquare,
 } from "lucide-react";
 import { NavUser } from "@/components/nav-user";
 import Cookies from "js-cookie";
@@ -231,6 +232,14 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
       component: "ScanEat",
       category: "app",
     },
+    {
+      id: "crm",
+      name: "CRM",
+      url: "/dashboard/webapp/crm",
+      icon: KanbanSquare,
+      component: "CRM",
+      category: "app",
+    },
   ];
 
   const appsEn: AppItem[] = [
@@ -296,6 +305,14 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
       url: "/dashboard/webapp/scan-eat",
       icon: Scan,
       component: "ScanEat",
+      category: "app",
+    },
+    {
+      id: "crm",
+      name: "CRM",
+      url: "/dashboard/webapp/crm",
+      icon: KanbanSquare,
+      component: "CRM",
       category: "app",
     },
   ];
