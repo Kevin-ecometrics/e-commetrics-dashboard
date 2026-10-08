@@ -1,18 +1,7 @@
 import ProjectClient from "./ProjectClient";
 import { redirect } from "next/navigation";
 
-interface Project {
-  project_name: string;
-}
-
-export async function generateStaticParams() {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_URL}/api/projects`);
-  const projects: Project[] = await res.json();
-
-  return projects.map((project) => ({
-    project_name: project.project_name,
-  }));
-}
+export const dynamic = "force-dynamic";
 
 export default async function Page({
   params,

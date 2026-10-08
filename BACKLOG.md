@@ -45,6 +45,34 @@ Navegador ──► e-commetrics.com (Vercel)   ← solo el frontend
                  └──► reformadental.com/crm (cPanel)           /crm/...
 ```
 
+### Estado (2026-10-07): EN PAUSA, no se ha tocado código ni DNS
+
+Solo se hizo análisis y se tomaron estas decisiones. Al retomar, empezar por el paso 1.
+
+- **DNS:** se administra **dentro de cPanel** (Zone Editor), no en el registrador. Se
+  descarta cambiar los nameservers a Vercel: habría que recrear a mano los MX y el
+  correo. Solo se cambian registros del sitio web.
+  - `@` (A) → `76.76.21.21`
+  - `www` (CNAME) → `cname.vercel-dns.com`
+  - No tocar MX. Borrar AAAA de `@` y `www` si existen (mandan tráfico al servidor viejo).
+- **Variables de entorno del frontend:** no hay variables nuevas. El código usa solo
+  `NEXT_PUBLIC_URL` (obligatoria; hay que cargarla en Vercel) y
+  `NEXT_PUBLIC_SCANEAT_ADMIN_KEY` (solo `webapp/scan-eat/page.tsx`; al ser `NEXT_PUBLIC_`
+  queda visible en el navegador, así que no es secreta).
+- **`www`:** había un redirect `www` → `https://e-commetrics.com` en cPanel. **Dejará de
+  funcionar** al apuntar `www` a Vercel (el tráfico ya no llega a cPanel). Decisión: se
+  quita de cPanel y el redirect se define en Vercel (Domains → `www.e-commetrics.com` →
+  *Redirect to* `e-commetrics.com`). Con esto `www` no llega a ser origen, así que no hace
+  falta tocar el CORS.
+- **Imágenes:** se confirma que se quedan en cPanel; no se necesita bucket.
+
+**Orden seguro del cambio de dominio** (no quitar el redirect de cPanel antes de tiempo):
+1. Código listo y desplegado en `*.vercel.app` (pasos 1 y 2).
+2. En Vercel agregar `e-commetrics.com` y `www.e-commetrics.com` (este con redirect).
+3. En el Zone Editor cambiar los registros de arriba.
+4. Esperar "Valid Configuration" en ambos dominios en Vercel.
+5. Recién entonces quitar el redirect de cPanel.
+
 ### Por qué
 
 - `next.config.ts` tiene `output: 'export'`: todo se genera como HTML fijo en `out/`.
@@ -109,7 +137,8 @@ Navegador ──► e-commetrics.com (Vercel)   ← solo el frontend
   el login y el CRM fallan. Si se quiere probar ramas en URLs de Vercel, hay que agregarlas
   a la lista de ambos backends.
 - **`www.e-commetrics.com`** no está en el CORS del backend del dashboard (sí en el de
-  Reforma). Decidir si se usa y añadirlo, o redirigirlo al dominio sin `www`.
+  Reforma). Decidido (2026-10-07): se redirige al dominio sin `www` desde Vercel; no se
+  añade al CORS. Ver "Estado" arriba.
 - **Llamadas desde el servidor de Vercel.** `[project_name]/page.tsx` llama al backend
   desde los servidores de Vercel, no desde el navegador. Comprobar que el backend no
   bloquee IPs externas.
